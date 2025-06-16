@@ -19,20 +19,26 @@ These suites simplify the creation of custom AI solutions for specific industrie
 
 [The Media & Entertainment AI Suite](media-and-entertainment-ai-suite) provides libraries and sample applications to accelerate solution development for high-performance, high-quality, live video production helping improve viewer experience.
 
+[The Robotics AI Suite](robotics-ai-suite) provides ready to use samples leveraging AI to help solve common robotics problems such as perception, navigation, simulation, and planning.
+
+
 The Edge AI Suites project hosts a collection of sample applications organized as follows:
 
 | Suite | Sample Application | Get Started | Developers Docs |
 |:------|:-------------------|:------------|:----------------|
+| Metro AI Suite | [Holographic Sensor Fusion](metro-ai-suite/holographic-sensor-fusion) | [Link](metro-ai-suite/holographic-sensor-fusion/docs/user-guide/Get-Started-Guide.md) | [Customize the Application](metro-ai-suite/holographic-sensor-fusion/docs/user-guide/Advanced-User-Guide.md) |
 | Metro AI Suite | [Loitering Detection](metro-ai-suite/loitering-detection) | [Link](metro-ai-suite/loitering-detection/docs/user-guide/get-started.md) | [Customize the Application](metro-ai-suite/loitering-detection/docs/user-guide/how-to-customize-application.md) |
 | Metro AI Suite | [Image-Based Video Search](metro-ai-suite/image-based-video-search) | [Link](metro-ai-suite/image-based-video-search/docs/user-guide/get-started.md) | [Build](metro-ai-suite/image-based-video-search/docs/user-guide/how-to-build-source.md) and [Deployment](metro-ai-suite/image-based-video-search/docs/user-guide/how-to-deploy-helm.md) instructions |
 | Metro AI Suite | [Smart Intersection](metro-ai-suite/smart-intersection) [*](#license) | [Link](metro-ai-suite/smart-intersection/docs/user-guide/get-started.md) | [Deployment](metro-ai-suite/smart-intersection/docs/user-guide/how-to-deploy-docker.md) |
 | Metro AI Suite | [Smart Parking](metro-ai-suite/smart-parking) | [Link](metro-ai-suite/smart-parking/docs/user-guide/get-started.md) | [Customize the Application](metro-ai-suite/smart-parking/docs/user-guide/how-to-customize-application.md) |
-| Metro AI Suite | [Holographic Sensor Fusion](metro-ai-suite/holographic-sensor-fusion) | [Link](metro-ai-suite/holographic-sensor-fusion/docs/user-guide/Get-Started-Guide.md) | [Customize the Application](metro-ai-suite/holographic-sensor-fusion/docs/user-guide/Advanced-User-Guide.md) |
+| Metro AI Suite | [Visual Search Question and Answering](metro-ai-suite/visual-search-question-and-answering) | [Link](metro-ai-suite/visual-search-question-and-answering/docs/user-guide/get-started.md) | [Tutorials](metro-ai-suite/visual-search-question-and-answering/docs/user-guide/tutorials.md) |
 | Manufacturing AI Suite | [Pallet Defect Detection](manufacturing-ai-suite/pallet-defect-detection) | [Link](manufacturing-ai-suite/pallet-defect-detection#get-started) | [Customize the Application](manufacturing-ai-suite/pallet-defect-detection/docs/user-guide/how-to-use-an-ai-model-and-video-file-of-your-own.md) |
 | Manufacturing AI Suite | [Weld Porosity](manufacturing-ai-suite/weld-porosity) | [Link](manufacturing-ai-suite/weld-porosity#get-started) | [Customize the Application](manufacturing-ai-suite/weld-porosity/docs/user-guide/how-to-use-an-ai-model-and-video-file-of-your-own.md) |
 | Manufacturing AI Suite | [Wind Turbine Anomaly Detection](manufacturing-ai-suite/wind-turbine-anomaly-detection/) | [Link](manufacturing-ai-suite/wind-turbine-anomaly-detection/docs/user-guide/get-started.md) | [Docker deployment](manufacturing-ai-suite/wind-turbine-anomaly-detection/docs/user-guide/get-started.md#deploy-with-docker-compose-single-node) and [Helm deployment](manufacturing-ai-suite/wind-turbine-anomaly-detection/docs/user-guide/how-to-deploy-with-helm.md) |
 | Retail AI Suite | [Automated Self Checkout](https://github.com/intel-retail/automated-self-checkout) | [Link](https://github.com/intel-retail/automated-self-checkout?tab=readme-ov-file#-quickstart) | [Advanced Guide](https://intel-retail.github.io/documentation/use-cases/automated-self-checkout/automated-self-checkout.html) |
 | Retail AI Suite | [Loss Prevention](https://github.com/intel-retail/loss-prevention) | [Link](https://github.com/intel-retail/loss-prevention?tab=readme-ov-file#quickstart) | [Advanced Guide](https://intel-retail.github.io/documentation/use-cases/loss-prevention/loss-prevention.html) |
+| Robotics AI Suite | [ACT Sample](robotics-ai-suite/act-sample) | [Link](robotics-ai-suite/act-sample) | [Tutorial](robotics-ai-suite/act-sample/README.md) |
+| Robotics AI Suite | [ORB-SLAM3 Sample](robotics-ai-suite/orb-slam3-sample) | [Link](robotics-ai-suite/orb-slam3-sample) | [Tutorial](robotics-ai-suite/orb-slam3-sample/README.md) |
 
 Please visit each sample application sub-directory for respective **Getting Started**, **Customization** instructions.
 
