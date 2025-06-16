@@ -88,7 +88,7 @@ config:
     int:
       port: "5000"
     ext:
-      port: "30080"
+      port: "30009"
   mqttbroker:
     name: ia-mqtt-broker
     int:
