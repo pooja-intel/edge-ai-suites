@@ -18,7 +18,7 @@ env:
   # should contain alphanumeric characters with atleast one digit. 
   # Do not set INFLUXDB_USERNAME to 'admin'.
   # Do not use the following special characters in the influxdb_username and influxdb_password "~:'+[/@^{%(-"*|,&<`}._=}!>;?#$)\"
-  INFLUXDB_USERNAME:  
+  INFLUXDB_USERNAME: 
   INFLUXDB_PASSWORD: 
   # The VISUALIZER_GRAFANA_USER and VISUALIZER_GRAFANA_PASSWORD length must be a minimum of 5 and 10 characters respectively 
   # and should contain alphanumeric characters with atleast one digit
@@ -93,7 +93,7 @@ config:
     int:
       port: "5000"
     ext:
-      port: "30009"
+      port: "30002"
   mqttbroker:
     name: ia-mqtt-broker
     int:
