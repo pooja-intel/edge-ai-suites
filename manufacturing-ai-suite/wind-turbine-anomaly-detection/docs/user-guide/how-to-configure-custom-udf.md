@@ -102,20 +102,18 @@ models/
 ```
 
 
-### Updating Time Series Analytics Microservice `config.json` for Model Registry usage
+### Updating Time Series Analytics Microservice config for Model Registry usage
 
 #### Docker compose deployment
 
-To fetch UDFs and models from the Model Registry, update the configuration file at:
-`edge-ai-suites/manufacturing-ai-suite/wind-turbine-anomaly-detection/time_series_analytics_microservice/config.json`.
+To fetch UDFs and models from the Model Registry, update the configuration using [steps](./how-to-update-config.md#how-to-update-config-in-time-series-analytics-microservice) and set the below parameters.
 
-1. Set `fetch_from_model_registry` to `true`.
-2. Specify the `task_name` and `version` as defined in the Model Registry.
+1. Set ``model_registry` key `enable` to `true`.
+2. Specify the `udf_name` and `version` as defined in the Model Registry.
    
    > **Note**: Mismatched task names or versions will cause the microservice to restart.
-4. Update the `tick_script` and `udfs` sections with the appropriate `name` and `models` details.
+3. Update the `tick_script` and `udfs` sections with the appropriate `name` and `models` details.
 
-As we are watching on `config.json` changes, the `ia-time-series-analytics-microservice` would auto-restart.
 
 #### Helm deployment
 
