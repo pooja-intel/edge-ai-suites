@@ -86,6 +86,8 @@ You can verify the publishing of OPC-UA alerts by checking the logs of the `Time
 
 ### Configuration
 
+<ADD details about runtime /config>
+
 Update the `edge-ai-suites/manufacturing-ai-suite/wind-turbine-anomaly-detection/time_series_analytics_microservice/config.json` file:
    ```json
    "alerts": {
