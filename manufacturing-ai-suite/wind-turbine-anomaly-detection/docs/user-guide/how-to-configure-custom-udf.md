@@ -108,7 +108,7 @@ models/
 
 > **Note**:
 > 1. If doing docker based deployment, ensure the Wind Turbine Anomaly Detection sample app is deployed by following [getting started](./get-started.md)
-> 2. If doing helm based deployment on kubernetes cluster, ensure the Wind Turbine Anomaly Detection sample app is deployed by following [how to deploy with helm](./how-to-deploy-with-helm.md)
+> 2. If doing Helm based deployment on Kubernetes cluster, ensure the Wind Turbine Anomaly Detection sample app is deployed by following [how to deploy with helm](./how-to-deploy-with-helm.md)
 
 To fetch UDFs and models from the Model Registry, one can dynamically update the configuration of Time Series Analytics microservice using [steps](./how-to-update-config.md#how-to-update-config-in-time-series-analytics-microservice) and set the below parameters.
 

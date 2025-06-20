@@ -108,6 +108,10 @@ You need to copy your own or existing model into Time Series Analytics Microserv
    > **Note**
    > You need to run the above commands only after performing the Helm install.
 
+## Restart the Time Series Analytics Microservice UDF deployment
+
+Refer the [steps](./how-to-update-config.md#to-restart-the-time-series-analytics-microservice-udf-deployment) to start the UDF deployment with the copied UDF deployment package.
+
 ## Verify the wind turbine anomaly detection results
 
 Please follow the steps per helm deployment at [link](get-started.md#verify-the-wind-turbine-anomaly-detection-results)
