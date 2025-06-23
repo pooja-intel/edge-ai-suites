@@ -2,6 +2,8 @@
 
 The Time Series Analytics Microservice provides an interactive Swagger UI at `http://<host_ip>:5000/docs`.
 
+**Note:** Use the link `http://localhost:5000/docs` to access the Swagger UI if doing a Helm-based deployment on a Kubernetes cluster.
+
 ## Accessing the Swagger UI
 
 ### To view the current configuration:
@@ -11,7 +13,7 @@ The Time Series Analytics Microservice provides an interactive Swagger UI at `ht
 3. Expand the endpoint and click **Execute**.
 4. The response will display the current configuration of the Time Series Analytics Microservice.
 
-### To restart the Time Series Analytics Microservice UDF deployment
+### To activate the new UDF deployment package
 
 1. Open the Swagger UI in your browser.
 2. Locate the `GET /config` endpoint.

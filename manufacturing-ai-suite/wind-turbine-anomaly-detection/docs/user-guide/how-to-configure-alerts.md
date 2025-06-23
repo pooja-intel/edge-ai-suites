@@ -105,9 +105,9 @@ data0
 > - The `noRecoveries()` method suppresses recovery alerts, ensuring only critical alerts are sent.
 > - If doing a Helm-based deployment on a Kubernetes cluster, after making changes to the tick script, copy the UDF deployment package using [step](./how-to-deploy-with-helm.md#copy-the-windturbine_anomaly_detection-udf-package-for-helm-deployment-to-time-series-analytics-microservice).
 
-### 2. Configuring OPC-UA Alert in config
+### 2. Configuring OPC-UA Alert in config.json
 
-Update the Time Series Analytics Microservice config to add the following `opcua` details to the `alerts` section by following the [steps to update config](./how-to-update-config.md#how-to-update-config-in-time-series-analytics-microservice).
+Update the Time Series Analytics Microservice `edge-ai-suites/manufacturing-ai-suite/wind-turbine-anomaly-detection/time_series_analytics_microservice/config.json` to add the following `opcua` details to the `alerts` section by following the [steps to update config](./how-to-update-config.md#how-to-update-config-in-time-series-analytics-microservice).
 
    ```json
    "alerts": {
