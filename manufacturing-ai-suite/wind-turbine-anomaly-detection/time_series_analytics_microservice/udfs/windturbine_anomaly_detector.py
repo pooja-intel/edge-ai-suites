@@ -120,8 +120,13 @@ class AnomalyDetectorHandler(Handler):
         is_alarm = 0
         anomaly_type = None
         check_for_anomalies = 1
-        tag_dict = point.tags  # tag values can be accessed like a dictionary, e.g., tag_dict['your_tag_key']
-        server = tag_dict['source']
+        #tag_dict = point.tags  # tag values can be accessed like a dictionary, e.g., tag_dict['your_tag_key']
+        server = None
+        for point_tag in point.tags:
+            if point_tag.key == "source":
+                server = point_tag.value
+                break
+        #server = tag_dict['source']
         global enable_benchmarking
         if enable_benchmarking:
             if server not in self.points_received:
@@ -141,12 +146,15 @@ class AnomalyDetectorHandler(Handler):
                 self.last_states.append(0)
                 return 0
 
-            return 1        
-
-        # extract the wind speed and power from the point 
-        point_dict = point.fieldsDouble
-        
-        x,y = point_dict[self.x_name], point_dict[self.y_name]
+            return 1 
+        # extract the wind speed and power from the point
+        for point_data in point.fieldsDouble:
+            if point_data.key == self.x_name:
+                x = point_data.value
+            elif point_data.key == self.y_name:
+                y = point_data.value
+            else:
+                continue
         # logger.info(f"Asset: {point.name}, x: {x}, y:{y}, cc:{self.enable_gcp_client}")
 
         # check if there is an active alarm for timestamp of the current point
@@ -178,27 +186,26 @@ class AnomalyDetectorHandler(Handler):
                     is_anomaly = 1
                     self.anomalies.append((x,y))     
                     if (error<0.3):
-                        point.fieldsDouble['anomaly_status'] = 0.3
+                        point.fieldsDouble.add(key = "anomaly_status", value = 0.3)
                         # anomaly_type="LOW"
                     elif(error<0.6):
                         # anomaly_type = "MEDIUM"
-                        point.fieldsDouble['anomaly_status'] = 0.6
+                        point.fieldsDouble.add(key = "anomaly_status", value = 0.6)
                     else:
                         # anomaly_type = "HIGH"                    
-                        point.fieldsDouble['anomaly_status'] = 1.0
+                        point.fieldsDouble.add(key = "anomaly_status", value = 1)
                 else:
                     self.last_states.append(0)
         
         # write data back to db if it is an anomaly point or there is an alarm for the point
         response = udf_pb2.Response()
-        point_dict = point.fieldsDouble
-        point.fieldsDouble['analytic'] = True
-        if not 'anomaly_status' in point_dict:
-            point.fieldsDouble['anomaly_status'] = 0.0
+        point.fieldsDouble.add(key = "analytic", value = True)
+        if not any(kv.key == "anomaly_status" for kv in point.fieldsDouble):
+            point.fieldsDouble.add(key = "anomaly_status", value = 0.0)
         time_now = time.time_ns()
-        point.fieldsDouble['processing_time'] = time_now-start_time
+        point.fieldsDouble.add(key = 'processing_time', value = time_now-start_time)
         
-        point.fieldsDouble['end_end_time'] = time_now-point.time
+        point.fieldsDouble.add(key = 'end_end_time', value = time_now-point.time)
         # logger.info(f"*********************************{point.fieldsDouble['processing_time'] } { point.fieldsDouble['end_end_time']}") 
         response.point.CopyFrom(point)
 
