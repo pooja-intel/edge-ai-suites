@@ -121,6 +121,8 @@ class AnomalyDetectorHandler(Handler):
         anomaly_type = None
         check_for_anomalies = 1
         server = None
+        x = None
+        y = None
         for point_tag in point.tags:
             if point_tag.key == "source":
                 server = point_tag.value
@@ -159,45 +161,49 @@ class AnomalyDetectorHandler(Handler):
         ns = point.time # in nanoseconds
         ts = pd.Timestamp(ns)
 
-        # check if the current point is an anomalous point
-        check_for_anomalies = process_the_point(x,y)
-
-        if (check_for_anomalies):
-            y_pred = self.rf.predict(np.reshape(x,(-1,1)))
-            error = (y_pred[0]-y)/(y)
-            if (error>self.error_threshold):
-                self.last_states.append(1)
-                self.last_anomalies.append((x,y))
-            else:
-                self.last_states.append(0)        
-
-            # check if there are consecutive 3 anomalies, and then filter out any false positives
-            if (sum(self.last_states)==self.n_steps):
-                x_feat = list(zip(*self.last_anomalies))[0]
-                x_feat = np.reshape(x_feat, (-1,1))
-                y_feat = list(zip(*self.last_anomalies))[1]
-
-                lm = LinearRegression()
-                lm.fit(x_feat, y_feat)
-
-                if (abs(lm.coef_)<200):
-                    is_anomaly = 1
-                    self.anomalies.append((x,y))     
-                    if (error<0.3):
-                        point.fieldsDouble.add(key = "anomaly_status", value = 0.3)
-                        # anomaly_type="LOW"
-                    elif(error<0.6):
-                        # anomaly_type = "MEDIUM"
-                        point.fieldsDouble.add(key = "anomaly_status", value = 0.6)
-                    else:
-                        # anomaly_type = "HIGH"                    
-                        point.fieldsDouble.add(key = "anomaly_status", value = 1)
+        if x is not None and y is not None:
+            # check if the current point is an anomalous point
+            check_for_anomalies = process_the_point(x,y)
+            point.fieldsDouble.add(key = "analytic", value = True)
+            if (check_for_anomalies):
+                y_pred = self.rf.predict(np.reshape(x,(-1,1)))
+                error = (y_pred[0]-y)/(y)
+                if (error>self.error_threshold):
+                    self.last_states.append(1)
+                    self.last_anomalies.append((x,y))
                 else:
-                    self.last_states.append(0)
+                    self.last_states.append(0)        
+
+                # check if there are consecutive 3 anomalies, and then filter out any false positives
+                if (sum(self.last_states)==self.n_steps):
+                    x_feat = list(zip(*self.last_anomalies))[0]
+                    x_feat = np.reshape(x_feat, (-1,1))
+                    y_feat = list(zip(*self.last_anomalies))[1]
+
+                    lm = LinearRegression()
+                    lm.fit(x_feat, y_feat)
+
+                    if (abs(lm.coef_)<200):
+                        is_anomaly = 1
+                        self.anomalies.append((x,y))     
+                        if (error<0.3):
+                            point.fieldsDouble.add(key = "anomaly_status", value = 0.3)
+                            # anomaly_type="LOW"
+                        elif(error<0.6):
+                            # anomaly_type = "MEDIUM"
+                            point.fieldsDouble.add(key = "anomaly_status", value = 0.6)
+                        else:
+                            # anomaly_type = "HIGH"                    
+                            point.fieldsDouble.add(key = "anomaly_status", value = 1)
+                    else:
+                        self.last_states.append(0)
+                    
+        else:
+            logger.error(f"No input received for {self.x_name} {x}, {self.y_name} {y}. Skipping anomaly detection.")
+            point.fieldsDouble.add(key = "analytic", value = False)
         
         # write data back to db if it is an anomaly point or there is an alarm for the point
         response = udf_pb2.Response()
-        point.fieldsDouble.add(key = "analytic", value = True)
         if not any(kv.key == "anomaly_status" for kv in point.fieldsDouble):
             point.fieldsDouble.add(key = "anomaly_status", value = 0.0)
         time_now = time.time_ns()
