@@ -120,13 +120,11 @@ class AnomalyDetectorHandler(Handler):
         is_alarm = 0
         anomaly_type = None
         check_for_anomalies = 1
-        #tag_dict = point.tags  # tag values can be accessed like a dictionary, e.g., tag_dict['your_tag_key']
         server = None
         for point_tag in point.tags:
             if point_tag.key == "source":
                 server = point_tag.value
                 break
-        #server = tag_dict['source']
         global enable_benchmarking
         if enable_benchmarking:
             if server not in self.points_received:
