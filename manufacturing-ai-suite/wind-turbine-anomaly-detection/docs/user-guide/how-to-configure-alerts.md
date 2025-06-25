@@ -133,7 +133,7 @@ Update the Time Series Analytics Microservice `edge-ai-suites/manufacturing-ai-s
     pip install asyncio asyncua
     ```
 
-3. Run the following sample OPC UA subscriber by updating the `<IP-Address of OPCUA Server>` and the `port` (`4840` for Docker Compose deployment and `30003` for Helm deployment) to read the alerts published to server on tag `ns=1;i=2004` from Time Series Analytics Microservice.
+3. Run the following sample OPC UA subscriber by updating the `<IP-Address of OPCUA Server>` to read the alerts published to server on tag `ns=1;i=2004` from Time Series Analytics Microservice.
 
     ```python
     import asyncio
@@ -142,7 +142,7 @@ Update the Time Series Analytics Microservice `edge-ai-suites/manufacturing-ai-s
         def datachange_notification(self, node: Node, val, data):
             print(val)
     async def main():
-        client = Client(url="opc.tcp://<IP-Address of OPCUA Server>:<port>/freeopcua/server/")
+        client = Client(url="opc.tcp://<IP-Address of OPCUA Server>:30003/freeopcua/server/")
         async with client:
             handler = SubscriptionHandler()
             subscription = await client.create_subscription(50, handler)
