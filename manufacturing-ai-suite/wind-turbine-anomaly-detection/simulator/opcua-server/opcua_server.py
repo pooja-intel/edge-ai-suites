@@ -73,6 +73,8 @@ else:
         ua.SecurityPolicyType.NoSecurity,
     ])
 
+loop = (os.getenv("LOOP", "true")).lower()
+
 # Create a new namespace for your objects
 uri = "urn:freeopcua:python:server"
 idx = server.register_namespace(uri)
@@ -110,7 +112,14 @@ try:
         logger.debug(f"wind_speed updated {wind_speed.get_value()}")
 
         time.sleep(1)  # 1-second delay
-        i = 0 if i == (len(data) -1) else i + 1
+        i += 1
+        if i >= len(data):
+            if loop == "false":
+                logger.info("End of data reached.")
+                grid_active_power.delete()
+                wind_speed.delete()
+                break
+            i = 0
 
 except KeyboardInterrupt:
     print("Server is shutting down...")

@@ -63,6 +63,8 @@ spec:
           value: "time-series-analytics-microservice"
         - name: TS_MS_PORT
           value: '{{ .Values.config.time_series_analytics_microservice.kapacitor_port }}'
+        - name: LOOP
+          value: "true"
         volumeMounts:
         {{ if eq .Values.env.SECURE_MODE true }}
         - name: certs
