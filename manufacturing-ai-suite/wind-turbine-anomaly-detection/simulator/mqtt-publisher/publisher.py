@@ -100,7 +100,7 @@ def stream_csv(mqttc, topic, subsample, sampling_rate, filename):
                     print("Publishing message", msg)
                     mqttc.publish(topic, msg)
                 except (ValueError, IndexError):
-                    print(f"Skipping row {row_served} {row} due to ValueError or IndexError: {ValueError} {IndexError}")
+                    print(f"Skipping row {row_served}- {row} due to ValueError: {ValueError} or IndexError: {IndexError}")
                     continue
 
                 row_served += 1
