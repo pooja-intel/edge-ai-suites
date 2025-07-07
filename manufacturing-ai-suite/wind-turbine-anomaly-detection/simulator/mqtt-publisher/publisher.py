@@ -72,13 +72,15 @@ def stream_csv(mqttc, topic, subsample, sampling_rate, filename):
     """
     Stream the csv file
     """
-    loop = os.getenv("LOOP", "true").lower()
+    continous_simulator_ingestion = os.getenv("CONTINUOUS_SIMULATOR_INGESTION", "true").lower()
+
+    print(f"\nMQTT Topic - {topic}\nSubsample - {subsample}\nSampling Rate - {sampling_rate}\nFilename - {filename}\n")
+    jencoder = json.JSONEncoder()
+
     while True:
         start_time = time.time()
         row_served = 0
-        jencoder = json.JSONEncoder()
-
-        print(f"\nMQTT Topic - {topic}\nSubsample - {subsample}\nSampling Rate - {sampling_rate}\nFilename - {filename}\n")
+        
 
         with open(filename, 'r') as fileobject:
             tick = g_tick(float(subsample) / float(sampling_rate))
@@ -98,6 +100,7 @@ def stream_csv(mqttc, topic, subsample, sampling_rate, filename):
                     print("Publishing message", msg)
                     mqttc.publish(topic, msg)
                 except (ValueError, IndexError):
+                    print(f"Skipping row {row_served} {row} due to ValueError or IndexError: {ValueError} {IndexError}")
                     continue
 
                 row_served += 1
@@ -106,7 +109,7 @@ def stream_csv(mqttc, topic, subsample, sampling_rate, filename):
                     print(f'{row_served} rows served in {time.time() - start_time:.2f} seconds')
 
         print(f'{filename} Done! {row_served} rows served in {time.time() - start_time:.2f} seconds')
-        if loop == "false":
+        if continous_simulator_ingestion == "false":
             print("End of data reached.")
             while True:
                 time.sleep(1)

@@ -73,7 +73,7 @@ else:
         ua.SecurityPolicyType.NoSecurity,
     ])
 
-loop = (os.getenv("LOOP", "true")).lower()
+continous_simulator_ingestion = (os.getenv("CONTINUOUS_SIMULATOR_INGESTION", "true")).lower()
 
 # Create a new namespace for your objects
 uri = "urn:freeopcua:python:server"
@@ -114,7 +114,7 @@ try:
         time.sleep(1)  # 1-second delay
         i += 1
         if i >= len(data):
-            if loop == "false":
+            if continous_simulator_ingestion == "false":
                 logger.info("End of data reached.")
                 grid_active_power.delete()
                 wind_speed.delete()

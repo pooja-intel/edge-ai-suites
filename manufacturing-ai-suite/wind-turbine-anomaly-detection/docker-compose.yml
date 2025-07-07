@@ -201,7 +201,7 @@ services:
       NO_PROXY: "ia-time-series-analytics-microservice,${no_proxy}"
       TS_MS_SERVER: "ia-time-series-analytics-microservice"
       TS_MS_PORT: ${KAPACITOR_PORT}
-      LOOP: "true"
+      CONTINUOUS_SIMULATOR_INGESTION: ${CONTINUOUS_SIMULATOR_INGESTION}
     restart: unless-stopped
     security_opt:
     - no-new-privileges
@@ -242,7 +242,7 @@ services:
       NO_PROXY: "ia-mqtt-broker,ia-time-series-analytics-microservice,${no_proxy}"
       TS_MS_SERVER: "ia-time-series-analytics-microservice"
       TS_MS_PORT: ${KAPACITOR_PORT}
-      LOOP: "true"
+      CONTINUOUS_SIMULATOR_INGESTION: ${CONTINUOUS_SIMULATOR_INGESTION}
     networks:
     - timeseries_network
     command: ["--csv", "/windturbine_data.csv"]
