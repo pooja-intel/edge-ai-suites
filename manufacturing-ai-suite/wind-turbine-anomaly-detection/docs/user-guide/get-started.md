@@ -155,7 +155,7 @@ cd edge-ai-suites/manufacturing-ai-suite/wind-turbine-anomaly-detection
 >    is set to `true` by default, enabling continuous looping of simulator data. To ingest the simulator data only once (without looping), 
 >    set this variable to `false`.
 >  - If `CONTINUOUS_SIMULATOR_INGESTION` is set to `false`, you may see the `[inputs.opcua] status not OK for node` message in the `telegraf` 
->    logs for OP-CUA ingestion after a single data ingestion loop. This message can be ignored.
+>    logs for OPC-UA ingestion after a single data ingestion loop. This message can be ignored.
 
    - **Using OPC-UA ingestion**:
      ```bash
