@@ -53,7 +53,7 @@ def parse_args():
                      help='MQTT publication interval')
     a_p.add_argument('--csv', default=None, type=str,
                      help='CSV file to publish to MQTT broker')
-    a_p.add_argument('--topic', default=None, type=str, required=True,
+    a_p.add_argument('--topic', default=None, type=str,
                      help='MQTT topic name to publish to')
     a_p.add_argument('--json', default=None, type=str,
                      help='folder containing json file(s) to publish'
@@ -86,7 +86,9 @@ def stream_csv(mqttc, topic, subsample, sampling_rate, filename):
     while True:
         start_time = time.time()
         row_served = 0
+
         tick = g_tick(float(subsample) / float(sampling_rate))
+
         for chunk in pd.read_csv(filename, chunksize=chunk_size):
             for _, row in chunk.iterrows():
 
@@ -102,6 +104,7 @@ def stream_csv(mqttc, topic, subsample, sampling_rate, filename):
                     print(f"Skipping row {row_served}- {row} due to ValueError: {ValueError} \
                           or IndexError: {IndexError}")
                     continue
+
                 row_served += 1
                 time.sleep(next(tick))
                 if row_served % max(1, int(sampling_rate) // max(1, int(subsample))) == 0:
@@ -210,7 +213,16 @@ def main():
     args.port = os.getenv('PORT', '1883')
     args.port = int(args.port)
     updated_topics = {}
-    topic = args.topic
+    sample_app = os.getenv('SAMPLE_APP')
+    if args.topic is not None:
+        topic = args.topic
+    else:
+        topic = sample_app.split("_")[0] + "_data"
+
+    if args.csv is not None:
+        csv_file_path = args.csv
+    else:
+        csv_file_path = "/" + sample_app + ".csv"
     client = None
     if int(args.streams) == 1:
         client = mqtt.Client(client_id = '', clean_session = True, userdata = None,
@@ -223,15 +235,9 @@ def main():
             client.tls_insecure_set(True)
         client.connect(args.host, args.port, 60)
         client.loop_start()
-
+    print("csv file = ", csv_file_path)
     try:
-        if args.csv is not None:
-            stream_csv(client,
-                       topic,
-                       args.subsample,
-                       args.sampling_rate,
-                       args.csv)
-        elif args.json is not None:
+        if args.json is not None:
             publish_json(client,
                          args.topic,
                          args.json,
@@ -241,6 +247,12 @@ def main():
                          args.host,
                          args.port,
                          args.service)
+        elif csv_file_path is not None:
+            stream_csv(client,
+                       topic,
+                       args.subsample,
+                       args.sampling_rate,
+                       csv_file_path)
 
         else:
             if not updated_topics:

@@ -4,6 +4,20 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+DEFAULT_APP := windturbine_anomaly_detector
+
+# Check for app override from command line
+ifdef app
+    SAMPLE_APP := $(app)
+else
+    SAMPLE_APP := $(DEFAULT_APP)
+endif
+
+app-%:
+	@true
+
+export SAMPLE_APP
+
 INCLUDE ?= default_INCLUDE
 
 DOCKER_COMPOSE_FILE = ./docker-compose.yml
