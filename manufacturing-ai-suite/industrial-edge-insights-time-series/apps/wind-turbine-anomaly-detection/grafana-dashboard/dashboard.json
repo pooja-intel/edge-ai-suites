@@ -128,7 +128,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "\"wind-turbine-anomaly-data\".anomaly_status"
+              "options": "wind-turbine-anomaly-data.anomaly_status"
             },
             "properties": [
               {
@@ -167,7 +167,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "\"wind-turbine-anomaly-data\".wind_speed"
+              "options": "wind-turbine-anomaly-data.wind_speed"
             },
             "properties": [
               {
@@ -182,7 +182,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "\"wind-turbine-anomaly-data\".grid_active_power"
+              "options": "wind-turbine-anomaly-data.grid_active_power"
             },
             "properties": [
               {
@@ -201,8 +201,8 @@
               "options": {
                 "mode": "exclude",
                 "names": [
-                  "\"wind-turbine-anomaly-data\".anomaly_status",
-                  "\"wind-turbine-anomaly-data\".grid_active_power"
+                  "wind-turbine-anomaly-data.anomaly_status",
+                  "wind-turbine-anomaly-data.grid_active_power"
                 ],
                 "prefix": "All except:",
                 "readOnly": true
@@ -289,7 +289,7 @@
             }
           ],
           "hide": false,
-          "measurement": "\"wind-turbine-anomaly-data\"",
+          "measurement": "wind-turbine-anomaly-data",
           "orderByTime": "ASC",
           "policy": "default",
           "query": "SELECT anomaly_status FROM \"wind-turbine-anomaly-data\" where anomaly_status>0",
@@ -766,7 +766,7 @@
               "type": "fill"
             }
           ],
-          "measurement": "\"wind-turbine-anomaly-data\"",
+          "measurement": "wind-turbine-anomaly-data",
           "orderByTime": "ASC",
           "policy": "default",
           "query": "SELECT count(\"wind_speed\") FROM \"wind-turbine-anomaly-data\" ",

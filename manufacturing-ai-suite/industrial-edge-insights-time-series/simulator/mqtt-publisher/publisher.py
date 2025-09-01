@@ -235,7 +235,7 @@ def main():
             client.tls_insecure_set(True)
         client.connect(args.host, args.port, 60)
         client.loop_start()
-    print("csv file = ", csv_file_path)
+
     try:
         if args.json is not None:
             publish_json(client,
