@@ -41,9 +41,7 @@ services:
     - timeseries_network
     volumes:
     - ./telegraf/entrypoint.sh:/entrypoint.sh
-    - "./telegraf/config/:/etc/telegraf"
-    - "./apps/${SAMPLE_APP}/telegraf-config/Telegraf_devmode.conf:/etc/telegraf/Telegraf_devmode.conf"
-    - ./telegraf/input_data:/tmp/input_data:ro    
+    - "./apps/${SAMPLE_APP}/telegraf-config/:/etc/telegraf"   
 
   ia-influxdb:
     user: "${TIMESERIES_UID}:${TIMESERIES_UID}"
