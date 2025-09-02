@@ -4,13 +4,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-DEFAULT_APP := wind-turbine-anomaly-detection
+DEFAULT_SAMPLE_APP := wind-turbine-anomaly-detection
+SAMPLE_APP_LIST := wind-turbine-anomaly-detection weld-anomaly-detection
 
-# Check for app override from command line
 ifdef app
-    SAMPLE_APP := $(app)
+ifeq ($(filter $(app),$(SAMPLE_APP_LIST)),)
+$(error Sample app '$(app)' not found. Valid options: $(SAMPLE_APP_LIST))
+endif
+SAMPLE_APP := $(app)
 else
-    SAMPLE_APP := $(DEFAULT_APP)
+$(info Using default Sample app: $(DEFAULT_SAMPLE_APP))
+SAMPLE_APP := $(DEFAULT_SAMPLE_APP)
 endif
 
 app-%:

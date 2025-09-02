@@ -217,6 +217,8 @@ def main():
     if args.topic is not None:
         topic = args.topic
     else:
+        if sample_app is None:
+            sys.exit("Error: SAMPLE_APP environment variable is not set.")
         topic = sample_app.split("anomaly")[0] + "data"
 
     if args.csv is not None:
