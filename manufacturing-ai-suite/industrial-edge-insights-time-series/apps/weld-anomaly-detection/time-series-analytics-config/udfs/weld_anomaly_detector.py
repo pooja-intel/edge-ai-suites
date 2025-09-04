@@ -5,7 +5,7 @@
 #
 
 """ Custom user defined function for anomaly detection on 
-the windturbine speed and generated power data. """
+the weld data. """
 
 import os
 import logging
@@ -27,7 +27,6 @@ warnings.filterwarnings(
     message=".*Threading.*parallel backend is not supported by Extension for Scikit-learn.*"
 )
 
-# from gcp_mqtt_client import get_client
 
 log_level = os.getenv('KAPACITOR_LOGGING_LEVEL', 'INFO').upper()
 enable_benchmarking = os.getenv('ENABLE_BENCHMARKING', 'false').upper() == 'TRUE'
@@ -42,10 +41,10 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 
-# Anomaly detection on the windturbine speed and generated power data
+# Anomaly detection on the weld data
 class AnomalyDetectorHandler(Handler):
     """ Handler for the anomaly detection UDF. It processes incoming points
-    and detects anomalies based on the wind speed and generated power data.
+    and detects anomalies based on the weld data.
     """
     def __init__(self, agent):
         self._agent = agent

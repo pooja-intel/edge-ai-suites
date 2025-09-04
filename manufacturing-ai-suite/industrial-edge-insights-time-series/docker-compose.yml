@@ -28,7 +28,7 @@ services:
       INFLUXDB_USERNAME: ${INFLUXDB_USERNAME}
       INFLUXDB_PASSWORD: ${INFLUXDB_PASSWORD}
       INFLUXDB_DBNAME: datain
-      TELEGRAF_CONFIG_PATH: /etc/telegraf/Telegraf_devmode.conf
+      TELEGRAF_CONFIG_PATH: /etc/telegraf/Telegraf.conf
       OPCUA_SERVER: opc.tcp://ia-opcua-server:4840/freeopcua/server/
       LOG_LEVEL: ${LOG_LEVEL}
       TELEGRAF_INPUT_PLUGIN: ${TELEGRAF_INPUT_PLUGIN:-opcua}
@@ -69,7 +69,7 @@ services:
       RETENTION_DURATION: 1h0m0s
       no_proxy: "ia-time-series-analytics-microservice,${no_proxy}"
       NO_PROXY: "ia-time-series-analytics-microservice,${no_proxy}"
-      INFLUXDB_CONFIG_PATH: "/etc/influxdb/influxdb_devmode.conf"
+      INFLUXDB_CONFIG_PATH: "/etc/influxdb/influxdb.conf"
       INFLUXDB_LOGGING_LEVEL: ${LOG_LEVEL}
       INFLUXDB_TLS_CIPHERS: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
     volumes:
@@ -193,7 +193,7 @@ services:
     ports:
     - "1883:1883"
     volumes:
-    - ./mqtt-broker/mosquitto_devmode.conf:/mosquitto/config/mosquitto.conf:ro
+    - ./mqtt-broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
 
   ia-opcua-server:
     build:
