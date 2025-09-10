@@ -467,7 +467,7 @@ jobs:
           sed -i "s/MR_MINIO_SECRET_KEY=.*/MR_MINIO_SECRET_KEY=${MR_MINIO_SECRET_KEY}/g" .env 
           make build
           echo "Deploying using opcua ingestion"
-          docker compose up -d
+          make up_opcua_ingestion app=wind-turbine-anomaly-detection
 
       - name: DBS download and scan for Wind Turbine Sample App
         run: |
