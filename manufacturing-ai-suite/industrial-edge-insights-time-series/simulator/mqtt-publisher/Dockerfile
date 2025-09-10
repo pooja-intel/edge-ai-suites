@@ -9,7 +9,6 @@ FROM python:3.13.4-slim
 COPY mqtt-publisher/requirements.txt /
 RUN pip3 install --no-cache-dir -r requirements.txt
 COPY mqtt-publisher/publisher.py /
-COPY simulation_data/windturbine_data.csv /
 
 ARG TIMESERIES_UID
 ARG TIMESERIES_USER_NAME

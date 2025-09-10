@@ -3,12 +3,12 @@
 # Copyright (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 #
-name: "[Wind Turbine Sample App] PR workflow"
-run-name: "[Wind Turbine Sample App] PR  workflow (by @${{ github.actor }} via ${{ github.event_name }})"
+name: "[Industrial Edge Insights Time Series] PR workflow"
+run-name: "[Industrial Edge Insights Time Series] PR  workflow (by @${{ github.actor }} via ${{ github.event_name }})"
 on:
   pull_request:
     paths:
-      - 'manufacturing-ai-suite/wind-turbine-anomaly-detection/*'
+      - 'manufacturing-ai-suite/industrial-edge-insights-time-series/*'
   workflow_call:
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ permissions:
   actions: read
 
 jobs:
-  windturbine-sample-app-pre-merge-build:
+  industrial-edge-insights-time-series-pre-merge-build:
     permissions:
       contents: read
       packages: read          # needed for actions/checkout
@@ -54,7 +54,7 @@ jobs:
           persist-credentials: false
     - name: Building Wind Turbine Anomaly Detection Sample App
       run: |
-        cd ./timeseries/manufacturing-ai-suite/wind-turbine-anomaly-detection
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-time-series
         make down 
         # Generate random values for sensitive environment variables
         INFLUXDB_USERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
@@ -76,19 +76,19 @@ jobs:
     - name: Deploying Wind Turbine Anomaly Detection Sample App
       run: |
         cd "${{ github.workspace }}"
-        cd ./timeseries/manufacturing-ai-suite/wind-turbine-anomaly-detection
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-time-series
         echo "Deploying Wind Turbine Anomaly Detection Sample App"
         echo "Deploying using mqtt ingestion"
-        make up_mqtt_ingestion
+        make up_mqtt_ingestion app=wind-turbine-anomaly-detection
         echo "Deploying using opcua ingestion"
-        make up_opcua_ingestion
+        make up_opcua_ingestion app=wind-turbine-anomaly-detection
     - name: Undeploying Wind Turbine Anomaly Detection Sample App
       run: |
         cd "${{ github.workspace }}"
-        cd ./timeseries/manufacturing-ai-suite/wind-turbine-anomaly-detection
+        cd ./timeseries/manufacturing-ai-suite/industrial-edge-insights-time-series
         make down
 
-  wind-turbine-anomaly-detection-scans:
-    uses: ./.github/workflows/windturbine-sampleapp-scans.yml
+  industrial-edge-insights-time-series-scans:
+    uses: ./.github/workflows/industrial-edge-insights-time-series-scans.yml
     with:
       target: all-scans

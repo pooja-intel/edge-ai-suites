@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-name: "[WindTurbine Sample App] SDLe Scans"
-run-name: "[WindTurbine Sample App] SDLe Scans workflow (by @${{ github.actor }} via ${{ github.event_name }})"
+name: "[Industrial Edge Insights Time Series] SDLe Scans"
+run-name: "[Industrial Edge Insights Time Series] SDLe Scans workflow (by @${{ github.actor }} via ${{ github.event_name }})"
 
 
 # Only run at most 1 workflow concurrently per PR, unlimited for branches
@@ -62,7 +62,7 @@ jobs:
         shell: bash
         run: |
           pwd
-          cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+          cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           trivy --version
           which trivy
           trivy image --download-db-only
@@ -111,7 +111,7 @@ jobs:
         with:
           name: Trivy Report - Filesystem Scan
           path: |
-                manufacturing-ai-suite/wind-turbine-anomaly-detection/trivy*
+                manufacturing-ai-suite/industrial-edge-insights-time-series/trivy*
     
   trivy-image-scan:
     if: ${{ (inputs.target == 'trivy-image-scan') || (inputs.target == 'all-scans') }}
@@ -138,7 +138,7 @@ jobs:
         shell: bash
         run: |
           pwd
-          cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+          cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           trivy --version
           which trivy
           trivy image --download-db-only
@@ -181,7 +181,7 @@ jobs:
         run: |
               pwd
               echo "Building Wind Turbine Sample App and scanning Image"
-              cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+              cd manufacturing-ai-suite/industrial-edge-insights-time-series/
               make down
               sed -i -e "s|OPC_UA_SERVER_IMAGE=.*|OPC_UA_SERVER_IMAGE=ia-opcua-server:latest|g" .env
               sed -i -e "s|MQTT_PUBLISHER_IMAGE=.*|MQTT_PUBLISHER_IMAGE=ia-mqtt-publisher:latest|g" .env
@@ -211,7 +211,7 @@ jobs:
         with:
           name: Trivy Report - Image Scan
           path: |
-                manufacturing-ai-suite/wind-turbine-anomaly-detection/trivy-image-scan*
+                manufacturing-ai-suite/industrial-edge-insights-time-series/trivy-image-scan*
 
   trivy-config-helm-scan:
     if: ${{ (inputs.target == 'trivy-config-scan') || (inputs.target == 'trivy-helm-scan') || (inputs.target == 'all-scans') }}
@@ -238,7 +238,7 @@ jobs:
         shell: bash
         run: |
           pwd
-          cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+          cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           trivy --version
           which trivy
           trivy image --download-db-only
@@ -277,7 +277,7 @@ jobs:
 
       - name: Trivy config scan for helm charts 
         run: |
-          cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+          cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           make gen_helm_charts
           cd helm
           trivy config . >> trivy-wind-turbine-helm.txt
@@ -286,7 +286,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Trivy Report - Config scan for Helm
-          path: manufacturing-ai-suite/wind-turbine-anomaly-detection/helm/trivy-wind-turbine-helm.txt
+          path: manufacturing-ai-suite/industrial-edge-insights-time-series/helm/trivy-wind-turbine-helm.txt
       
   trivy-config-dockerfile-scan:
     if: ${{ (inputs.target == 'trivy-config-scan') || (inputs.target == 'trivy-dockerfile-scan') || (inputs.target == 'all-scans') }}
@@ -298,10 +298,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile-path: manufacturing-ai-suite/wind-turbine-anomaly-detection/simulator/opcua-server/Dockerfile
+          - dockerfile-path: manufacturing-ai-suite/industrial-edge-insights-time-series/simulator/opcua-server/Dockerfile
             output-report-path: trivy-opcua-dockerfile.json
             scan-name: Time Series OPCUA Dockerfile
-          - dockerfile-path: manufacturing-ai-suite/wind-turbine-anomaly-detection/simulator/mqtt-publisher/Dockerfile
+          - dockerfile-path: manufacturing-ai-suite/industrial-edge-insights-time-series/simulator/mqtt-publisher/Dockerfile
             output-report-path: trivy-mqttpublisher-dockerfile.json
             scan-name: Time Series mqttpublisher Dockerfile
     uses: open-edge-platform/edge-ai-libraries/.github/workflows/trivy-config-mode.yaml@e6e04af3dbca805db9118b85a22ad2998f7eec39
@@ -335,7 +335,7 @@ jobs:
         mkdir -p reports
         docker pull ghcr.io/pycqa/bandit/bandit
         echo "### Bandit Scan Results" >> $GITHUB_STEP_SUMMARY
-        docker run --rm -v "${{ github.workspace }}:/src" ghcr.io/pycqa/bandit/bandit -r /src/manufacturing-ai-suite/wind-turbine-anomaly-detection/ -f json -o /src/reports/bandit-report.json || true >> $GITHUB_STEP_SUMMARY
+        docker run --rm -v "${{ github.workspace }}:/src" ghcr.io/pycqa/bandit/bandit -r /src/manufacturing-ai-suite/industrial-edge-insights-time-series/ -f json -o /src/reports/bandit-report.json || true >> $GITHUB_STEP_SUMMARY
         echo "Please find full report in bandit-report.txt" >> $GITHUB_STEP_SUMMARY
         ls -al 
         pwd
@@ -392,7 +392,7 @@ jobs:
         mkdir -p reports
         docker pull clamav/clamav
         echo "### Virus Scan Results" >> $GITHUB_STEP_SUMMARY
-        docker run --rm -v "${{ github.workspace }}:/src" clamav/clamav clamscan -r  /src/manufacturing-ai-suite/wind-turbine-anomaly-detection/ > ./reports/clamav-report.txt || true
+        docker run --rm -v "${{ github.workspace }}:/src" clamav/clamav clamscan -r  /src/manufacturing-ai-suite/industrial-edge-insights-time-series/ > ./reports/clamav-report.txt || true
         echo "Please find full report in clamav-report.txt" >> $GITHUB_STEP_SUMMARY
     - name: Upload Scan Reports
       uses: actions/upload-artifact@v4
@@ -447,7 +447,7 @@ jobs:
 
       - name: Deploy Wind Turbine Sample App 
         run: |
-          cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+          cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           make down 
           # Generate random values for sensitive environment variables
           INFLUXDB_USERNAME=$(openssl rand -hex 4)
@@ -471,7 +471,7 @@ jobs:
 
       - name: DBS download and scan for Wind Turbine Sample App
         run: |
-          cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+          cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           docker run --rm --net host --pid host --userns host --cap-add audit_control \
           -e DOCKER_CONTENT_TRUST=$DOCKER_CONTENT_TRUST \
           -v /etc:/etc:ro \
@@ -485,14 +485,14 @@ jobs:
 
       - name: Undeploy Time Series Analytics microservice
         run: |
-          cd manufacturing-ai-suite/wind-turbine-anomaly-detection/
+          cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           make down
           
       - name: Upload Scan artifact to Github
         uses: actions/upload-artifact@v4
         with:
           name: DBS_time-series-analytics
-          path:  manufacturing-ai-suite/wind-turbine-anomaly-detection/dbs_scan_*
+          path:  manufacturing-ai-suite/industrial-edge-insights-time-series/dbs_scan_*
   
   codeql-job:
     name: CodeQL Scan - Python
@@ -515,7 +515,7 @@ jobs:
         uses: github/codeql-action/init@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
         with:
           languages: 'python'
-          source-root: manufacturing-ai-suite/wind-turbine-anomaly-detection
+          source-root: manufacturing-ai-suite/industrial-edge-insights-time-series/
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18

@@ -35,7 +35,6 @@ RUN if [ "$COPYLEFT_SOURCES" = "true" ]; then \
 
 WORKDIR /app
 COPY opcua-server/opcua_server.py .
-COPY simulation_data/windturbine_data.csv .
 
 RUN apt-get remove --purge -y --allow-remove-essential perl-base
 
