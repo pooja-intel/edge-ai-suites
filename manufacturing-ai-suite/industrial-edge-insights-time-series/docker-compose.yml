@@ -112,10 +112,9 @@ services:
       SSL_CERT_FILE: /run/secrets/ca_certificate.pem
       MODEL_REGISTRY_URL: http://model-registry:8111
       SAMPLE_APP: ${SAMPLE_APP}
+      REST_API_ROOT_PATH: "/ts-api"
     networks:
     - timeseries_network
-    ports:
-    - 5000:5000
     volumes:
     - "vol_temp_time_series_analytics_microservice:/tmp/"
     - ./apps/${SAMPLE_APP}/time-series-analytics-config/udfs/:/tmp/${SAMPLE_APP}/udfs/
@@ -171,9 +170,7 @@ services:
     - ./grafana/dashboards/datasources_dev.yml:/etc/grafana/provisioning/datasources/datasources.yml
     - ./apps/${SAMPLE_APP}/grafana-dashboard/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
     - ./grafana/entrypoint.sh:/entrypoint.sh
-    ports:
-    - ${GRAFANA_PORT}:3000
-
+    
   ia-mqtt-broker:
     user: "${TIMESERIES_UID}:${TIMESERIES_UID}"
     container_name: ia-mqtt-broker
@@ -190,8 +187,6 @@ services:
       interval: 5m
     networks:
     - timeseries_network
-    ports:
-    - "1883:1883"
     volumes:
     - ./mqtt-broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
 
@@ -341,6 +336,25 @@ services:
       MINIO_SECRET_KEY: ${MR_MINIO_SECRET_KEY}
     command: server --address ":8000" --certs-dir /certs /data
 
+
+  nginx:
+    image: bitnami/nginx:1.29-debian-12
+    container_name: nginx_proxy
+    environment:
+      no_proxy: "ia-grafana,ia-time-series-analytics-microservice,ia-mqtt-broker,${no_proxy}"
+      NO_PROXY: "ia-grafana,ia-time-series-analytics-microservice,ia-mqtt-broker,${no_proxy}"
+    ports:
+      - "${GRAFANA_PORT}:443"   # HTTPS for Grafana and TS MS Rest API 
+      - "1883:1883" # MQTT TCP Proxy
+    volumes:
+      - ./nginx/nginx.conf:/opt/bitnami/nginx/conf/nginx.conf:ro
+      - ./nginx/ssl:/opt/bitnami/nginx/conf/bitnami/certs:ro
+    networks:
+      - timeseries_network
+    depends_on:
+      - ia-grafana
+      - ia-time-series-analytics-microservice
+      - ia-mqtt-broker
 networks:
   timeseries_network:
     driver: bridge
