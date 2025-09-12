@@ -158,8 +158,7 @@ class AnomalyDetectorHandler(Handler):
             check_for_anomalies = process_the_point(x,y)
             point.fieldsDouble.add(key = "analytic", value = True)
             if check_for_anomalies:
-                with config_context(target_offload="gpu"):
-                    y_pred = self.rf.predict(np.reshape(x,(-1,1)))
+                y_pred = self.rf.predict(np.reshape(x,(-1,1)))
                 error = (y_pred[0]-y)/(y)
                 if error>self.error_threshold:
                     self.last_states.append(1)
@@ -174,7 +173,7 @@ class AnomalyDetectorHandler(Handler):
                     x_feat = np.reshape(x_feat, (-1,1))
                     y_feat = list(zip(*self.last_anomalies))[1]
 
-                    with config_context(target_offload="gpu"):
+                    with config_context(target_offload="auto", allow_fallback_to_host=True):
                         lm = LinearRegression()
                         lm.fit(x_feat, y_feat)
 
