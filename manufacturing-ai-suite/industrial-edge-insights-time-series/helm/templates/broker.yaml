@@ -52,9 +52,6 @@ spec:
             type: RuntimeDefault
         volumeMounts:
         {{ if eq .Values.env.SECURE_MODE true}}
-        - name: mosquitto-conf
-          mountPath: /mosquitto/config/mosquitto.conf
-          subPath: mosquitto.conf
         - name: certs
           mountPath: /run/secrets/ca_certificate.pem
           subPath: ca_certificate.pem
@@ -64,19 +61,15 @@ spec:
         - name: certs
           mountPath: /run/secrets/mqtt-broker_Server_server_key.pem
           subPath: mqtt-broker_Server_server_key.pem
-        {{- else }}
-        - name: mosquitto-dev-conf
+        {{ end }}
+        - name: mosquitto-conf
           mountPath: /mosquitto/config/mosquitto.conf
           subPath: mosquitto.conf
-        {{ end }}
 
       volumes:
         - name: mosquitto-conf
           configMap:
             name: mosquitto-conf
-        - name: mosquitto-dev-conf
-          configMap:
-            name: mosquitto-dev-conf
       {{ if eq .Values.env.SECURE_MODE true}}
         - name: certs
           secret:

@@ -39,8 +39,9 @@ spec:
               - ALL
           seccompProfile:
             type: RuntimeDefault
-        command: ["python3", "-u", "publisher.py", "--csv", "/windturbine_data.csv" , "--topic", "wind_turbine_data"]
         env:
+        - name: SAMPLE_APP
+          value: '{{ .Values.env.SAMPLE_APP }}'
         - name: HOST_IP
           value: "ia-mqtt-broker"
         - name: SECURE_MODE
@@ -52,6 +53,9 @@ spec:
         - name: CONTINUOUS_SIMULATOR_INGESTION
           value: '{{ .Values.env.CONTINUOUS_SIMULATOR_INGESTION }}'
         volumeMounts:
+        - name: ingestor-{{ .Values.env.SAMPLE_APP }}
+          mountPath: /{{ .Values.env.SAMPLE_APP }}.csv
+          subPath: {{ .Values.env.SAMPLE_APP }}.csv
         {{ if eq .Values.env.SECURE_MODE true }}
         - name: certs
           mountPath: /run/secrets/ca_certificate.pem
@@ -65,6 +69,9 @@ spec:
         {{ end }}
 
       volumes:
+      - name: ingestor-{{ .Values.env.SAMPLE_APP }}
+        configMap:
+          name: ingestor-{{ .Values.env.SAMPLE_APP }}
       {{ if eq .Values.env.SECURE_MODE true }}
       - name: certs
         secret:

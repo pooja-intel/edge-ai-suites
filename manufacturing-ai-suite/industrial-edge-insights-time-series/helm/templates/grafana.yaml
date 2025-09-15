@@ -64,8 +64,8 @@ spec:
           mountPath: /var/lib/grafana
         
         - name: grafana-dashboard-json
-          mountPath: /etc/grafana/provisioning/dashboards/windturbine_dashboard.json
-          subPath: windturbine_dashboard.json
+          mountPath: /etc/grafana/provisioning/dashboards/dashboard.json
+          subPath: dashboard.json
         - name: grafana-dashboard-yml
           mountPath: /etc/grafana/provisioning/dashboards/dashboards.yml
           subPath: dashboards.yml

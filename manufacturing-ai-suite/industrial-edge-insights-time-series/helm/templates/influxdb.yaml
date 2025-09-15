@@ -52,13 +52,8 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         env:
-        {{ if eq .Values.env.SECURE_MODE false}}
-        - name: INFLUXDB_CONFIG_PATH
-          value: /etc/influxdb/influxdb_devmode.conf
-        {{- else }}
         - name: INFLUXDB_CONFIG_PATH
           value: /etc/influxdb/influxdb.conf
-        {{ end }}
         - name: INFLUXDB_DB
           value: 'datain'
         - name: INFLUXDB_ADMIN_PASSWORD
@@ -92,9 +87,6 @@ spec:
         - name: influx-config
           mountPath: /etc/influxdb/influxdb.conf
           subPath: influxdb.conf
-        - name: influx-dev-config
-          mountPath: /etc/influxdb/influxdb_devmode.conf
-          subPath: influxdb_devmode.conf
         - name: init-influxdb
           mountPath: /docker-entrypoint-initdb.d/init-influxdb.sh
           subPath: init-influxdb.sh
@@ -105,9 +97,6 @@ spec:
       - name: influx-config
         configMap:
           name: influxdb-conf-input
-      - name: influx-dev-config
-        configMap:
-          name: influxdb-dev-conf-input
       - name: tmpfs-data-volume
         emptyDir: {}
       {{ if eq .Values.env.SECURE_MODE true }}

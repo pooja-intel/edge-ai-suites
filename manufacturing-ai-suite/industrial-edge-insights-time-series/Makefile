@@ -196,7 +196,7 @@ push_images: build
 .PHONY: gen_helm_charts
 gen_helm_charts:
 	@echo "Generating Helm packages"
-	$(HELM_PACKAGE_SCRIPT)
+	$(HELM_PACKAGE_SCRIPT) $(SAMPLE_APP)
 	@echo "Helm packages generated"
 
 # Help
