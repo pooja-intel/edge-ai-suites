@@ -67,7 +67,7 @@ spec:
           value: '{{ .Values.env.CONTINUOUS_SIMULATOR_INGESTION }}'
         volumeMounts:
         - name: ingestor-{{ .Values.env.SAMPLE_APP }}
-          mountPath: /{{ .Values.env.SAMPLE_APP }}.csv
+          mountPath: /app/{{ .Values.env.SAMPLE_APP }}.csv
           subPath: {{ .Values.env.SAMPLE_APP }}.csv
         {{ if eq .Values.env.SECURE_MODE true }}
         - name: certs
