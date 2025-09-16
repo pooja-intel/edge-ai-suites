@@ -71,17 +71,6 @@ spec:
         - name: INFLUXDB_TLS_CIPHERS
           value: "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
         volumeMounts:
-        {{ if eq .Values.env.SECURE_MODE true}}
-        - name: certs
-          mountPath: /run/secrets/ca_certificate.pem
-          subPath: ca_certificate.pem
-        - name: certs
-          mountPath: /run/secrets/influxdb_Server_server_certificate.pem
-          subPath: influxdb_Server_server_certificate.pem
-        - name: certs
-          mountPath: /run/secrets/influxdb_Server_server_key.pem
-          subPath: influxdb_Server_server_key.pem
-        {{ end }}
         - name: tmpfs-data-volume
           mountPath: /var/lib/influxdb
         - name: influx-config
@@ -99,16 +88,3 @@ spec:
           name: influxdb-conf-input
       - name: tmpfs-data-volume
         emptyDir: {}
-      {{ if eq .Values.env.SECURE_MODE true }}
-      - name: certs
-        secret:
-          secretName: ts-certs
-          items:
-          - key: ca_certificate.pem
-            path: ca_certificate.pem 
-          - key: influxdb_Server_server_certificate.pem
-            path: influxdb_Server_server_certificate.pem
-          - key: influxdb_Server_server_key.pem
-            path: influxdb_Server_server_key.pem
-      {{ end }}
-
