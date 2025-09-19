@@ -87,10 +87,7 @@ config:
     influx_http: 8086
   grafana:
     name: grafana
-    int:
-      port: "3000"
-    ext:
-      port: "30001"
+    grafana_port: "3000"
   telegraf:
     name: telegraf
     MQTT_BROKER_HOST: "ia-mqtt-broker"
@@ -100,16 +97,9 @@ config:
   time_series_analytics_microservice_rest_api:
     name: time-series-analytics-microservice-rest-api
     rest_api_port: 5000
-    int:
-      port: "5000"
-    ext:
-      port: "30002"
   mqttbroker:
     name: ia-mqtt-broker
-    int:
-      port: 1883
-    ext:
-      port: 30006
+    mqttbroker_port: 1883
   opcuaserver:
     name: ia-opcua-server
     int:
@@ -124,3 +114,11 @@ config:
       port: "8111"
     ext:
       port: "32002"
+  nginx:
+    name: nginx
+    int:
+      https_port: "443"
+      mqtt_port: "1883"
+    ext:
+      https_port: "30001"
+      mqtt_port: "30002"

@@ -15,9 +15,7 @@ spec:
     app: grafana
   ports:
   - name: grafana-port
-    port: {{ $.Values.config.grafana.int.port }}
-    targetPort: {{ $.Values.config.grafana.int.port }}
-    nodePort: {{ $.Values.config.grafana.ext.port }}
+    port: {{ $.Values.config.grafana.grafana_port }}
   
 ---
 apiVersion: apps/v1

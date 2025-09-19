@@ -16,8 +16,6 @@ spec:
     name: kapacitor-port
   - name: rest-api-port
     port: {{ .Values.config.time_series_analytics_microservice_rest_api.rest_api_port }}
-    targetPort: {{ .Values.config.time_series_analytics_microservice_rest_api.int.port }}
-    nodePort: {{ .Values.config.time_series_analytics_microservice_rest_api.ext.port }}
   selector:
     app: time-series-analytics-microservice
 ---
@@ -109,6 +107,8 @@ spec:
           value: "http://model-registry:8111"
         - name: SAMPLE_APP
           value: '{{ .Values.env.SAMPLE_APP }}'
+        - name: REST_API_ROOT_PATH
+          value: "/ts-api"
       volumes:
       - name: vol-temp-time-series-analytics-microservice
         emptyDir: {}
