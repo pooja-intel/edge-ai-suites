@@ -21,5 +21,5 @@ Verify the pod logs by executing
 
 `kubectl logs -f <NAME OF THE POD>`
 
-Access Grafana at `https://nodeip:{{ $.Values.config.nginx.ext.port }}`
+Access Grafana at `https://nodeip:{{ $.Values.config.nginx.ext.https_port }}`
 

@@ -40,10 +40,6 @@ spec:
       labels:
         app: nginx
     spec:
-      {{- if and .Values.DOCKER_USERNAME .Values.DOCKER_PASSWORD }}
-      imagePullSecrets:
-      - name: registryauth
-      {{- end }}
       containers:
       - name: nginx-proxy
         image: bitnami/nginx:1.29-debian-12
@@ -57,9 +53,9 @@ spec:
             type: RuntimeDefault
         env:
         - name: no_proxy
-          value: "grafana,time-series-analytics-microservice,ia-mqtt-broker,${no_proxy}"
+          value: "ia-grafana,ia-time-series-analytics-microservice,ia-mqtt-broker,${no_proxy}"
         - name: NO_PROXY
-          value: "grafana,time-series-analytics-microservice,ia-mqtt-broker,${no_proxy}"
+          value: "ia-grafana,ia-time-series-analytics-microservice,ia-mqtt-broker,${no_proxy}"
         volumeMounts:
         - name: nginx-conf
           mountPath: /opt/bitnami/nginx/conf/nginx.conf

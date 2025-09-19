@@ -12,7 +12,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: grafana
+    app: ia-grafana
   ports:
   - name: grafana-port
     port: {{ $.Values.config.grafana.grafana_port }}
@@ -22,18 +22,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata: 
   labels:
-    app: grafana
+    app: ia-grafana
   name: deployment-grafana
   namespace: {{ $.Values.namespace }}
 
 spec:
   selector:
     matchLabels:
-      app: grafana
+      app: ia-grafana
   template:
     metadata:
       labels:
-        app: grafana
+        app: ia-grafana
     spec:
       {{- if and $.Values.DOCKER_USERNAME $.Values.DOCKER_PASSWORD }}
       imagePullSecrets:
