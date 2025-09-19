@@ -119,8 +119,8 @@ To copy your own or existing model into Time Series Analytics Microservice in or
 
 Run the following command to activate the UDF deployment package:
 ```sh
-curl -X 'GET' \
-  'http://<HOST_IP>:30002/config?restart=true' \
+curl -k -X 'GET' \
+  'https://<HOST_IP>:30001/ts-api/config?restart=true' \
   -H 'accept: application/json'
 ```
 
