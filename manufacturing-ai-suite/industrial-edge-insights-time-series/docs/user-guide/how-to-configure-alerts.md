@@ -88,7 +88,7 @@ data0
 Make the following REST API call to the Time Series Analytics microservice. Note that the `mqtt` alerts key is replaced with the `opcua` key and its specific details:
 
 ```sh
-curl -X 'POST' \
+curl -k -X 'POST' \
 'https://<HOST_IP>:3000/ts-api/config' \
 -H 'accept: application/json' \
 -H 'Content-Type: application/json' \

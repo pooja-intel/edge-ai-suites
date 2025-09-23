@@ -77,6 +77,17 @@ To install Helm charts, use one of the following options:
     ```bash
     helm install ts-wind-turbine-anomaly --set env.TELEGRAF_INPUT_PLUGIN=mqtt_consumer . -n ts-sample-app --create-namespace
     ```
+
+> **Note:**
+> To deploy with GPU support for inferencing, use the following command:
+> ```bash
+> helm install ts-wind-turbine-anomaly \
+>   --set privileged_access_required=true \
+>   --set env.TELEGRAF_INPUT_PLUGIN=<input_plugin> \
+>   . -n ts-sample-app --create-namespace
+> ```
+> The `privileged_access_required=true` setting enables container access to GPU devices through `/dev/dri`.
+
 Use the following command to verify if all the application resources got installed w/ their status:
 
 ```bash
