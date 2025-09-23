@@ -134,26 +134,9 @@ To copy your own or existing model into Time Series Analytics Microservice in or
 > 'https://<HOST_IP>:30001/ts-api/config' \
 > -H 'accept: application/json' \
 > -H 'Content-Type: application/json' \
-> -d '{
->  "model_registry": {
->      "enable": false,
->      "version": "1.0"
->  },
->  "udfs": {
->      "name": "<custom_UDF>",
->      "models": "<custom_UDF>.pkl",
->      "device": "cpu|gpu"
->  },
->  "alerts": {
->      "mqtt": {
->          "mqtt_broker_host": "ia-mqtt-broker",
->          "mqtt_broker_port": 1883,
->          "name": "my_mqtt_broker"
->      }
->  }
->}'
+> -d '<Add contents of edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/wind-turbine-anomaly-detection/time-series-analytics-config/config.json with device
+>     value updated to gpu from cpu>'
 > ```
-
 
 Run the following command to activate the UDF deployment package:
 ```sh
@@ -161,8 +144,6 @@ curl -k -X 'GET' \
   'https://<HOST_IP>:30001/ts-api/config?restart=true' \
   -H 'accept: application/json'
 ```
-
-
 
 ## Step 6: Verify the Wind Turbine Anomaly Detection Results
 

@@ -99,7 +99,8 @@ curl -k -X 'POST' \
     },
     "udfs": {
         "name": "windturbine_anomaly_detector",
-        "models": "windturbine_anomaly_detector.pkl"
+        "models": "windturbine_anomaly_detector.pkl",
+        "device": "cpu"
     },
     "alerts": {
         "opcua": {
@@ -215,7 +216,8 @@ curl -k -X 'POST' \
     },
     "udfs": {
         "name": "windturbine_anomaly_detector",
-        "models": "windturbine_anomaly_detector.pkl"
+        "models": "windturbine_anomaly_detector.pkl",
+        "device": "cpu"
     },
     "alerts": {
         "opcua": {
