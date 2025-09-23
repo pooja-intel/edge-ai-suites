@@ -47,9 +47,9 @@ spec:
         image: {{ .Values.DOCKER_REGISTRY }}{{ .Values.images.time_series_analytics_image }}{{ if .Values.images.image_suffix }}-{{ .Values.images.image_suffix }}{{ end }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         securityContext:
-          # privileged: true # Required for /dev/dri access, if using GPU devices
+          privileged: true # Required for /dev/dri access, if using GPU devices
           readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: true
           capabilities:
             drop:
               - ALL
