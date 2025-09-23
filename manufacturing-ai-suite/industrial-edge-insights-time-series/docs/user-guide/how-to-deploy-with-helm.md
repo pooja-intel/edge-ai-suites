@@ -86,7 +86,7 @@ To install Helm charts, use one of the following options:
 >   --set env.TELEGRAF_INPUT_PLUGIN=<input_plugin> \
 >   . -n ts-sample-app --create-namespace
 > ```
-> The `privileged_access_required=true` setting enables container access to GPU devices through `/dev/dri`.
+> The `privileged_access_required=true` setting enables Time Series Analytics Microservice access to GPU device through `/dev/dri`.
 
 Use the following command to verify if all the application resources got installed w/ their status:
 
@@ -128,12 +128,41 @@ To copy your own or existing model into Time Series Analytics Microservice in or
 
 ## Step 5: Activate the New UDF Deployment Package
 
+> **NOTE**: To activate the UDF inferencing on GPU, additionally run the following command as a prerequisite before activating the UDF deployment package:
+> ```sh
+> curl -k -X 'POST' \
+> 'https://<HOST_IP>:30001/ts-api/config' \
+> -H 'accept: application/json' \
+> -H 'Content-Type: application/json' \
+> -d '{
+>  "model_registry": {
+>      "enable": false,
+>      "version": "1.0"
+>  },
+>  "udfs": {
+>      "name": "<custom_UDF>",
+>      "models": "<custom_UDF>.pkl",
+>      "device": "cpu|gpu"
+>  },
+>  "alerts": {
+>      "mqtt": {
+>          "mqtt_broker_host": "ia-mqtt-broker",
+>          "mqtt_broker_port": 1883,
+>          "name": "my_mqtt_broker"
+>      }
+>  }
+>}'
+> ```
+
+
 Run the following command to activate the UDF deployment package:
 ```sh
 curl -k -X 'GET' \
   'https://<HOST_IP>:30001/ts-api/config?restart=true' \
   -H 'accept: application/json'
 ```
+
+
 
 ## Step 6: Verify the Wind Turbine Anomaly Detection Results
 
