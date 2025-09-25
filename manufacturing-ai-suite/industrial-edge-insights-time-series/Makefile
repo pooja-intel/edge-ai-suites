@@ -20,6 +20,14 @@ endif
 app-%:
 	@true
 
+# Assign default value to stream if not provided
+ifeq ($(origin stream), undefined)
+stream := 1
+endif
+
+stream-%:
+	@true
+
 export SAMPLE_APP
 
 INCLUDE ?= default_INCLUDE
@@ -125,12 +133,16 @@ up_mqtt_ingestion: check_env_variables down
 # Run Docker containers
 .PHONY: up_opcua_ingestion
 up_opcua_ingestion: check_env_variables down
-	@export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "opcua:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "opcua"; fi); \
+	@if [ "$(stream)" -gt 1 ]; then \
+		python3 telegraf/generate_telegraf_config.py $(stream); \
+		export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
+	fi; \
+	export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "opcua:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "opcua"; fi); \
 	echo "Starting Docker containers..."; \
 	if [ $(INCLUDE) = 'validation' ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_VALIDATION_FILE) up --scale ia-mqtt-publisher=0 -d ;\
 	else \
-		$(DOCKER_COMPOSE) up --scale ia-mqtt-publisher=0 -d; \
+		$(DOCKER_COMPOSE) up --scale ia-opcua-server=$(stream) --scale ia-mqtt-publisher=0 -d; \
 	fi;
 
 

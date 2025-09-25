@@ -28,7 +28,7 @@ services:
       INFLUXDB_USERNAME: ${INFLUXDB_USERNAME}
       INFLUXDB_PASSWORD: ${INFLUXDB_PASSWORD}
       INFLUXDB_DBNAME: datain
-      TELEGRAF_CONFIG_PATH: /etc/telegraf/Telegraf.conf
+      TELEGRAF_CONFIG_PATH: ${TELEGRAF_CONFIG_PATH:-/etc/telegraf/Telegraf.conf}
       OPCUA_SERVER: opc.tcp://ia-opcua-server:4840/freeopcua/server/
       LOG_LEVEL: ${LOG_LEVEL}
       TELEGRAF_INPUT_PLUGIN: ${TELEGRAF_INPUT_PLUGIN:-opcua}
@@ -220,7 +220,7 @@ services:
     networks:
     - timeseries_network
     ports:
-    - ${OPCUA_SERVER_PORT}:4840
+    - ${OPCUA_SERVER_PORT}-30010:4840
     volumes:
     - ./apps/${SAMPLE_APP}/ingestor-data/${SAMPLE_APP}.csv:/app/${SAMPLE_APP}.csv
 
