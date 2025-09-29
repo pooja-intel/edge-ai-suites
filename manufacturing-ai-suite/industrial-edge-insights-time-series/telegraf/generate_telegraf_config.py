@@ -7,7 +7,6 @@
 import argparse
 import os
 import tomlkit
-import shutil
 
 
 # [[inputs.opcua]]
@@ -43,21 +42,23 @@ def main():
 
     # Define the arguments
     parser.add_argument("no_of_streams", type=int, help="Number of streams to generate", default=1)
-    #parser.add_argument("ingestion_interval", type=str, help="Rate of ingestions like 1s, 100ms, 10ms, etc.,", default="1s")
-    #parser.add_argument("config_file", type=str, help="Path of Telegraf config file")
-  
+    parser.add_argument("log_level", type=str, help="Log level", default="INFO")
+    parser.add_argument("telegraf_metric_batch_size", type=int, help="Telegraf metric batch size", default=100)
+
     # Parse the arguments
     args = parser.parse_args()
     if args.no_of_streams < 1:
         raise ValueError("Number of streams must be greater than 0")
     dir_path = os.path.join("apps", "wind-turbine-anomaly-detection", "telegraf-config")
-    #shutil.copy(dir_path + "/Telegraf.conf", dir_path + "/Telegraf_multi_stream.conf")
+
     with open(dir_path + "/Telegraf.conf", 'r') as file:
         # Read the content and replace environment variables with placeholders
         content = file.read()
-        content = content.replace("$TELEGRAF_METRIC_BATCH_SIZE", "\"placeholder_metric_batch_size\"")  # Replace with a valid placeholder
-        content = content.replace("${DEBUG_MODE}", "\"placeholder_debug_mode\"")   # Replace with a valid placeholder
-
+        content = content.replace("$TELEGRAF_METRIC_BATCH_SIZE", str(args.telegraf_metric_batch_size))
+        if args.log_level.lower() == "info":
+            content = content.replace("${DEBUG_MODE}", "false")
+        else:
+            content = content.replace("${DEBUG_MODE}", "true")
         # Now parse the content with replaced values
         config_data = tomlkit.parse(content)
         stream_name = "opcua"
@@ -104,16 +105,9 @@ def main():
             opc_array.append(opcua_section)
         config_data['inputs'][stream_name] = opc_array
 
-        # Convert the config back to string
-        output_content = tomlkit.dumps(config_data, sort_keys=False)
-        
-        # Restore the environment variables
-        output_content = output_content.replace("\"placeholder_metric_batch_size\"", "$TELEGRAF_METRIC_BATCH_SIZE")
-        output_content = output_content.replace("\"placeholder_debug_mode\"", "${DEBUG_MODE}")
-        
-        # Write the final content with restored environment variables
-        with open(dir_path+"/Telegraf_multi_stream.conf", 'w') as file:
-            file.write(output_content)
+        # Write the updated config directly to the output file
+        with open(os.path.join(dir_path, "Telegraf_multi_stream.conf"), 'w') as file:
+            file.write(tomlkit.dumps(config_data, sort_keys=False))
 
 if __name__ == "__main__":
     main()

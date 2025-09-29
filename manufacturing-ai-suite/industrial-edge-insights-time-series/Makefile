@@ -17,16 +17,10 @@ $(info Using default Sample app: $(DEFAULT_SAMPLE_APP))
 SAMPLE_APP := $(DEFAULT_SAMPLE_APP)
 endif
 
-app-%:
-	@true
-
-# Assign default value to stream if not provided
-ifeq ($(origin stream), undefined)
-stream := 1
+# Assign default value to num_of_streams if not provided
+ifeq ($(origin num_of_streams), undefined)
+num_of_streams := 1
 endif
-
-stream-%:
-	@true
 
 export SAMPLE_APP
 
@@ -127,22 +121,33 @@ up_mqtt_ingestion: check_env_variables down
 	if [ $(INCLUDE) = 'validation' ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_VALIDATION_FILE) up --scale ia-opcua-server=0 -d; \
 	else \
-		$(DOCKER_COMPOSE) up --scale ia-opcua-server=0 -d; \
+		if [ "$(num_of_streams)" -gt 1 ] && [ "$(SAMPLE_APP)" != "$(DEFAULT_SAMPLE_APP)" ]; then \
+			echo "Multi-stream MQTT ingestion is only supported for the 'wind-turbine-anomaly-detection' sample app."; \
+			exit 1; \
+		fi; \
+		$(DOCKER_COMPOSE) up --scale ia-mqtt-publisher=$(num_of_streams) --scale ia-opcua-server=0 -d; \
 	fi;
 
 # Run Docker containers
 .PHONY: up_opcua_ingestion
 up_opcua_ingestion: check_env_variables down
-	@if [ "$(stream)" -gt 1 ]; then \
-		python3 telegraf/generate_telegraf_config.py $(stream); \
-		export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
+	@if [ "$(num_of_streams)" -gt 1 ]; then \
+		if [ "$(SAMPLE_APP)" = "$(DEFAULT_SAMPLE_APP)" ]; then \
+			TELEGRAF_METRIC_BATCH_SIZE=$$(grep -m1 TELEGRAF_METRIC_BATCH_SIZE $(DOCKER_COMPOSE_FILE) | awk -F ': ' '{print $$2}' | xargs); \
+			LOG_LEVEL=$$(grep -E "^LOG_LEVEL=" $(ENV_FILE) | cut -d'=' -f2); \
+			python3 telegraf/generate_telegraf_config.py $(num_of_streams) $$LOG_LEVEL $$TELEGRAF_METRIC_BATCH_SIZE; \
+			export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
+		else \
+			echo "Multi-stream OPC-UA ingestion is only supported for the 'wind-turbine-anomaly-detection' sample app."; \
+			exit 1; \
+		fi; \
 	fi; \
 	export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "opcua:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "opcua"; fi); \
 	echo "Starting Docker containers..."; \
 	if [ $(INCLUDE) = 'validation' ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_VALIDATION_FILE) up --scale ia-mqtt-publisher=0 -d ;\
 	else \
-		$(DOCKER_COMPOSE) up --scale ia-opcua-server=$(stream) --scale ia-mqtt-publisher=0 -d; \
+		$(DOCKER_COMPOSE) up --scale ia-opcua-server=$(num_of_streams) --scale ia-mqtt-publisher=0 -d; \
 	fi;
 
 

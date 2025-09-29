@@ -167,6 +167,20 @@ The `mqtt` section specifies the MQTT broker details for sending alerts.
      ```bash
      make up_mqtt_ingestion
      ```
+
+**Multi-Stream Ingestion**
+
+Multi-stream ingestion is supported only for the wind-turbine-anomaly-detection sample app. To enable multiple parallel data streams:
+
+```bash
+# OPC-UA Ingestion
+make up_opcua_ingestion num_of_streams=<NUMBER_OF_STREAMS>
+
+# MQTT Ingestion  
+make up_mqtt_ingestion num_of_streams=<NUMBER_OF_STREAMS>
+```
+
+Replace <NUMBER_OF_STREAMS> with the desired number of parallel data streams (e.g., 3 for three streams).
    
 Use the following command to verify that all containers are active and error-free.
 
