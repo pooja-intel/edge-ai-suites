@@ -158,7 +158,11 @@ up_opcua_ingestion: check_env_variables down
 	@if [ $(num_of_streams) -gt 1 ]; then \
 		export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
     fi; \
-	export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "opcua:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "opcua"; fi); \
+	if [ "$(app)" = "weld-anomaly-detection" ]; then \
+		echo "The weld-anomaly-detection sample app supports only MQTT ingestion. Please use 'make up_mqtt_ingestion' command to start the services."; \
+		exit 1; \
+	fi;
+	@export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "opcua:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "opcua"; fi); \
 	echo "Starting Docker containers..."; \
 	if [ $(INCLUDE) = 'validation' ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_VALIDATION_FILE) up --scale ia-mqtt-publisher=0 -d ;\
