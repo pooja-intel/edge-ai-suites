@@ -22,7 +22,31 @@ ifeq ($(origin num_of_streams), undefined)
 num_of_streams := 1
 endif
 
+ifdef number_of_data_points_per_stream
+export ENABLE_BENCHMARKING=true
+export BENCHMARK_TOTAL_PTS=$(number_of_data_points_per_stream)
+endif
+
+ifeq ($(origin ingestion_interval), undefined)
+ingestion_interval := "1s"
+endif
+
 export SAMPLE_APP
+
+# Example: Run a shell if-else block before starting containers
+define multi_stream_check
+	@if [ "$(num_of_streams)" -gt 1 ]; then \
+		if [ "$(SAMPLE_APP)" = "$(DEFAULT_SAMPLE_APP)" ]; then \
+			echo "define check"; \
+			TELEGRAF_METRIC_BATCH_SIZE=$$(grep -m1 TELEGRAF_METRIC_BATCH_SIZE $(DOCKER_COMPOSE_FILE) | awk -F ': ' '{print $$2}' | xargs); \
+			LOG_LEVEL=$$(grep -E "^LOG_LEVEL=" $(ENV_FILE) | cut -d'=' -f2); \
+			python3 telegraf/generate_telegraf_config.py $(num_of_streams) $$LOG_LEVEL $$TELEGRAF_METRIC_BATCH_SIZE $(ingestion_interval) $(1); \
+		else \
+			echo "Multi-stream ingestion is only supported for the 'Wind Turbine Anomaly Detection' sample app."; \
+			exit 1; \
+		fi; \
+	fi
+endef
 
 INCLUDE ?= default_INCLUDE
 
@@ -37,10 +61,6 @@ ENV_FILE = ./.env
 include $(ENV_FILE)
 export $(shell sed 's/=.*//' $(ENV_FILE))
 
-# Default values
-KEY_LENGTH=3072
-DAYS=365
-SHA_ALGO="sha384"
 
 # Build Docker containers
 .PHONY: build
@@ -116,32 +136,28 @@ check_env_variables:
 
 .PHONY: up_mqtt_ingestion
 up_mqtt_ingestion: check_env_variables down
+	$(call multi_stream_check,mqtt)
 	@export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "mqtt_consumer:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "mqtt_consumer"; fi); \
+	if [ "$(ENABLE_BENCHMARKING)" = "true" ]; then \
+		export BENCHMARK_TOTAL_PTS=$$(($(number_of_data_points_per_stream) * $(num_of_streams))); \
+	fi; \
+	if [ $(num_of_streams) -gt 1 ]; then \
+		export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
+    fi; \
 	echo "Starting Docker containers..."; \
 	if [ $(INCLUDE) = 'validation' ]; then \
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_VALIDATION_FILE) up --scale ia-opcua-server=0 -d; \
 	else \
-		if [ "$(num_of_streams)" -gt 1 ] && [ "$(SAMPLE_APP)" != "$(DEFAULT_SAMPLE_APP)" ]; then \
-			echo "Multi-stream MQTT ingestion is only supported for the 'wind-turbine-anomaly-detection' sample app."; \
-			exit 1; \
-		fi; \
 		$(DOCKER_COMPOSE) up --scale ia-mqtt-publisher=$(num_of_streams) --scale ia-opcua-server=0 -d; \
 	fi;
 
 # Run Docker containers
 .PHONY: up_opcua_ingestion
 up_opcua_ingestion: check_env_variables down
-	@if [ "$(num_of_streams)" -gt 1 ]; then \
-		if [ "$(SAMPLE_APP)" = "$(DEFAULT_SAMPLE_APP)" ]; then \
-			TELEGRAF_METRIC_BATCH_SIZE=$$(grep -m1 TELEGRAF_METRIC_BATCH_SIZE $(DOCKER_COMPOSE_FILE) | awk -F ': ' '{print $$2}' | xargs); \
-			LOG_LEVEL=$$(grep -E "^LOG_LEVEL=" $(ENV_FILE) | cut -d'=' -f2); \
-			python3 telegraf/generate_telegraf_config.py $(num_of_streams) $$LOG_LEVEL $$TELEGRAF_METRIC_BATCH_SIZE; \
-			export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
-		else \
-			echo "Multi-stream OPC-UA ingestion is only supported for the 'wind-turbine-anomaly-detection' sample app."; \
-			exit 1; \
-		fi; \
-	fi; \
+	$(call multi_stream_check,opcua)
+	@if [ $(num_of_streams) -gt 1 ]; then \
+		export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
+    fi; \
 	export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "opcua:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "opcua"; fi); \
 	echo "Starting Docker containers..."; \
 	if [ $(INCLUDE) = 'validation' ]; then \
