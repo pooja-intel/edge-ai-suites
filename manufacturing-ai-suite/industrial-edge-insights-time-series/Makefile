@@ -241,6 +241,7 @@ gen_helm_charts:
 	@cp -f configs/nginx/nginx-cert-gen.sh helm/nginx-cert-gen.sh
 	@cp -f configs/nginx/nginx.conf helm/nginx.conf
 	@sed -i "s/name: .*/name: ${SAMPLE_APP}-sample-app/" "helm/Chart.yaml"
+	@sed -i "s/description: .*/description: Helm charts for ${SAMPLE_APP} sample app/" "helm/Chart.yaml"
 	@sed -i "s/version: .*/version: ${version}/" "helm/Chart.yaml"
 	@sed -i "s/appVersion: .*/appVersion: \"${version}\"/" "helm/Chart.yaml"
 	@sed -i "s/SAMPLE_APP: .*/SAMPLE_APP: ${SAMPLE_APP}/" "helm/values.yaml"
