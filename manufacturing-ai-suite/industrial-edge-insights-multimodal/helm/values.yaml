@@ -59,8 +59,6 @@ env:
   MTX_WEBRTCICESERVERS2_0_PASSWORD: admin123123
   COTURN_UDP_PORT: 3478
   TS_TOPIC: weld-data
-  VISION_TOPIC: vision_weld_defect_classification
-  FUSION_TOPIC: fusion/anomaly
   SIMULATION_TARGET_FPS: "10"
   FUSION_MODE: AND
   TOLERANCE_NS: "50e6"

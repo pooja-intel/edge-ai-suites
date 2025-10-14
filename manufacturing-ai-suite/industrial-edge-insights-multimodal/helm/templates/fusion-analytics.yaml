@@ -51,7 +51,7 @@ spec:
           value: "{{ .Values.config.mqttbroker.name }},{{ .Values.config.influx_db_server.name }},{{ .Values.env.timeseries_no_proxy }}"
         # Topic Configuration
         - name: VISION_TOPIC
-          value: "{{ .Values.env.VISION_TOPIC }}"
+          value: "vision_weld_defect_classification"
         - name: TS_TOPIC
           value: "ts_weld_defect_detection"
         - name: FUSION_TOPIC

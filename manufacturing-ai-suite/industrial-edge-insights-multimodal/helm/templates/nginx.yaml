@@ -63,7 +63,7 @@ spec:
         - name: HOST_IP
           value: "{{ .Values.env.HOST_IP }}"
         - name: WHIP_SERVER_PORT
-          value: "{{ .Values.env.WHIP_SERVER_PORT }}"
+          value: "{{ .Values.config.mediamtx.ext.mediamtx_port }}"
         volumeMounts:
         - name: nginx-conf
           mountPath: /tmp/default.conf.template
