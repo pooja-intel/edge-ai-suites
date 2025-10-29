@@ -16,7 +16,7 @@ spec:
   ports:
     - name: broker-port
       port: {{ .Values.config.mqttbroker.mqttbroker_port }}
-      targetPort: 1883
+      targetPort: {{ .Values.config.mqttbroker.mqttbroker_port }}
       protocol: TCP
   publishNotReadyAddresses: false
 ---
