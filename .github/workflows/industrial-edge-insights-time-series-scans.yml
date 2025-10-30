@@ -126,7 +126,7 @@ jobs:
             cd $CWD/manufacturing-ai-suite/industrial-edge-insights-multimodal/
             trivy fs . --format template --template "@$CWD/trivy-html.tpl" -o "trivy_multimodal_fs_full_report_code_scan.html" 
             trivy fs --list-all-pkgs --format template --template "@$CWD/csv.tpl" --output trivy-multimodal-fs-full-report.csv .
-            trivy fs --ignore-unfixed . | tee trivy-multimodalfs-full-report-ignore-unfixed.txt
+            trivy fs --ignore-unfixed . | tee trivy-multimodal-fs-full-report-ignore-unfixed.txt
           fi
 
       - name: Upload Trivy FS Scan Report
@@ -573,7 +573,7 @@ jobs:
           docker compose down -v 
           docker compose build
 
-      - name: Deploy Wind Turbine Sample App 
+      - name: Deploy Time Series Wind Turbine Sample App 
         if: ${{ (inputs.application == 'time-series') || (inputs.application == 'both') }}
         run: |
           cd manufacturing-ai-suite/industrial-edge-insights-time-series/
@@ -583,22 +583,17 @@ jobs:
           INFLUXDB_PASSWORD=$(openssl rand -hex 10)
           VISUALIZER_GRAFANA_USER=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
           VISUALIZER_GRAFANA_PASSWORD=$(openssl rand -hex 10)
-          MR_PSQL_PASSWORD=$(openssl rand -hex 10)
-          MR_MINIO_ACCESS_KEY=$(openssl rand -hex 10)
-          MR_MINIO_SECRET_KEY=$(openssl rand -hex 10)
 
           sed -i "s/INFLUXDB_USERNAME=.*/INFLUXDB_USERNAME=${INFLUXDB_USERNAME}/g" .env
           sed -i "s/INFLUXDB_PASSWORD=.*/INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}/g" .env
           sed -i "s/VISUALIZER_GRAFANA_USER=.*/VISUALIZER_GRAFANA_USER=${VISUALIZER_GRAFANA_USER}/g" .env
           sed -i "s/VISUALIZER_GRAFANA_PASSWORD=.*/VISUALIZER_GRAFANA_PASSWORD=${VISUALIZER_GRAFANA_PASSWORD}/g" .env
-          sed -i "s/MR_PSQL_PASSWORD=.*/MR_PSQL_PASSWORD=${MR_PSQL_PASSWORD}/g" .env
-          sed -i "s/MR_MINIO_ACCESS_KEY=.*/MR_MINIO_ACCESS_KEY=${MR_MINIO_ACCESS_KEY}/g" .env
-          sed -i "s/MR_MINIO_SECRET_KEY=.*/MR_MINIO_SECRET_KEY=${MR_MINIO_SECRET_KEY}/g" .env 
+
           make build
           echo "Deploying using opcua ingestion"
           make up_opcua_ingestion app=wind-turbine-anomaly-detection
 
-      - name: DBS download and scan for Wind Turbine Sample App
+      - name: DBS download and scan for Time Series Wind Turbine Sample App
         if: ${{ (inputs.application == 'time-series') || (inputs.application == 'both') }}
         run: |
           cd manufacturing-ai-suite/industrial-edge-insights-time-series/
@@ -619,7 +614,7 @@ jobs:
           cd manufacturing-ai-suite/industrial-edge-insights-time-series/
           make down
         
-      - name: Deploy Weld Anomaly Detection Sample App 
+      - name: Deploy Time Series Weld Anomaly Detection Sample App 
         if: ${{ (inputs.application == 'time-series') || (inputs.application == 'both') }}
         run: |
           cd manufacturing-ai-suite/industrial-edge-insights-time-series/
@@ -629,22 +624,16 @@ jobs:
           INFLUXDB_PASSWORD=$(openssl rand -hex 10)
           VISUALIZER_GRAFANA_USER=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
           VISUALIZER_GRAFANA_PASSWORD=$(openssl rand -hex 10)
-          MR_PSQL_PASSWORD=$(openssl rand -hex 10)
-          MR_MINIO_ACCESS_KEY=$(openssl rand -hex 10)
-          MR_MINIO_SECRET_KEY=$(openssl rand -hex 10)
 
           sed -i "s/INFLUXDB_USERNAME=.*/INFLUXDB_USERNAME=${INFLUXDB_USERNAME}/g" .env
           sed -i "s/INFLUXDB_PASSWORD=.*/INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}/g" .env
           sed -i "s/VISUALIZER_GRAFANA_USER=.*/VISUALIZER_GRAFANA_USER=${VISUALIZER_GRAFANA_USER}/g" .env
           sed -i "s/VISUALIZER_GRAFANA_PASSWORD=.*/VISUALIZER_GRAFANA_PASSWORD=${VISUALIZER_GRAFANA_PASSWORD}/g" .env
-          sed -i "s/MR_PSQL_PASSWORD=.*/MR_PSQL_PASSWORD=${MR_PSQL_PASSWORD}/g" .env
-          sed -i "s/MR_MINIO_ACCESS_KEY=.*/MR_MINIO_ACCESS_KEY=${MR_MINIO_ACCESS_KEY}/g" .env
-          sed -i "s/MR_MINIO_SECRET_KEY=.*/MR_MINIO_SECRET_KEY=${MR_MINIO_SECRET_KEY}/g" .env 
           make build
           echo "Deploying using mqtt ingestion"
-          make up_mqtt_ingestion app=weld-anomaly-anomaly-detection
+          make up_mqtt_ingestion app=weld-anomaly-detection
 
-      - name: DBS download and scan for Weld Anomaly Detection Sample App
+      - name: DBS download and scan for Time Series Weld Anomaly Detection Sample App
         if: ${{ (inputs.application == 'time-series') || (inputs.application == 'both') }}
         run: |
           cd manufacturing-ai-suite/industrial-edge-insights-time-series/
@@ -684,9 +673,6 @@ jobs:
           VISUALIZER_GRAFANA_PASSWORD=$(openssl rand -hex 10)
           MTX_WEBRTCICESERVERS2_0_USERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 8)
           MTX_WEBRTCICESERVERS2_0_PASSWORD=$(openssl rand -hex 10)
-          MR_PSQL_PASSWORD=$(openssl rand -hex 10)
-          MR_MINIO_ACCESS_KEY=$(openssl rand -hex 10)
-          MR_MINIO_SECRET_KEY=$(openssl rand -hex 10)
 
           sed -i "s/INFLUXDB_USERNAME=.*/INFLUXDB_USERNAME=${INFLUXDB_USERNAME}/g" .env
           sed -i "s/INFLUXDB_PASSWORD=.*/INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}/g" .env
@@ -694,9 +680,7 @@ jobs:
           sed -i "s/VISUALIZER_GRAFANA_PASSWORD=.*/VISUALIZER_GRAFANA_PASSWORD=${VISUALIZER_GRAFANA_PASSWORD}/g" .env
           sed -i "s/MTX_WEBRTCICESERVERS2_0_USERNAME=.*/MTX_WEBRTCICESERVERS2_0_USERNAME=${MTX_WEBRTCICESERVERS2_0_USERNAME}/g" .env
           sed -i "s/MTX_WEBRTCICESERVERS2_0_PASSWORD=.*/MTX_WEBRTCICESERVERS2_0_PASSWORD=${MTX_WEBRTCICESERVERS2_0_PASSWORD}/g" .env
-          sed -i "s/MR_PSQL_PASSWORD=.*/MR_PSQL_PASSWORD=${MR_PSQL_PASSWORD}/g" .env
-          sed -i "s/MR_MINIO_ACCESS_KEY=.*/MR_MINIO_ACCESS_KEY=${MR_MINIO_ACCESS_KEY}/g" .env
-          sed -i "s/MR_MINIO_SECRET_KEY=.*/MR_MINIO_SECRET_KEY=${MR_MINIO_SECRET_KEY}/g" .env 
+ 
           make build
           echo "Deploying using mqtt ingestion"
           make up
