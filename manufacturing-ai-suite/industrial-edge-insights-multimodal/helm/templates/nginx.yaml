@@ -65,7 +65,7 @@ spec:
         - name: MEDIAMTX_SERVER
           value: "{{ .Values.config.mediamtx.name }}"
         - name: WHIP_SERVER_PORT
-          value: "{{ .Values.config.mediamtx.ext.webrtc_port }}"
+          value: "{{ .Values.config.mediamtx.int.webrtc_port }}"
         volumeMounts:
         - name: nginx-conf
           mountPath: /tmp/default.conf.template

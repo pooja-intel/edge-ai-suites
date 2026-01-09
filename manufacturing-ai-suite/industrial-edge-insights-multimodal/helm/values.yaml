@@ -17,23 +17,26 @@ storageClassName: manual
 env:
   # The INFLUXDB_USERNAME must contain only alphabets and be at least 5 characters minimum
   # Do not set INFLUXDB_USERNAME to 'admin'.
-  INFLUXDB_USERNAME: users 
+  INFLUXDB_USERNAME:  
 
   # The INFLUXDB_PASSWORD length must be a minimum of 10 alphanumeric characters with at least one digit
   # Do not use the following special characters in the INFLUXDB_PASSWORD "~:'+[/@^{%(-"*|,&<`}._=}!>;?#$)\"
-  INFLUXDB_PASSWORD: user123123
+  INFLUXDB_PASSWORD: 
 
   # The VISUALIZER_GRAFANA_USER must contain only alphabets and be at least 5 characters minimum
-  VISUALIZER_GRAFANA_USER: admin
+  VISUALIZER_GRAFANA_USER: 
 
   # The VISUALIZER_GRAFANA_PASSWORD length must be a minimum of 10 alphanumeric characters with at least one digit
-  VISUALIZER_GRAFANA_PASSWORD: admin123123
+  VISUALIZER_GRAFANA_PASSWORD: 
 
   # If your environment requires a proxy to access external resources, please set the following variables.
   # If no proxy is required, please leave them empty.
-  HTTP_PROXY: http://proxy-iind.intel.com:911
-  HTTPS_PROXY: http://proxy-iind.intel.com:911
+  HTTP_PROXY: 
+  HTTPS_PROXY: 
   
+  # Update with the absolute path to your industrial-edge-insights-multimodal directory
+  # Example: /home/user/edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-multimodal
+  WORK_DIR: ""
   # If CONTINUOUS_SIMULATOR_INGESTION is set to true (default), continuous looping of simulator data is enabled.
   # To ingest the simulator data only once (without looping), set this variable to false.
   CONTINUOUS_SIMULATOR_INGESTION: true
@@ -69,8 +72,8 @@ env:
   # Webrtc related config
   # mediamtx-port for streaming
   WHIP_SERVER_PORT: 8889
-  MTX_WEBRTCICESERVERS2_0_USERNAME: admin
-  MTX_WEBRTCICESERVERS2_0_PASSWORD: admin123123
+  MTX_WEBRTCICESERVERS2_0_USERNAME: 
+  MTX_WEBRTCICESERVERS2_0_PASSWORD: 
   COTURN_UDP_PORT: 3478
 
   # Fusion Analytics config
