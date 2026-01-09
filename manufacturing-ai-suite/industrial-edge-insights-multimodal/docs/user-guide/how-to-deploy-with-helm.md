@@ -57,7 +57,7 @@ You can either generate or download the Helm charts.
     HTTPS_PROXY:  # example: http_proxy: http://proxy.example.com:891
     MTX_WEBRTCICESERVERS2_0_USERNAME: 
     MTX_WEBRTCICESERVERS2_0_PASSWORD: 
-    HOST_IP:  # IP address of server where DLStreamer Pipeline Server is running
+    HOST_IP:  # IP address of server where DL Streamer Pipeline Server is running
     ```
 
 ## Step 3: Install Helm charts 
@@ -86,15 +86,15 @@ Use the following command to verify if all the application resources got install
 
 ## Step 4: Copy the udf package for helm deployment
 
-**DLStreamer Pipeline Server**
+**DL Streamer Pipeline Server**
 
-To copy your own or existing model into DLStreamer Pipeline Server in order to run this sample application in Kubernetes environment:
+To copy your own or existing model into DL Streamer Pipeline Server in order to run this sample application in Kubernetes environment:
 
 The model package is available in the repository at `edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-multimodal/configs/dlstreamer-pipeline-server/`.
 
 Copy the resources such as video and model from local directory to the to the `dlstreamer-pipeline-server` pod to make them available for application while launching pipelines.
 
-    ```sh
+    ```bash
     cd edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-multimodal/configs/dlstreamer-pipeline-server/
 
     POD_NAME=$(kubectl get pods -n multimodal-sample-app -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep deployment-dlstreamer-pipeline-server | head -n 1)
@@ -120,7 +120,7 @@ To copy your own or existing model into Time Series Analytics Microservice in or
     ```
 
 2. Copy your new UDF package to the `time-series-analytics-microservice` pod:
-    ```sh
+    ```bash
     cd edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-multimodal/configs/time-series-analytics-microservice # path relative to git clone folder
     mkdir -p weld_anomaly_detector
     cp -r models tick_scripts udfs weld_anomaly_detector/.
@@ -136,7 +136,7 @@ To copy your own or existing model into Time Series Analytics Microservice in or
 ## Step 5: Activate the Pipeline/UDF Deployment Package
 
 
-**DLStreamer Pipeline Server**
+**DL Streamer Pipeline Server**
 
 You use a Client URL (cURL) command to start the pipeline. Start this pipeline with the following cURL command.
 
@@ -165,7 +165,7 @@ You use a Client URL (cURL) command to start the pipeline. Start this pipeline w
 
 Run the following command to activate the UDF deployment package:
 
-```sh
+```bash
     curl -k -X 'GET' \
     'https://localhost:30001/ts-api/config?restart=true' \
     -H 'accept: application/json'
@@ -179,7 +179,7 @@ Follow the verification steps in the [Get Started guide](get-started.md#verify-t
 
 To uninstall Helm charts:
 
-```sh
+```bash
 helm uninstall multimodal-weld-defect-detection -n multimodal-sample-app
 kubectl get all -n multimodal-sample-app # It may take a few minutes for all application resources to be cleaned up.
 ```
@@ -191,7 +191,7 @@ To configure alerts in Time Series Analytics Microservice, follow the steps [her
 ## Troubleshooting
 
 - Check pod details or container logs to diagnose failures:
-    ```sh
+    ```bash
     kubectl get pods -n multimodal-sample-app
     kubectl describe pod <pod_name> -n multimodal-sample-app # Shows details of the pod
     kubectl logs -f <pod_name> -n multimodal-sample-app # Shows logs of the container in the pod

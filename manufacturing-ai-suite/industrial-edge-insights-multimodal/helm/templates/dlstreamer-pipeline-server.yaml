@@ -44,7 +44,6 @@ spec:
       imagePullSecrets:
       - name: registryauth
       {{- end }}
-      # hostNetwork: true
       containers:
       - name: {{ $.Values.config.dlstreamer_pipeline_server.name }}
         image: {{ $.Values.DOCKER_REGISTRY }}{{ $.Values.images.dlstreamer_pipeline_server }}

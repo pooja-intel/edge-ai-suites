@@ -46,7 +46,6 @@ spec:
       imagePullSecrets:
       - name: registryauth
       {{- end }}
-      # hostNetwork: true
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -70,11 +69,11 @@ spec:
               - ALL
             add:
               - NET_BIND_SERVICE
-      args:
-      - "--verbose"
-      - "--listening-ip=0.0.0.0"
-      - "--listening-port={{ $.Values.config.coturn.int.coturn_udp_port }}"
-      - "--tls-listening-port={{ $.Values.config.coturn.int.coturn_tcp_port }}"
-      - "--min-port=49152"
-      - "--max-port=65535"
+        args:
+        - "--verbose"
+        - "--listening-ip=0.0.0.0"
+        - "--listening-port={{ $.Values.config.coturn.int.coturn_udp_port }}"
+        - "--tls-listening-port={{ $.Values.config.coturn.int.coturn_tcp_port }}"
+        - "--min-port=49152"
+        - "--max-port=65535"
       restartPolicy: Always

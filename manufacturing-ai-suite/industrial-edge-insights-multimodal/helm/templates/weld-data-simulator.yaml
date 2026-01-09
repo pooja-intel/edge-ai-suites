@@ -44,6 +44,8 @@ spec:
           value: "{{ .Values.config.mediamtx.name }}"
         - name: MEDIAMTX_PORT
           value: "{{ .Values.config.mediamtx.int.rtsp_port }}"
+        - name: RTSP_STREAM_NAME
+          value: "live.stream"
         - name: TS_TOPIC
           value: "{{ .Values.env.TS_TOPIC }}"
         - name: LOG_LEVEL
@@ -56,3 +58,12 @@ spec:
           value: "{{ .Values.config.time_series_analytics_microservice.name }}"
         - name: TS_MS_PORT
           value: "{{ .Values.config.time_series_analytics_microservice.kapacitor_port }}"
+        volumeMounts:
+        - name: simulation-data
+          mountPath: /simulation-data
+          readOnly: true
+
+      volumes:
+      - name: simulation-data
+        persistentVolumeClaim:
+          claimName: simulation-data-pvc

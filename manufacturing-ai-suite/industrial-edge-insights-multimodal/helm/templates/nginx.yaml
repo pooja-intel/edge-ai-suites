@@ -62,6 +62,8 @@ spec:
           value: "ia-grafana,ia-time-series-analytics-microservice,ia-mqtt-broker,{{ .Values.env.timeseries_no_proxy }},coturn,mediamtx,{{ .Values.env.HOST_IP }},dlstreamer-pipeline-server"
         - name: HOST_IP
           value: "{{ .Values.env.HOST_IP }}"
+        - name: MEDIAMTX_SERVER
+          value: "{{ .Values.config.mediamtx.name }}"
         - name: WHIP_SERVER_PORT
           value: "{{ .Values.config.mediamtx.ext.webrtc_port }}"
         volumeMounts:
