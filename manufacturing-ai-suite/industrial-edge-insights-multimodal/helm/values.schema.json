@@ -55,7 +55,7 @@
         },
         "WORK_DIR": {
           "type": "string",
-          "pattern": ".*/industrial-edge-insights-multimodal.*",
+          "pattern": "^/.*/industrial-edge-insights-multimodal/?$",
           "description": "Must be a valid absolute path to industrial-edge-insights-multimodal directory."
         }
       }
