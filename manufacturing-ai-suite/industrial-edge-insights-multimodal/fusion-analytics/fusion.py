@@ -181,7 +181,27 @@ def on_message(client, userdata, msg):
             
             # Debug: uncomment to see incoming messages
             # logger.info(f"Received from Vision: {payload}")
-            
+
+            # Write vision weld classification results to InfluxDB
+            time = payload["metadata"]["time"]
+            json_body = [{
+                "measurement": "vision-weld-classification-results",
+                "time": pd.to_datetime(time, unit="ns").isoformat(),
+                "fields": {
+                    "frame_id": int(payload["metadata"]["frame_id"]),
+                    "height": int(payload["metadata"]["height"]),
+                    "width": int(payload["metadata"]["width"]),
+                    "img_handle": str(payload["metadata"]["img_handle"]),
+                    "objects": str(payload["metadata"]["objects"]),
+                    "img_format": str(payload["metadata"]["img_format"]),
+                    "pipeline": str(payload["metadata"]["pipeline"])
+                }
+            }]
+            try:
+                influx_client.write_points(json_body)
+            except Exception as e:
+                logger.error(f"Failed to write vision data to InfluxDB: {e}")
+
     except Exception as e:
         logger.error(f"Error processing message on topic {msg.topic}: {e}")
 
@@ -216,26 +236,6 @@ def fuse_firstcome(mode: Literal["AND", "OR"] = "AND") -> Optional[Dict[str, Any
     # Get the front (oldest) message from each queue
     front_ts = queues["ts"][0]
     front_vision = queues["vision"][0]
-
-    # Write vision pipeline results to InfluxDB
-    time = front_vision["metadata"]["time"]
-    json_body = [{
-        "measurement": "vision-weld-classification-results",
-        "time": pd.to_datetime(time, unit="ns").isoformat(),
-        "fields": {
-            "frame_id": int(front_vision["metadata"]["frame_id"]),
-            "height": int(front_vision["metadata"]["height"]),
-            "width": int(front_vision["metadata"]["width"]),
-            "img_handle": str(front_vision["metadata"]["img_handle"]),
-            "objects": str(front_vision["metadata"]["objects"]),
-            "img_format": str(front_vision["metadata"]["img_format"]),
-            "pipeline": str(front_vision["metadata"]["pipeline"])
-        }
-    }]
-    try:
-        influx_client.write_points(json_body)
-    except Exception as e:
-        logger.error(f"Failed to write vision data to InfluxDB: {e}")
 
     # Determine which message came first based on timestamps
     if front_ts["time"] <= front_vision["metadata"]["time"]:
