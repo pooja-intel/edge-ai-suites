@@ -69,6 +69,7 @@ logger.debug(type(FUSION_MODE), FUSION_MODE)
 if FUSION_MODE not in ["AND", "OR"]:
     raise ValueError(f"FUSION_MODE must be 'AND' or 'OR' given value is {FUSION_MODE}")
 
+influx_client = None
 # ===================== UTILITY FUNCTIONS =====================
 
 def find_nearest(buf, ts, type):
@@ -216,6 +217,24 @@ def fuse_firstcome(mode: Literal["AND", "OR"] = "AND") -> Optional[Dict[str, Any
     front_ts = queues["ts"][0]
     front_vision = queues["vision"][0]
 
+    # Write vision pipeline results to InfluxDB
+    time = front_vision["metadata"]["time"]
+    json_body = [{
+        "measurement": "vision-weld-classification-results",
+        "time": pd.to_datetime(time, unit="ns").isoformat(),
+        "fields": {
+            "time": pd.to_datetime(time, unit="ns").strftime("%Y-%m-%d : %H:%M:%S"),
+            "frame_id": int(front_vision["metadata"]["frame_id"]),
+            "height": int(front_vision["metadata"]["height"]),
+            "width": int(front_vision["metadata"]["width"]),
+            "img_handle": str(front_vision["metadata"]["img_handle"]),
+            "objects": str(front_vision["metadata"]["objects"]),
+            "img_format": str(front_vision["metadata"]["img_format"]),
+            "pipeline": str(front_vision["metadata"]["pipeline"])
+        }
+    }]
+    influx_client.write_points(json_body)
+
     # Determine which message came first based on timestamps
     if front_ts["time"] <= front_vision["metadata"]["time"]:
         # Time-series message is older, process it first
@@ -300,6 +319,7 @@ def fuse_firstcome(mode: Literal["AND", "OR"] = "AND") -> Optional[Dict[str, Any
 # ===================== MAIN EXECUTION =====================
 
 def main():
+    global influx_client
     # Initialize MQTT client and configure callbacks
     client = mqtt.Client()
     client.on_connect = on_connect
