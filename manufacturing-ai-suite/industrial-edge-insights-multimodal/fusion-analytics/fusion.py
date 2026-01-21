@@ -223,7 +223,6 @@ def fuse_firstcome(mode: Literal["AND", "OR"] = "AND") -> Optional[Dict[str, Any
         "measurement": "vision-weld-classification-results",
         "time": pd.to_datetime(time, unit="ns").isoformat(),
         "fields": {
-            "time": pd.to_datetime(time, unit="ns").strftime("%Y-%m-%d : %H:%M:%S"),
             "frame_id": int(front_vision["metadata"]["frame_id"]),
             "height": int(front_vision["metadata"]["height"]),
             "width": int(front_vision["metadata"]["width"]),
@@ -233,7 +232,10 @@ def fuse_firstcome(mode: Literal["AND", "OR"] = "AND") -> Optional[Dict[str, Any
             "pipeline": str(front_vision["metadata"]["pipeline"])
         }
     }]
-    influx_client.write_points(json_body)
+    try:
+        influx_client.write_points(json_body)
+    except Exception as e:
+        logger.error(f"Failed to write vision data to InfluxDB: {e}")
 
     # Determine which message came first based on timestamps
     if front_ts["time"] <= front_vision["metadata"]["time"]:
