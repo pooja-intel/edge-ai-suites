@@ -194,7 +194,8 @@ def on_message(client, userdata, msg):
                     "img_handle": str(payload["metadata"]["img_handle"]),
                     "objects": str(payload["metadata"]["objects"]),
                     "img_format": str(payload["metadata"]["img_format"]),
-                    "pipeline": str(payload["metadata"]["pipeline"])
+                    "pipeline": str(payload["metadata"]["pipeline"]),
+                    "metadata": str(payload["metadata"])
                 }
             }]
             try:
