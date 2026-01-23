@@ -200,6 +200,7 @@ def on_message(client, userdata, msg):
                     "gva_meta": str(payload["metadata"]["gva_meta"]),
                     "resolution": str(payload["metadata"]["resolution"]),
                     "tags": str(payload["metadata"]["tags"]),
+                    "metadata": str(payload["metadata"]),
                     "timestamp": int(payload["metadata"]["timestamp"])
                 }
             }]
