@@ -191,11 +191,16 @@ def on_message(client, userdata, msg):
                     "frame_id": int(payload["metadata"]["frame_id"]),
                     "height": int(payload["metadata"]["height"]),
                     "width": int(payload["metadata"]["width"]),
+                    "channels": int(payload["metadata"]["channels"]),
+                    "caps": str(payload["metadata"]["caps"]),
                     "img_handle": str(payload["metadata"]["img_handle"]),
                     "objects": str(payload["metadata"]["objects"]),
                     "img_format": str(payload["metadata"]["img_format"]),
                     "pipeline": str(payload["metadata"]["pipeline"]),
-                    "metadata": str(payload["metadata"])
+                    "gva_meta": str(payload["metadata"]["gva_meta"]),
+                    "resolution": str(payload["metadata"]["resolution"]),
+                    "tags": str(payload["metadata"]["tags"]),
+                    "timestamp": int(payload["metadata"]["timestamp"])
                 }
             }]
             try:
