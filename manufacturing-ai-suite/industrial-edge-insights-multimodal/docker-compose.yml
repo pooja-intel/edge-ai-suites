@@ -414,7 +414,7 @@ services:
     - timeseries_network
   
   seaweedfs-master:
-    image: chrislusf/seaweedfs:latest
+    image: chrislusf/seaweedfs:4.07
     hostname: seaweedfs-master
     container_name: seaweedfs-master
     ports:
@@ -430,7 +430,7 @@ services:
     command: master -ip=seaweedfs-master -ip.bind=0.0.0.0
 
   seaweedfs-volume:
-    image: chrislusf/seaweedfs:latest
+    image: chrislusf/seaweedfs:4.07
     hostname: seaweedfs-volume
     container_name: seaweedfs-volume
     ports:
@@ -448,7 +448,7 @@ services:
       - seaweedfs-master
 
   seaweedfs-filer:
-    image: chrislusf/seaweedfs:latest
+    image: chrislusf/seaweedfs:4.07
     hostname: seaweedfs-filer
     container_name: seaweedfs-filer
     ports:
@@ -474,7 +474,7 @@ services:
       start_period: 30s
 
   seaweedfs-s3:
-    image: chrislusf/seaweedfs:latest
+    image: chrislusf/seaweedfs:4.07
     hostname: seaweedfs-s3
     container_name: seaweedfs-s3
     ports:

@@ -50,6 +50,3 @@ done
 echo "Bucket initialization complete. Starting S3 service..."
 # Execute the SeaweedFS binary with the provided command arguments
 exec weed "$@"
-
-
-
