@@ -263,6 +263,7 @@ services:
       - ia-mqtt-broker
       - mediamtx
       - coturn
+      - dlstreamer-pipeline-server
   ia-fusion-analytics:
     build:
       context: $PWD/fusion-analytics
@@ -312,7 +313,10 @@ services:
     security_opt:
     - no-new-privileges
     depends_on:
-      - ia-weld-data-simulator
+      ia-weld-data-simulator:
+        condition: service_started
+      seaweedfs-s3:
+        condition: service_started
     environment:
       AppName: "DLStreamerPipelineServer"
       ENABLE_WEBRTC: true
@@ -320,14 +324,14 @@ services:
       ENABLE_RTSP: true
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
-      no_proxy: ${no_proxy},${HOST_IP},${RTSP_CAMERA_IP},otel-collector,mediamtx,model_registry,${MR_MINIO_HOSTNAME:-"minio-server"},ia-mqtt-broker
-      NO_PROXY: ${no_proxy},${HOST_IP},${RTSP_CAMERA_IP},otel-collector,mediamtx,model_registry,${MR_MINIO_HOSTNAME:-"minio-server"},ia-mqtt-broker
+      no_proxy: ${no_proxy},${HOST_IP},${RTSP_CAMERA_IP},otel-collector,mediamtx,model_registry,${S3_STORAGE_HOST},ia-mqtt-broker
+      NO_PROXY: ${no_proxy},${HOST_IP},${RTSP_CAMERA_IP},otel-collector,mediamtx,model_registry,${S3_STORAGE_HOST},ia-mqtt-broker
       GST_DEBUG: "1"
       REST_SERVER_PORT: ${REST_SERVER_PORT}
-      S3_STORAGE_HOST: ${MR_MINIO_HOSTNAME:-"minio-server"}
-      S3_STORAGE_PORT: ${MR_MINIO_SERVER_PORT:-9000}
-      S3_STORAGE_USER: ${MR_MINIO_ACCESS_KEY:-""}
-      S3_STORAGE_PASS: ${MR_MINIO_SECRET_KEY:-""}
+      S3_STORAGE_HOST: ${S3_STORAGE_HOST}
+      S3_STORAGE_PORT: ${S3_STORAGE_PORT}
+      S3_STORAGE_USER: ${S3_STORAGE_USERNAME}
+      S3_STORAGE_PASS: ${S3_STORAGE_PASSWORD}
       SERVICE_NAME: "dlstreamer-pipeline-server"
       ENABLE_OPEN_TELEMETRY: true
       OTEL_COLLECTOR_HOST: ${OTEL_COLLECTOR_HOST}
@@ -344,6 +348,7 @@ services:
       MR_VERIFY_CERT: ${MR_VERIFY_CERT:-""}
       MQTT_HOST: ia-mqtt-broker
       MQTT_PORT: 1883
+      LOG_LEVEL: ${LOG_LEVEL}
     volumes:
     - vol_pipeline_root:/var/cache/pipeline_root:uid=1999,gid=1999
     - /var/tmp:/var/tmp
@@ -408,6 +413,101 @@ services:
     networks:
     - timeseries_network
   
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:latest
+    hostname: seaweedfs-master
+    container_name: seaweedfs-master
+    ports:
+      - "9333:9333"  # Master server port
+      - "19333:19333"  # Master gRPC port
+    networks:
+      - timeseries_network
+    volumes:
+      - seaweed_master_data:/data
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+      - no_proxy=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+    command: master -ip=seaweedfs-master -ip.bind=0.0.0.0
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:latest
+    hostname: seaweedfs-volume
+    container_name: seaweedfs-volume
+    ports:
+      - "8081:8080"  # Volume server HTTP port
+      - "18080:18080"  # Volume server gRPC port
+    networks:
+      - timeseries_network
+    volumes:
+      - seaweed_volume_data:/data
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+      - no_proxy=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+    command: volume -mserver=seaweedfs-master:9333 -ip.bind=0.0.0.0 -port=8080
+    depends_on:
+      - seaweedfs-master
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:latest
+    hostname: seaweedfs-filer
+    container_name: seaweedfs-filer
+    ports:
+      - "8887:8888"  # Filer HTTP port
+      - "18888:18888"  # Filer gRPC port
+    networks:
+      - timeseries_network
+    volumes:
+      - seaweed_filer_data:/data
+      - ./seaweedfs_s3_config.json:/etc/seaweedfs/s3_config.json:ro
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+      - no_proxy=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+    command: filer -master=seaweedfs-master:9333 -ip.bind=0.0.0.0
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:latest
+    hostname: seaweedfs-s3
+    container_name: seaweedfs-s3
+    ports:
+      - "8888:8333"  # S3 API port (mapped to 8888 on host)
+    networks:
+      - timeseries_network
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+      - no_proxy=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
+      # Comma-separated list of default buckets to create
+      - DEFAULT_S3_BUCKETS=dlstreamer-pipeline-results
+      # S3 credentials from .env file
+      - S3_STORAGE_USER=${S3_STORAGE_USERNAME}
+      - S3_STORAGE_PASS=${S3_STORAGE_PASSWORD}
+    entrypoint: ["/s3-init-buckets.sh"]
+    command: s3 -filer=seaweedfs-filer:8888 -ip.bind=0.0.0.0 -config=/tmp/s3_config.json
+    depends_on:
+      seaweedfs-filer:
+        condition: service_healthy
+      seaweedfs-master:
+        condition: service_started
+      seaweedfs-volume:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./configs/seaweedfs-s3/seaweedfs_s3_config.json.template:/etc/seaweedfs/s3_config.json.template:ro
+      - ./configs/seaweedfs-s3/s3-init-buckets.sh:/s3-init-buckets.sh:ro
+
   coturn:
     image: coturn/coturn:4.7.0
     container_name: coturn
@@ -458,3 +558,9 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
+  seaweed_master_data:
+    driver: local
+  seaweed_volume_data:
+    driver: local
+  seaweed_filer_data:
+    driver: local
