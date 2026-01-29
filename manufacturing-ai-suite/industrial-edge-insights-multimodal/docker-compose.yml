@@ -238,6 +238,7 @@ services:
     user: "${TIMESERIES_UID}:${TIMESERIES_UID}"
     security_opt:
     - no-new-privileges
+    restart: unless-stopped
     command: >
      /bin/sh -c "/usr/local/bin/nginx-cert-gen.sh && exec nginx -g 'daemon off;'"
     environment:
@@ -263,7 +264,6 @@ services:
       - ia-mqtt-broker
       - mediamtx
       - coturn
-      - dlstreamer-pipeline-server
   ia-fusion-analytics:
     build:
       context: $PWD/fusion-analytics
@@ -414,12 +414,9 @@ services:
     - timeseries_network
   
   seaweedfs-master:
-    image: chrislusf/seaweedfs:4.07
+    image: ${SEAWEEDFS_IMAGE}
     hostname: seaweedfs-master
     container_name: seaweedfs-master
-    ports:
-      - "9333:9333"  # Master server port
-      - "19333:19333"  # Master gRPC port
     networks:
       - timeseries_network
     volumes:
@@ -430,12 +427,9 @@ services:
     command: master -ip=seaweedfs-master -ip.bind=0.0.0.0
 
   seaweedfs-volume:
-    image: chrislusf/seaweedfs:4.07
+    image: ${SEAWEEDFS_IMAGE}
     hostname: seaweedfs-volume
     container_name: seaweedfs-volume
-    ports:
-      - "8081:8080"  # Volume server HTTP port
-      - "18080:18080"  # Volume server gRPC port
     networks:
       - timeseries_network
     volumes:
@@ -448,16 +442,16 @@ services:
       - seaweedfs-master
 
   seaweedfs-filer:
-    image: chrislusf/seaweedfs:4.07
+    image: ${SEAWEEDFS_IMAGE}
     hostname: seaweedfs-filer
     container_name: seaweedfs-filer
     ports:
       - "8887:8888"  # Filer HTTP port
-      - "18888:18888"  # Filer gRPC port
     networks:
       - timeseries_network
     volumes:
       - seaweed_filer_data:/data
+      - "vol_temp_seaweed_filer:/tmp"
       - ./seaweedfs_s3_config.json:/etc/seaweedfs/s3_config.json:ro
     environment:
       - NO_PROXY=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
@@ -474,11 +468,9 @@ services:
       start_period: 30s
 
   seaweedfs-s3:
-    image: chrislusf/seaweedfs:4.07
+    image: ${SEAWEEDFS_IMAGE}
     hostname: seaweedfs-s3
     container_name: seaweedfs-s3
-    ports:
-      - "8888:8333"  # S3 API port (mapped to 8888 on host)
     networks:
       - timeseries_network
     environment:
@@ -564,3 +556,9 @@ volumes:
     driver: local
   seaweed_filer_data:
     driver: local
+  vol_temp_seaweed_filer:
+    name: "seaweed_filer_vol"
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
