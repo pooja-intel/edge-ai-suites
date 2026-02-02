@@ -452,7 +452,6 @@ services:
     volumes:
       - seaweed_filer_data:/data
       - "vol_temp_seaweed_filer:/tmp"
-      - ./seaweedfs_s3_config.json:/etc/seaweedfs/s3_config.json:ro
     environment:
       - NO_PROXY=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16
       - no_proxy=localhost,127.0.0.1,seaweedfs-master,seaweedfs-volume,seaweedfs-filer,seaweedfs-s3,172.18.0.0/16

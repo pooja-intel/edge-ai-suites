@@ -9,7 +9,6 @@
          }
        ],
        "actions": [
-         "Admin",
          "Read",
          "Write",
          "List"
