@@ -27,16 +27,17 @@ hide_directive-->
 
 1. Download Helm chart:
    ```bash
-   helm pull oci://registry-1.docker.io/intel/wind-turbine-anomaly-detection-sample-app --version 1.1.0-weekly
-   ```
+   helm pull oci://registry-1.docker.io/intel/wind-turbine-anomaly-detection-sample-app --version 2026.0.<date>-weekly`
+    ```
+
+    Replace `<date>` with the actual patch version date (e.g., `20260120` for January 20th, 2026).
+    `helm pull oci://registry-1.docker.io/intel/wind-turbine-anomaly-detection-sample-app --version 2026.0.20260120-weekly`
 
 2. Extract the Helm chart:
    ```bash
-   tar -xvzf wind-turbine-anomaly-detection-sample-app-1.1.0-weekly.tgz
+   tar -xvzf wind-turbine-anomaly-detection-sample-app-2026.0.<date>-weekly.tgz
    cd wind-turbine-anomaly-detection-sample-app
    ```
-
-    `helm pull oci://registry-1.docker.io/intel/wind-turbine-anomaly-detection-sample-app --version 1.1.0-weekly`
 
 **Option B: Generate Helm charts**
 
@@ -47,7 +48,7 @@ hide_directive-->
 
 2. Generate the charts:
    ```bash
-   make gen_helm_charts app=wind-turbine-anomaly-detection version=1.1.0-weekly
+   make gen_helm_charts app=wind-turbine-anomaly-detection version=2026.0-weekly
    cd helm/
    ```
 
@@ -64,12 +65,15 @@ hide_directive-->
 
 1. Download Helm chart:
    ```bash
-   helm pull oci://registry-1.docker.io/intel/weld-anomaly-detection-sample-app --version 1.0.0-weekly
-   ```
+   helm pull oci://registry-1.docker.io/intel/weld-anomaly-detection-sample-app --version 2026.0.<date>-weekly`
+     ```
+
+    Replace `<date>` with the actual patch version date (e.g., `20260120` for January 20th, 2026).
+    `helm pull oci://registry-1.docker.io/intel/weld-anomaly-detection-sample-app --version 2026.0.20260120-weekly`
 
 2. Extract the Helm chart:
    ```bash
-   tar -xvzf weld-anomaly-detection-sample-app-1.0.0-weekly.tgz
+   tar -xvzf weld-anomaly-detection-sample-app-2026.0.<date>-weekly.tgz
    cd weld-anomaly-detection-sample-app
    ```
 
@@ -84,7 +88,7 @@ hide_directive-->
 
 2. Generate the charts:
     ```bash
-    make gen_helm_charts app=weld-anomaly-detection version=1.0.0-weekly
+    make gen_helm_charts app=weld-anomaly-detection version=2026.0-weekly
     cd helm/
     ```
 
