@@ -147,7 +147,7 @@ this sample application in Kubernetes environment:
 > **Note:**
 > Run the commands only after performing the Helm install.
 
-## Step 5: Activate the Pipeline/UDF Deployment Package
+## Step 5: Activate the Pipeline and UDF Deployment Package
 
 
 **DL Streamer Pipeline Server**
