@@ -177,6 +177,7 @@ push_images: build
 .PHONY: gen_helm_charts
 gen_helm_charts:
 	@echo "Generating Helm packages"
+	$(eval version := $(shell if [ -n "$(WEEKLY_BUILD_DATE)" ] && [ "$(WEEKLY_BUILD_DATE)" != '""' ]; then echo "2026.0.0-$(WEEKLY_BUILD_DATE)-weekly"; else echo $(IMAGE_SUFFIX); fi))
 	@cp -f configs/grafana/* helm/
 	@cp -f configs/influxdb/config/*.conf helm/
 	@cp -f configs/influxdb/init-influxdb.sh helm/
@@ -188,7 +189,10 @@ gen_helm_charts:
 	@cp -f configs/nginx/nginx.conf helm/nginx.conf
 	@cp -f configs/dlstreamer-pipeline-server/config.json helm/dlstreamer-pipeline-server.json
 	@sed -i 's/"auto_start": true,/"auto_start": false,/' helm/dlstreamer-pipeline-server.json
-	@echo "Helm packages generated"
+	@sed -i "s/version: .*/version: ${version}/" "helm/Chart.yaml"
+	@sed -i "s/appVersion: .*/appVersion: \"${version}\"/" "helm/Chart.yaml"
+	@sed -i "s/weekly_build_date: .*/weekly_build_date: \"$(WEEKLY_BUILD_DATE)\"/" "helm/values.yaml"
+	@echo "Helm packages generated with version: ${version}"
 
 # Help
 .PHONY: help
