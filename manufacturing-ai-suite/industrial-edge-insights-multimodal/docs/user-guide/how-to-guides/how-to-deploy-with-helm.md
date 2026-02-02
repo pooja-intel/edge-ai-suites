@@ -25,7 +25,7 @@ You can either generate or download the Helm charts.
   1. Download Helm chart with the following command:
 
      ```bash
-     helm pull oci://registry-1.docker.io/intel/multimodal-weld-defect-detection-sample-app --version 2026.0.<date>-weekly`
+     helm pull oci://registry-1.docker.io/intel/multimodal-weld-defect-detection-sample-app --version 2026.0.<date>-weekly
      ```
 
     Replace `<date>` with the actual patch version date (e.g., `20260120` for January 20th, 2026).
