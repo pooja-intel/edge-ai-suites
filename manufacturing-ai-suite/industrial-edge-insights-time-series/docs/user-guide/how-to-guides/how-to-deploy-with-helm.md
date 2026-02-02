@@ -182,7 +182,7 @@ To copy your own or existing model into Time Series Analytics Microservice in or
 
 1. The following udf package is placed in the repository under `edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/wind-turbine-anomaly-detection/time-series-analytics-config`.
 
-    > ```
+    >
     > - time-series-analytics-config/
     >     - models/
     >         - windturbine_anomaly_detector.pkl
@@ -191,7 +191,7 @@ To copy your own or existing model into Time Series Analytics Microservice in or
     >     - udfs/
     >         - requirements.txt
     >         - windturbine_anomaly_detector.py
-    > ```
+    >
 
 2. Copy your new UDF package (using the wind turbine anomaly detection UDF package as an example) to the `time-series-analytics-microservice` pod:
     ```sh
@@ -217,16 +217,16 @@ To copy your own or existing model into Time Series Analytics Microservice in or
 
 1. The following udf package is placed in the repository under `edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/weld-anomaly-detection/time-series-analytics-config`.
 
-    ```
-    - time-series-analytics-config/
-        - models/
-            - weld_anomaly_detector.cb
-        - tick_scripts/
-            - weld_anomaly_detector.tick
-        - udfs/
-            - requirements.txt
-            - weld_anomaly_detector.py
-    ```
+    >
+    > - time-series-analytics-config/
+    >     - models/
+    >         - weld_anomaly_detector.cb
+    >     - tick_scripts/
+    >         - weld_anomaly_detector.tick
+    >     - udfs/
+    >         - requirements.txt
+    >         - weld_anomaly_detector.py
+    >
 
 2. Copy your new UDF package (using the weld anomaly detection UDF package as an example) to the `time-series-analytics-microservice` pod:
 

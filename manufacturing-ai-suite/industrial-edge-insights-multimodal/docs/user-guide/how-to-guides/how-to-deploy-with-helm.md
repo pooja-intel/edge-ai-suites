@@ -121,16 +121,16 @@ this sample application in Kubernetes environment:
 
 1. The following udf package is placed in the repository under `edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-multimodal/configs/time-series-analytics-microservice`.
 
-   ```text
-   - time-series-analytics-microservice/
-       - models/
-           - weld_anomaly_detector.cb
-       - tick_scripts/
-           - weld_anomaly_detector.tick
-       - udfs/
-           - requirements.txt
-           - weld_anomaly_detector.py
-   ```
+   >
+   > - time-series-analytics-microservice/
+   >     - models/
+   >         - weld_anomaly_detector.cb
+   >     - tick_scripts/
+   >         - weld_anomaly_detector.tick
+   >     - udfs/
+   >         - requirements.txt
+   >         - weld_anomaly_detector.py
+   >
 
 2. Copy your new UDF package to the `time-series-analytics-microservice` pod:
 
