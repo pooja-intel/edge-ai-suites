@@ -177,7 +177,7 @@ push_images: build
 .PHONY: gen_helm_charts
 gen_helm_charts:
 	@echo "Generating Helm packages"
-	$(eval version := $(shell if [ -n "$(WEEKLY_BUILD_DATE)" ] && [ "$(WEEKLY_BUILD_DATE)" != '""' ]; then echo "2026.0.0-$(WEEKLY_BUILD_DATE)-weekly"; else echo "2026.0.0-weekly"; fi))
+	$(eval version := $(shell if [ -n "$(WEEKLY_BUILD_DATE)" ] && [ "$(WEEKLY_BUILD_DATE)" != '""' ]; then echo "2026.0.0-$(WEEKLY_BUILD_DATE)-weekly"; else echo "2026.0.0"; fi))
 	@cp -f configs/grafana/* helm/
 	@cp -f configs/influxdb/config/*.conf helm/
 	@cp -f configs/influxdb/init-influxdb.sh helm/

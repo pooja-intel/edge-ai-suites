@@ -217,7 +217,7 @@ push_images: build
 gen_helm_charts:
 	@echo "Generating Helm packages"
 	@echo "Packaging Helm chart for ${SAMPLE_APP}"
-	$(eval version := $(if $(filter command line,$(origin version)),$(version),$(shell if [ -n "$(WEEKLY_BUILD_DATE)" ] && [ "$(WEEKLY_BUILD_DATE)" != '""' ]; then echo "2026.0.0-$(WEEKLY_BUILD_DATE)-weekly"; else echo "2026.0.0-weekly"; fi)))
+	$(eval version := $(if $(filter command line,$(origin version)),$(version),$(shell if [ -n "$(WEEKLY_BUILD_DATE)" ] && [ "$(WEEKLY_BUILD_DATE)" != '""' ]; then echo "2026.0.0-$(WEEKLY_BUILD_DATE)-weekly"; else echo "2026.0.0"; fi)))
 	@cp -f configs/grafana/dashboards/*.yml helm/
 	@cp -f apps/${SAMPLE_APP}/grafana-dashboard.json helm/
 	@cp -f configs/influxdb/config/*.conf helm/
