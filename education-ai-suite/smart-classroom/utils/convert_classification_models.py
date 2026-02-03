@@ -8,6 +8,8 @@ from torchvision import transforms
 import openvino as ov
 import nncf
 import yaml
+import os
+import tarfile
 
 
 # Model URLs
@@ -42,6 +44,19 @@ def download_labels():
             return labels
     return None
 
+def is_within_directory(directory, target):
+    directory = os.path.abspath(directory)
+    target = os.path.abspath(target)
+    return os.path.commonpath([directory]) == os.path.commonpath([directory, target])
+
+def safe_extract(tar: tarfile.TarFile, path: str):
+    for member in tar.getmembers():
+        member_path = os.path.join(path, member.name)
+        if not is_within_directory(path, member_path):
+            raise Exception(f"Unsafe tar path detected: {member.name}")
+
+    tar.extractall(path=path)
+
 def download_dataset(url, dataset_path):
     """Download and extract dataset."""
     import tarfile
@@ -52,7 +67,7 @@ def download_dataset(url, dataset_path):
         print(f"Downloading dataset from {url}...")
         urllib.request.urlretrieve(url, archive_path)
         with tarfile.open(archive_path, "r:gz") as tar:
-            tar.extractall(path=dataset_path)
+            safe_extract(tar, dataset_path)     
         os.remove(archive_path)
     return dataset_path
 
