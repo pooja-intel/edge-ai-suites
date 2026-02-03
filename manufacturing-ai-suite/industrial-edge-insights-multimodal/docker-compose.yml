@@ -79,7 +79,7 @@ services:
   ia-time-series-analytics-microservice:
     container_name: ia-time-series-analytics-microservice
     hostname: ia-time-series-analytics-microservice
-    image: ${DOCKER_REGISTRY}${TIME_SERIES_ANALYTICS_IMAGE}:${IMAGE_SUFFIX:-latest}${WEEKLY_BUILD_DATE:+-${WEEKLY_BUILD_DATE}}
+    image: ${DOCKER_REGISTRY}${TIME_SERIES_ANALYTICS_IMAGE}:${IMAGE_SUFFIX:-latest}${WEEKLY_BUILD_DATE:+-${WEEKLY_BUILD_DATE}}${IMAGE_SUFFIX:+-weekly}
     restart: unless-stopped
     depends_on:
       - ia-influxdb
@@ -206,7 +206,7 @@ services:
     container_name: ia-weld-data-simulator
     hostname: ia-weld-data-simulator
     read_only: true
-    image: ${DOCKER_REGISTRY}${WELD_SIMULATOR_IMAGE}:${IMAGE_SUFFIX:-latest}${WEEKLY_BUILD_DATE:+-${WEEKLY_BUILD_DATE}}
+    image: ${DOCKER_REGISTRY}${WELD_SIMULATOR_IMAGE}:${IMAGE_SUFFIX:-latest}${WEEKLY_BUILD_DATE:+-${WEEKLY_BUILD_DATE}}${IMAGE_SUFFIX:+-weekly}
     restart: unless-stopped
     security_opt:
     - no-new-privileges
@@ -271,7 +271,7 @@ services:
         TIMESERIES_USER_NAME: ${TIMESERIES_USER_NAME}
         TIMESERIES_UID: ${TIMESERIES_UID}
     container_name: ia-fusion-analytics
-    image: ${DOCKER_REGISTRY}${FUSION_MODULE_IMAGE}:${IMAGE_SUFFIX:-latest}${WEEKLY_BUILD_DATE:+-${WEEKLY_BUILD_DATE}}
+    image: ${DOCKER_REGISTRY}${FUSION_MODULE_IMAGE}:${IMAGE_SUFFIX:-latest}${WEEKLY_BUILD_DATE:+-${WEEKLY_BUILD_DATE}}${IMAGE_SUFFIX:+-weekly}
     read_only: true
     restart: unless-stopped
     security_opt:
