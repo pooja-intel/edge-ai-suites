@@ -31,11 +31,6 @@ ifeq ($(origin ingestion_interval), undefined)
 ingestion_interval := "1s"
 endif
 
-# Assign default value to version and appVersion if not provided for helm deployment
-ifeq ($(origin version), undefined)
-version := "2026.0.0"
-endif
-
 export SAMPLE_APP
 
 # Example: Run a shell if-else block before starting containers
@@ -217,7 +212,7 @@ push_images: build
 gen_helm_charts:
 	@echo "Generating Helm packages"
 	@echo "Packaging Helm chart for ${SAMPLE_APP}"
-	$(eval version := $(if $(filter command line,$(origin version)),$(version),$(shell if [ -n "$(WEEKLY_BUILD_DATE)" ] && [ "$(WEEKLY_BUILD_DATE)" != '""' ]; then echo "2026.0.0-$(WEEKLY_BUILD_DATE)-weekly"; else echo "2026.0.0"; fi)))
+	$(eval version := $(shell if [ -n "$(WEEKLY_BUILD_DATE)" ] && [ "$(WEEKLY_BUILD_DATE)" != '""' ]; then echo "2026.0.0-$(WEEKLY_BUILD_DATE)-weekly"; else echo "2026.0.0"; fi))
 	@cp -f configs/grafana/dashboards/*.yml helm/
 	@cp -f apps/${SAMPLE_APP}/grafana-dashboard.json helm/
 	@cp -f configs/influxdb/config/*.conf helm/
@@ -265,7 +260,6 @@ help:
 	@echo "      Example: make push_images DOCKER_REGISTRY=myregistry"
 	@echo "  make gen_helm_charts              - Generate Helm packages for the selected sample app"
 	@echo "      Mandatory: app (default: wind-turbine-anomaly-detection)"
-	@echo "      Optional: version (default: 2026.0.0-weekly)"
-	@echo "      Example: make gen_helm_charts app=weld-anomaly-detection version=1.2.0"
+	@echo "      Example: make gen_helm_charts app=weld-anomaly-detection"
 	@echo "  make help                         - Display this help message"
 	@echo "      No parameters required."
