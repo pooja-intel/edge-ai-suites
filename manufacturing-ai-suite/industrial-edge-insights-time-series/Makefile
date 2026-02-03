@@ -33,7 +33,7 @@ endif
 
 # Assign default value to version and appVersion if not provided for helm deployment
 ifeq ($(origin version), undefined)
-version := "2026.0.0-weekly"
+version := "2026.0.0"
 endif
 
 export SAMPLE_APP
