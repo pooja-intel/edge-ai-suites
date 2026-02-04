@@ -1,6 +1,6 @@
 # Access S3 Stored Images
 
-The DL Streamer Pipeline Server automatically stores processed images in the SeaweedFS S3 bucket. This guide explains how to access and verify these stored images.
+The DL Streamer Pipeline Server stores processed images in the SeaweedFS S3 bucket. This guide explains how to access and verify these stored images.
 
 ## Overview
 
@@ -8,7 +8,7 @@ All images processed by the DL Streamer Pipeline Server are stored in the S3 buc
 
 ## Viewing Vision Metadata in InfluxDB
 
-DL Streamer Pipeline Server generates vision metadata for each processed frame and is stored into InfluxDB*. 
+The DL Streamer Pipeline Server generates vision metadata for each processed frame, which is stored in InfluxDB.
 
 ### Accessing Vision Metadata
 
