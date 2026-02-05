@@ -8,7 +8,7 @@ All images processed by the DL Streamer Pipeline Server are stored in the S3 buc
 
 ## Viewing Vision Metadata in InfluxDB
 
-The DL Streamer Pipeline Server generates vision metadata for each processed frame, which is stored in InfluxDB.
+The DL Streamer Pipeline Server generates vision metadata for each processed frame. This metadata is stored in InfluxDB.
 
 ### Accessing Vision Metadata
 
@@ -45,7 +45,7 @@ Access the SeaweedFS Filer interface in your web browser:
 http://<host_ip>:8887/buckets/dlstreamer-pipeline-results/weld-defect-classification/
 ```
 
-Images are organized by their `img_handle` identifier. Browse the directory to locate specific images, then click to view or download them.
+Images are organized by their `img_handle` identifier. Browse the directory to locate specific images, then click to view the image.
 
 ## Mapping Vision Metadata to Stored Images
 
