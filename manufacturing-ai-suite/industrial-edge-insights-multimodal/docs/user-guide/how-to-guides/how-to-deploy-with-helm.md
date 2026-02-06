@@ -67,6 +67,8 @@ You can either generate or download the Helm charts.
    MTX_WEBRTCICESERVERS2_0_USERNAME:
    MTX_WEBRTCICESERVERS2_0_PASSWORD:
    HOST_IP:  # IP address of server where DL Streamer Pipeline Server is running
+   S3_STORAGE_USERNAME:
+   S3_STORAGE_PASSWORD:
    ```
 
 ## Step 3: Install Helm charts

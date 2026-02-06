@@ -45,7 +45,7 @@ Access the SeaweedFS Filer interface in your web browser:
 https://<host_ip>:8887/buckets/dlstreamer-pipeline-results/weld-defect-classification/
 ```
 
-> **Note:**: Use link `https://<host_ip>:30003/buckets/dlstreamer-pipeline-results/weld-defect-classification/` to access the SeaweedFS Filer interface for the Helm deployment.
+> **Note:** Use link `https://<host_ip>:30003/buckets/dlstreamer-pipeline-results/weld-defect-classification/` to access the SeaweedFS Filer interface for the Helm deployment.
 
 Images are organized by their `img_handle` identifier. Browse the directory to locate specific images, then click to view the image.
 
