@@ -161,10 +161,16 @@ curl -k https://localhost:30001/dsps-api/pipelines/user_defined_pipelines/weld_d
             "type": "mqtt",
             "topic": "vision_weld_defect_classification"
         },
-        "frame": {
-            "type": "webrtc",
-            "peer-id": "samplestream"
-        }
+        "frame": [{
+                            "type": "webrtc",
+                            "peer-id": "samplestream"
+                        },
+                        {
+                            "type": "s3_write",
+                            "bucket": "dlstreamer-pipeline-results",
+                            "folder_prefix": "weld-defect-classification",
+                            "block": false
+                        }]
     },
     "parameters": {
         "classification-properties": {

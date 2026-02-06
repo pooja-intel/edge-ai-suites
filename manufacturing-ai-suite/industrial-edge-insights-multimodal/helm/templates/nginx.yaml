@@ -18,6 +18,10 @@ spec:
     port: {{ $.Values.config.nginx.int.https_port }}
     targetPort: {{ $.Values.config.nginx.int.https_port }}
     nodePort: {{ $.Values.config.nginx.ext.https_port }}
+  - name: seaweedfs-filer
+    port: {{ $.Values.config.nginx.int.seaweedfs_filer_port }}
+    targetPort: {{ $.Values.config.nginx.int.seaweedfs_filer_port }}
+    nodePort: {{ $.Values.config.nginx.ext.seaweedfs_filer_port }}
   - name: mqtt
     port: {{ $.Values.config.nginx.int.mqtt_port }}
     targetPort: {{ $.Values.config.nginx.int.mqtt_port }}
