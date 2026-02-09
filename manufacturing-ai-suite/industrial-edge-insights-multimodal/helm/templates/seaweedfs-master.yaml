@@ -14,9 +14,9 @@ spec:
   selector:
     app: seaweedfs-master
   ports:
-  - port: {{ .Values.config.seaweedfs_master.server_port }}
+  - port: 9333
     name: master-server-port
-  - port: {{ .Values.config.seaweedfs_master.grpc_port }}
+  - port: 19333
     name: master-grpc-port
 ---
 apiVersion: apps/v1

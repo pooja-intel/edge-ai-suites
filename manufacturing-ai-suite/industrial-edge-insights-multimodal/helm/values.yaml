@@ -140,19 +140,12 @@ config:
       rtsp_output_port: "8554"
   seaweedfs_filer:
     name: seaweedfs-filer
-    http_port: "8888"
-    grpc_port: "18888"
   seaweedfs_master:
     name: seaweedfs-master
-    server_port: "9333"
-    grpc_port: "19333"
   seaweedfs_volume:
     name: seaweedfs-volume
-    server_port: "8080"
-    grpc_port: "18080"
   seaweedfs_s3:
     name: seaweedfs-s3
-    server_port: "8333"
   coturn:
     name: coturn
     int:

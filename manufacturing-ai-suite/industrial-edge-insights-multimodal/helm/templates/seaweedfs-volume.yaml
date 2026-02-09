@@ -14,9 +14,9 @@ spec:
   selector:
     app: seaweedfs-volume
   ports:
-  - port: {{ .Values.config.seaweedfs_volume.server_port }}
+  - port: 8080
     name: volume-server-port
-  - port: {{ .Values.config.seaweedfs_volume.grpc_port }}
+  - port: 18080
     name: volume-grpc-port
 ---
 apiVersion: apps/v1
@@ -53,7 +53,7 @@ spec:
         volumeMounts:
         - name: vol-seaweed-volume-data
           mountPath: /data
-        args: ["volume", "-mserver={{ .Values.config.seaweedfs_master.name }}:{{ .Values.config.seaweedfs_master.server_port }}", "-ip.bind=0.0.0.0", "-port={{ .Values.config.seaweedfs_volume.server_port }}"]
+        args: ["volume", "-mserver={{ .Values.config.seaweedfs_master.name }}:9333", "-ip.bind=0.0.0.0", "-port=8080"]
         env:
         - name: NO_PROXY
           value: "localhost,127.0.0.1,{{ .Values.config.seaweedfs_filer.name }},{{ .Values.config.seaweedfs_volume.name }},{{ .Values.config.seaweedfs_master.name }},{{ .Values.config.seaweedfs_s3.name }},172.18.0.0/16"

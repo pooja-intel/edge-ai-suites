@@ -12,10 +12,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: {{ .Values.config.seaweedfs_filer.http_port }}
-    name: filer-http-port
+  - name: filer-http-port
+    port: 8888 
   - name: filer-grpc-port
-    port: {{ .Values.config.seaweedfs_filer.grpc_port }}
+    port: 18888
   selector:
     app: seaweedfs-filer
 ---
@@ -55,7 +55,7 @@ spec:
           mountPath: /tmp
         - name: vol-seaweed-filer-data
           mountPath: /data
-        args: ["filer", "-master={{ .Values.config.seaweedfs_master.name }}:{{ .Values.config.seaweedfs_master.server_port }}", "-ip.bind=0.0.0.0"]
+        args: ["filer", "-master={{ .Values.config.seaweedfs_master.name }}:9333", "-ip.bind=0.0.0.0"]
         env:
         - name: NO_PROXY
           value: "localhost,127.0.0.1,{{ .Values.config.seaweedfs_filer.name }},{{ .Values.config.seaweedfs_volume.name }},{{ .Values.config.seaweedfs_master.name }},{{ .Values.config.seaweedfs_s3.name }},172.18.0.0/16"
