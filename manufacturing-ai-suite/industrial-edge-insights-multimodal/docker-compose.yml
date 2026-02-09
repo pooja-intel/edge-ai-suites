@@ -249,7 +249,6 @@ services:
     ports:
       - "${GRAFANA_PORT}:15443"   # HTTPS for Grafana and TS MS Rest API
       - "1883:1883" # MQTT TCP Proxy
-      - "8887:8887" # HTTPS for SeaweedFS Filer UI
     volumes:
       - ./configs/nginx/nginx.conf:/tmp/default.conf.template:ro
       - ./configs/nginx/nginx-cert-gen.sh:/usr/local/bin/nginx-cert-gen.sh:ro

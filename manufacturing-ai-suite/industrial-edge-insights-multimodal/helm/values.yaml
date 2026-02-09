@@ -122,11 +122,9 @@ config:
     int:
       https_port: "15443"
       mqtt_port: "1883"
-      seaweedfs_filer_port: "8887"
     ext:
       https_port: "30001"
       mqtt_port: "30002"
-      seaweedfs_filer_port: "30003"
   mediamtx:
     name: mediamtx
     int:
