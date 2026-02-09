@@ -45,7 +45,7 @@ spec:
         image: {{ .Values.images.seaweedfs_image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         securityContext:
-          readOnlyRootFilesystem: false  # Or false to match docker-compose
+          readOnlyRootFilesystem: false
           allowPrivilegeEscalation: false
           capabilities:
             drop:
