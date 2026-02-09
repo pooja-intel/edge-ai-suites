@@ -121,7 +121,7 @@ spec:
         - name: S3_STORAGE_HOST
           value: "{{ $.Values.config.seaweedfs_s3.name }}"
         - name: S3_STORAGE_PORT
-          value: "{{ $.Values.config.seaweedfs_s3.server_port }}"
+          value: "8333"
         - name: S3_STORAGE_USER
           value: "{{ $.Values.env.S3_STORAGE_USERNAME }}"
         - name: S3_STORAGE_PASS
