@@ -37,7 +37,7 @@ Similarly, it ingests the .csv files as data points into **Telegraf** using the 
 ##### 2.1 **DL Streamer Pipeline Server**
 
 The `DL Streamer Pipeline Server` microservice reads the frames/images from the MediaMTX server over RTSP protocol, runs the configured DL weld
-defect classification model, publishes the frame metadata results over MQTT and generates the WebRTC stream with bounded boxes for visualization in **Grafana**.
+defect classification model, publishes the frame metadata results over MQTT, stores the processed frames in SeaweedFS S3 storage, and generates the WebRTC stream with bounded boxes for visualization in **Grafana**.
 
 ###### **DL Streamer Pipeline Server `config.json`**
 
@@ -61,13 +61,17 @@ defect classification model, publishes the frame metadata results over MQTT and 
 
 **Destination Configuration**:
 
-| Key                | Description                                                                 | Example Value                          |
-|--------------------|-----------------------------------------------------------------------------|----------------------------------------|
-| `destination`      | Configuration for output destinations of the pipeline.                      | Object containing metadata and frame settings |
-| `metadata.type`    | The protocol type for sending metadata information.                         | `"mqtt"`                              |
-| `metadata.topic`   | The MQTT topic where vision classification results are published.           | `"vision_weld_defect_classification"` |
-| `frame.type`       | The protocol type for streaming video frames.                               | `"webrtc"`                            |
-| `frame.peer-id`    | Unique identifier for the WebRTC peer connection.                           | `"samplestream"`                      |
+| Key                   | Description                                                              | Example Value                          |
+|-----------------------|--------------------------------------------------------------------------|----------------------------------------|
+| `destination`         | Configuration for output destinations of the pipeline.                   | Object containing metadata and frame settings |
+| `metadata.type`       | The protocol type for sending metadata information.                      | `"mqtt"`                               |
+| `metadata.topic`      | The MQTT topic where vision classification results are published.        | `"vision_weld_defect_classification"`  |
+| `frame.type`          | The protocol type for streaming video frames.                            | `"webrtc"`                             |
+| `frame.peer-id`       | Unique identifier for the WebRTC peer connection.                        | `"samplestream"`                       |
+| `frame.type`          | The protocol type for storing video frames.                              | `"s3_write"`                           |
+| `frame.bucket`        | S3 bucket name for storing processed frames.                             | `"dlstreamer-pipeline-results"`        |
+| `frame.folder_prefix` | Directory path within the bucket for storing frames.                     | `"weld-defect-classification"`         |
+| `frame.block`         | Controls S3 write synchronization with MQTT publishing. When false, metadata may arrive before S3 write completes. When true, MQTT metadata is sent only after S3 write completion. | `"false"` |
 
 ##### 2.2 **Time Series Analytics Microservice**
 
@@ -126,6 +130,7 @@ library.
 ##### 2.3 **Fusion Analytics**
 
 **Fusion Analytics** subscribes to the MQTT topics coming out of `DL Streamer Pipeline Server` and `Time Series Analytics Microservice`, applies `AND`/`OR` logic to determine the anomalies during weld process, publishes the results over MQTT and writes the results as a measurement/table in **InfluxDB**
+It also stores the vision metadata from the `DL Streamer Pipeline Server` as measurements/table in **InfluxDB**.
 
 #### 3. **Data Storage**
 
