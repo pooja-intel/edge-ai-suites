@@ -150,8 +150,8 @@ library.
 
 ##### 2.3 **Fusion Analytics**
 
-**Fusion Analytics** subscribes to the MQTT topics coming out of `DL Streamer Pipeline Server` and `Time Series Analytics Microservice`, applies `AND`/`OR` logic to determine the anomalies during weld process, publishes the results over MQTT and writes the results as a measurement/table in **InfluxDB**
-It also stores the vision metadata from the `DL Streamer Pipeline Server` as measurement/table in **InfluxDB**.
+**Fusion Analytics** subscribes to the MQTT topics coming out of `DL Streamer Pipeline Server` and `Time Series Analytics Microservice`, applies `AND`/`OR` logic to determine the anomalies during weld process, publishes the results over MQTT and writes the results as a measurement in **InfluxDB**
+It also stores the vision metadata from the `DL Streamer Pipeline Server` as a measurement in **InfluxDB**.
 
 #### 3. **Data Storage**
 
