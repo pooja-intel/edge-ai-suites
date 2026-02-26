@@ -93,14 +93,3 @@ failure_predictor_model.pkl       # Gradient Boosting failure predictor
 anomaly_type_classifier_model.pkl # Random Forest anomaly type classifier
 feature_scaler.pkl                # Fitted StandardScaler for inference
 ```
-
-## Integration
-
-The saved models are intended for deployment in a real-time ML inference service (e.g., a REST API). Kapacitor or a similar stream-processing engine can forward live metrics to the service:
-
-```
-POST http://ml-service:5000/predict
-Body: { <metric_name>: <value>, ... }
-
-Response: { is_anomaly, failure_probability, alert_level, ... }
-```
