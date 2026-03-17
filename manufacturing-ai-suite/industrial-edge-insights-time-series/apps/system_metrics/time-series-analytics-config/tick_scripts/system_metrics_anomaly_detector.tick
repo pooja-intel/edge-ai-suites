@@ -1,0 +1,422 @@
+// Predictive Maintenance Anomaly Detection TICKscript
+// Reads system metrics from InfluxDB and sends to UDF for ML-based anomaly detection
+
+dbrp "datain"."autogen"
+
+// ============================================================
+// CPU Metrics Stream (fan-out branch per field)
+// ============================================================
+var cpu_w = stream
+    |from()
+        .database('datain')
+        .retentionPolicy('autogen')
+        .measurement('cpu')
+        .groupBy('host')
+        .where(lambda: "cpu" == 'cpu-total')
+    |window()
+        .period(10s)
+        .every(10s)
+
+var cpu_user_s = cpu_w
+    |mean('usage_user')
+        .as('cpu_user_pct')
+
+var cpu_system_s = cpu_w
+    |mean('usage_system')
+        .as('cpu_system_pct')
+
+var cpu_idle_s = cpu_w
+    |mean('usage_idle')
+        .as('cpu_idle_pct')
+
+var cpu_iowait_s = cpu_w
+    |mean('usage_iowait')
+        .as('cpu_iowait_pct')
+
+var cpu = cpu_user_s
+    |join(cpu_system_s, cpu_idle_s, cpu_iowait_s)
+        .as('cu', 'cs', 'ci', 'cw')
+        .tolerance(1s)
+        .fill(0.0)
+    |eval(lambda: "cu.cpu_user_pct")
+        .as('cpu_user_pct')
+        .keep()
+    |eval(lambda: "cs.cpu_system_pct")
+        .as('cpu_system_pct')
+        .keep()
+    |eval(lambda: "ci.cpu_idle_pct")
+        .as('cpu_idle_pct')
+        .keep()
+    |eval(lambda: "cw.cpu_iowait_pct")
+        .as('cpu_iowait_pct')
+        .keep()
+    |eval(lambda: 100.0 - "cpu_idle_pct")
+        .as('cpu_total_pct')
+        .keep()
+
+// ============================================================
+// Memory Metrics Stream
+// ============================================================
+var mem = stream
+    |from()
+        .database('datain')
+        .measurement('mem')
+        .groupBy('host')
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('used_percent')
+        .as('mem_used_pct')
+
+// ============================================================
+// Swap Metrics Stream
+// ============================================================
+var swap = stream
+    |from()
+        .database('datain')
+        .measurement('swap')
+        .groupBy('host')
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('used_percent')
+        .as('swap_used_pct')
+
+// ============================================================
+// Disk Metrics Stream
+// ============================================================
+var disk = stream
+    |from()
+        .database('datain')
+        .measurement('disk')
+        .groupBy('host')
+        .where(lambda: "path" == '/')
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('used_percent')
+        .as('disk_used_pct')
+
+// ============================================================
+// Disk I/O Metrics Stream
+// read_bytes/write_bytes are cumulative counters - use derivative
+// to convert to bytes/sec rate, filtered to main disk (sda)
+// ============================================================
+var diskio_base = stream
+    |from()
+        .database('datain')
+        .measurement('diskio')
+        .groupBy('host')
+        .where(lambda: "name" == 'sda')
+
+var diskio_read = diskio_base
+    |derivative('read_bytes')
+        .as('disk_read_bps')
+        .unit(1s)
+        .nonNegative()
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('disk_read_bps')
+        .as('disk_read_bps')
+
+var diskio_write = diskio_base
+    |derivative('write_bytes')
+        .as('disk_write_bps')
+        .unit(1s)
+        .nonNegative()
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('disk_write_bps')
+        .as('disk_write_bps')
+
+var diskio_latency = diskio_base
+    |default()
+        .field('io_await', 0.0)
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('io_await')
+        .as('disk_latency_ms')
+
+var diskio = diskio_read
+    |join(diskio_write, diskio_latency)
+        .as('dr', 'dw', 'dl')
+        .tolerance(5s)
+        .fill(0.0)
+    |default()
+        .field('dr.disk_read_bps', 0.0)
+        .field('dw.disk_write_bps', 0.0)
+        .field('dl.disk_latency_ms', 0.0)
+    |eval(lambda: "dr.disk_read_bps")
+        .as('disk_read_bps')
+        .keep()
+    |eval(lambda: "dw.disk_write_bps")
+        .as('disk_write_bps')
+        .keep()
+    |eval(lambda: "dl.disk_latency_ms")
+        .as('disk_latency_ms')
+        .keep()
+
+// ============================================================
+// Network Metrics Stream
+// bytes_recv/bytes_sent/err_in/err_out are cumulative counters
+// Use derivative to convert to per-second rates, filter to eth0
+// ============================================================
+var net_base = stream
+    |from()
+        .database('datain')
+        .measurement('net')
+        .groupBy('host')
+        .where(lambda: "interface" == 'eth0')
+
+var net_recv = net_base
+    |derivative('bytes_recv')
+        .as('net_in_bps')
+        .unit(1s)
+        .nonNegative()
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('net_in_bps')
+        .as('net_in_bps')
+
+var net_sent = net_base
+    |derivative('bytes_sent')
+        .as('net_out_bps')
+        .unit(1s)
+        .nonNegative()
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('net_out_bps')
+        .as('net_out_bps')
+
+var net_errin = net_base
+    |derivative('err_in')
+        .as('net_err_in')
+        .unit(1s)
+        .nonNegative()
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('net_err_in')
+        .as('net_err_in')
+
+var net_errout = net_base
+    |derivative('err_out')
+        .as('net_err_out')
+        .unit(1s)
+        .nonNegative()
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('net_err_out')
+        .as('net_err_out')
+
+var net = net_recv
+    |join(net_sent, net_errin, net_errout)
+        .as('nr', 'ns', 'nei', 'neo')
+        .tolerance(5s)
+        .fill(0.0)
+    |default()
+        .field('nr.net_in_bps', 0.0)
+        .field('ns.net_out_bps', 0.0)
+        .field('nei.net_err_in', 0.0)
+        .field('neo.net_err_out', 0.0)
+    |eval(lambda: "nr.net_in_bps")
+        .as('net_in_bps')
+        .keep()
+    |eval(lambda: "ns.net_out_bps")
+        .as('net_out_bps')
+        .keep()
+    |eval(lambda: "nei.net_err_in")
+        .as('net_err_in')
+        .keep()
+    |eval(lambda: "neo.net_err_out")
+        .as('net_err_out')
+        .keep()
+
+// ============================================================
+// System Load Metrics Stream
+// ============================================================
+var system = stream
+    |from()
+        .database('datain')
+        .measurement('system')
+        .groupBy('host')
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('load1')
+        .as('load1')
+
+// ============================================================
+// Process Metrics Stream
+// ============================================================
+var processes = stream
+    |from()
+        .database('datain')
+        .measurement('processes')
+        .groupBy('host')
+    |window()
+        .period(10s)
+        .every(10s)
+    |mean('running')
+        .as('proc_running')
+
+// ============================================================
+// Docker Container CPU Stream (aggregated by host)
+// ============================================================
+var docker_cpu = stream
+    |from()
+        .database('datain')
+        .measurement('docker_container_cpu')
+        .groupBy('host')
+    |default()
+        .field('usage_percent', 0.0)
+    |window()
+        .period(60s)
+        .every(10s)
+    |mean('usage_percent')
+        .as('ctr_cpu_total_pct')
+
+// ============================================================
+// Docker Container Memory Stream (aggregated by host)
+// ============================================================
+var docker_mem = stream
+    |from()
+        .database('datain')
+        .measurement('docker_container_mem')
+        .groupBy('host')
+    |default()
+        .field('usage_percent', 0.0)
+    |window()
+        .period(60s)
+        .every(10s)
+    |mean('usage_percent')
+        .as('ctr_mem_used_pct_of_limit')
+
+// ============================================================
+// JOIN ALL METRICS and Send to UDF
+// ============================================================
+var data0 = cpu
+    |join(mem, swap, disk, diskio, net, system, processes, docker_cpu, docker_mem)
+        .as('cpu', 'mem', 'swap', 'disk', 'diskio', 'net', 'system', 'processes', 'dcpu', 'dmem')
+        .tolerance(30s)
+        .fill(0.0)
+    // Default null joined fields (docker streams may lag)
+    |default()
+        .field('dcpu.ctr_cpu_total_pct', 0.0)
+        .field('dmem.ctr_mem_used_pct_of_limit', 0.0)
+    // Flatten joined fields for UDF
+    |eval(lambda: "cpu.cpu_total_pct")
+        .as('cpu_total_pct')
+        .keep()
+    |eval(lambda: "cpu.cpu_user_pct")
+        .as('cpu_user_pct')
+        .keep()
+    |eval(lambda: "cpu.cpu_system_pct")
+        .as('cpu_system_pct')
+        .keep()
+    |eval(lambda: "cpu.cpu_iowait_pct")
+        .as('cpu_iowait_pct')
+        .keep()
+    |eval(lambda: "mem.mem_used_pct")
+        .as('mem_used_pct')
+        .keep()
+    |eval(lambda: "swap.swap_used_pct")
+        .as('swap_used_pct')
+        .keep()
+    |eval(lambda: "disk.disk_used_pct")
+        .as('disk_used_pct')
+        .keep()
+    |eval(lambda: "diskio.disk_read_bps")
+        .as('disk_read_bps')
+        .keep()
+    |eval(lambda: "diskio.disk_write_bps")
+        .as('disk_write_bps')
+        .keep()
+    |eval(lambda: "diskio.disk_latency_ms")
+        .as('disk_latency_ms')
+        .keep()
+    |eval(lambda: "net.net_in_bps")
+        .as('net_in_bps')
+        .keep()
+    |eval(lambda: "net.net_out_bps")
+        .as('net_out_bps')
+        .keep()
+    |eval(lambda: "net.net_err_in")
+        .as('net_err_in')
+        .keep()
+    |eval(lambda: "net.net_err_out")
+        .as('net_err_out')
+        .keep()
+    |eval(lambda: "system.load1")
+        .as('load1')
+        .keep()
+    |eval(lambda: "processes.proc_running")
+        .as('proc_running')
+        .keep()
+    |eval(lambda: "dcpu.ctr_cpu_total_pct")
+        .as('ctr_cpu_total_pct')
+        .keep()
+    |eval(lambda: "dmem.ctr_mem_used_pct_of_limit")
+        .as('ctr_mem_used_pct_of_limit')
+        .keep()
+    // Add default container health metrics (set to 0 if not available)
+    |default()
+        .field('ctr_cpu_total_pct', 0.0)
+        .field('ctr_mem_used_pct_of_limit', 0.0)
+        .field('ctr_unhealthy_count', 0.0)
+        .field('ctr_exited_count', 0.0)
+    // Send to anomaly detector UDF
+    @system_metrics_anomaly_detector()
+
+// ============================================================
+// Store predictions to InfluxDB
+// ============================================================
+data0
+    |influxDBOut()
+        .buffer(0)
+        .database('datain')
+        .measurement('system-anomaly-predictions')
+        .retentionPolicy('autogen')
+
+// ============================================================
+// Alert on anomalies
+// ============================================================
+data0
+    |alert()
+        .id('system-anomaly-{{ index .Tags "host" }}')
+        .message('System Anomaly Detected - Host: {{ index .Tags "host" }}, Alert Level: {{ index .Fields "alert_level" }}')
+        .details('''
+System Predictive Maintenance Alert
+
+Host: {{ index .Tags "host" }}
+Time: {{ .Time }}
+
+ML Predictions:
+  - Is Anomaly: {{ index .Fields "is_anomaly" }}
+  - Anomaly Probability: {{ index .Fields "anomaly_probability" }}
+  - Failure Probability: {{ index .Fields "failure_probability" }}
+  - Alert Level: {{ index .Fields "alert_level" }}
+
+Key Metrics:
+  - CPU Total: {{ index .Fields "cpu_total_pct" }}%
+  - Memory Used: {{ index .Fields "mem_used_pct" }}%
+  - Disk Latency: {{ index .Fields "disk_latency_ms" }}ms
+  - System Load: {{ index .Fields "load1" }}
+  - Disk Read: {{ index .Fields "disk_read_bps" }} bytes/s
+  - Disk Write: {{ index .Fields "disk_write_bps" }} bytes/s
+''')
+        .info(lambda: "alert_level" == 'INFO')
+        .warn(lambda: "alert_level" == 'WARNING')
+        .crit(lambda: "alert_level" == 'CRITICAL')
+        .stateChangesOnly()
+        .log('/var/log/kapacitor/system_anomaly_alerts.log')
+        // Optional: Send to MQTT
+        // .mqtt('my_mqtt_broker')
+        // .topic('alerts/system_anomaly')
+        // .qos(1)

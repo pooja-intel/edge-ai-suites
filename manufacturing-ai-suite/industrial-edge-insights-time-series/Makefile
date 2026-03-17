@@ -5,7 +5,7 @@
 #
 
 DEFAULT_SAMPLE_APP := wind-turbine-anomaly-detection
-SAMPLE_APP_LIST := wind-turbine-anomaly-detection weld-anomaly-detection
+SAMPLE_APP_LIST := wind-turbine-anomaly-detection weld-anomaly-detection system_metrics
 
 ifdef app
 ifeq ($(filter $(app),$(SAMPLE_APP_LIST)),)
