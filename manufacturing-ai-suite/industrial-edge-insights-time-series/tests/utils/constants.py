@@ -177,6 +177,7 @@ SAMPLE_APPS_CONFIG = {
         "vision_topic": "vision_weld_defect_classification",
         "vision_measurement": "vision-weld-classification-results",
         "fusion_topic": "fusion/anomaly_detection_results",
+        "fusion_measurement": "fusion_result",
         "alert_topic": "alerts/weld_defect_detection",
         "udf": "weld_anomaly_detector",
         "model": "weld_anomaly_detector.cb",

@@ -341,8 +341,8 @@ def test_influxdb_data_storage_multimodal(setup_multimodal_environment):
     measurements_to_check = [
         multimodal_config.get("ingested_topic"),      # Raw sensor data
         multimodal_config.get("analytics_topic"),     # Time series analytics results
-        multimodal_config.get("vision_topic"),        # Vision analytics results
-        multimodal_config.get("fusion_topic")         # Fusion decision results
+        multimodal_config.get("vision_measurement"),        # Vision analytics results
+        multimodal_config.get("fusion_measurement")         # Fusion decision results
     ]
     
     stored_measurements = []
@@ -362,6 +362,8 @@ def test_influxdb_data_storage_multimodal(setup_multimodal_environment):
     # Verify at least ingested data and analytics data are stored
     assert multimodal_config.get("ingested_topic") in stored_measurements, "Raw sensor data not stored in InfluxDB"
     assert multimodal_config.get("analytics_topic") in stored_measurements, "Analytics results not stored in InfluxDB"
+    assert multimodal_config.get("vision_measurement") in stored_measurements, "Vision analytics results not stored in InfluxDB"
+    assert multimodal_config.get("fusion_measurement") in stored_measurements, "Fusion decision results not stored in InfluxDB"
     
     logger.info(f"✓ InfluxDB data storage validated - {len(stored_measurements)}/{len(measurements_to_check)} measurements stored")
 

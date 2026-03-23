@@ -1584,7 +1584,8 @@ def validate_mqtt_alert_system(sample_app=constants.WIND_SAMPLE_APP):
     
     # Step 1: Check for MQTT alerts configuration pattern using unified function
     logger.info(f"\nStep 1: Checking for {alert_type.upper()} alerts configuration pattern...")
-    update_config_pattern = update_config_file(ingestion_type)
+    if sample_app == constants.WIND_SAMPLE_APP:
+        update_config_pattern = update_config_file(ingestion_type)
     if not update_config_pattern:
         logger.error(f"✗ Step 1 FAILED: to update {alert_type.upper()} configuration via REST API")
         return False

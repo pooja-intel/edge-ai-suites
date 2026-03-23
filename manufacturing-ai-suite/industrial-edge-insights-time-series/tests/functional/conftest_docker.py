@@ -5,7 +5,6 @@ import time
 import logging
 
 # Add paths for imports
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils')))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils import docker_utils
 from utils import constants

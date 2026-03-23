@@ -386,8 +386,9 @@ def test_seaweed_s3_stored_images_access_multimodal():
         logger.info("SETUP COMPLETED - STARTING SEAWEEDFS S3 VALIDATION")
         logger.info("=====================================================")
 
-        logger.info("Waiting %ss for DLStreamer to process video and write images to S3 storage...", constants.MULTIMODAL_SEAWEED_WAIT_FOR_S3_WRITE)
-        common_utils.wait_for_stability(constants.MULTIMODAL_SEAWEED_WAIT_FOR_S3_WRITE)
+        s3_wait_time = 90  # Additional 90 seconds for S3 image writes
+        logger.info("Waiting %ss for DLStreamer to process video and write images to S3 storage...", s3_wait_time)
+        common_utils.wait_for_stability(s3_wait_time)
 
         logger.info("S3 Step 1: Verifying required pods for S3 image storage")
         pod_check = helm_utils.verify_seaweed_essential_pods(multimodal_namespace)
