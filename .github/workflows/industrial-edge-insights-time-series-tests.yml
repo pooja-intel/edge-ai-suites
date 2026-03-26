@@ -163,22 +163,29 @@ jobs:
         # Print test results summary
         python3 - <<'PYEOF'
         import xml.etree.ElementTree as ET, os
+        from collections import defaultdict
         xml_path = '/tmp/test_timeseries_report/junit.xml'
         if not os.path.exists(xml_path):
             print("No test results found")
         else:
             root = ET.parse(xml_path).getroot()
-            suites = root.findall('testsuite') if root.tag == 'testsuites' else [root]
+            files = defaultdict(lambda: {'total': 0, 'passed': 0, 'failed': 0, 'skipped': 0, 'errors': 0})
+            for tc in root.findall('.//testcase'):
+                parts = tc.get('classname', '').split('.')
+                fname = next((p for p in parts if p.startswith('test_')), parts[0] if parts else 'unknown')
+                files[fname]['total'] += 1
+                if tc.find('failure') is not None:
+                    files[fname]['failed'] += 1
+                elif tc.find('error') is not None:
+                    files[fname]['errors'] += 1
+                elif tc.find('skipped') is not None:
+                    files[fname]['skipped'] += 1
+                else:
+                    files[fname]['passed'] += 1
             print(f"\n{'Test File':<55} {'Run':>5} {'Pass':>5} {'Fail':>5} {'Skip':>5} {'Err':>5}")
             print('-' * 80)
-            for s in suites:
-                name = s.get('name', 'unknown').replace('functional.', '')
-                t = int(s.get('tests', 0))
-                f = int(s.get('failures', 0))
-                e = int(s.get('errors', 0))
-                sk = int(s.get('skipped', 0))
-                p = t - f - e - sk
-                print(f"{name:<55} {t:>5} {p:>5} {f:>5} {sk:>5} {e:>5}")
+            for fname, c in sorted(files.items()):
+                print(f"{fname:<55} {c['total']:>5} {c['passed']:>5} {c['failed']:>5} {c['skipped']:>5} {c['errors']:>5}")
             print()
         PYEOF
         deactivate
@@ -229,22 +236,29 @@ jobs:
         # Print test results summary
         python3 - <<'PYEOF'
         import xml.etree.ElementTree as ET, os
+        from collections import defaultdict
         xml_path = '/tmp/test_multimodal_report/junit.xml'
         if not os.path.exists(xml_path):
             print("No test results found")
         else:
             root = ET.parse(xml_path).getroot()
-            suites = root.findall('testsuite') if root.tag == 'testsuites' else [root]
+            files = defaultdict(lambda: {'total': 0, 'passed': 0, 'failed': 0, 'skipped': 0, 'errors': 0})
+            for tc in root.findall('.//testcase'):
+                parts = tc.get('classname', '').split('.')
+                fname = next((p for p in parts if p.startswith('test_')), parts[0] if parts else 'unknown')
+                files[fname]['total'] += 1
+                if tc.find('failure') is not None:
+                    files[fname]['failed'] += 1
+                elif tc.find('error') is not None:
+                    files[fname]['errors'] += 1
+                elif tc.find('skipped') is not None:
+                    files[fname]['skipped'] += 1
+                else:
+                    files[fname]['passed'] += 1
             print(f"\n{'Test File':<55} {'Run':>5} {'Pass':>5} {'Fail':>5} {'Skip':>5} {'Err':>5}")
             print('-' * 80)
-            for s in suites:
-                name = s.get('name', 'unknown').replace('functional.', '')
-                t = int(s.get('tests', 0))
-                f = int(s.get('failures', 0))
-                e = int(s.get('errors', 0))
-                sk = int(s.get('skipped', 0))
-                p = t - f - e - sk
-                print(f"{name:<55} {t:>5} {p:>5} {f:>5} {sk:>5} {e:>5}")
+            for fname, c in sorted(files.items()):
+                print(f"{fname:<55} {c['total']:>5} {c['passed']:>5} {c['failed']:>5} {c['skipped']:>5} {c['errors']:>5}")
             print()
         PYEOF
         deactivate
@@ -278,18 +292,22 @@ jobs:
         def parse_junit(xml_path):
             if not os.path.exists(xml_path):
                 return None
+            from collections import defaultdict
             root = ET.parse(xml_path).getroot()
-            suites = root.findall('testsuite') if root.tag == 'testsuites' else [root]
-            rows = []
-            for s in suites:
-                name = s.get('name', 'unknown').replace('functional.', '')
-                t  = int(s.get('tests', 0))
-                f  = int(s.get('failures', 0))
-                e  = int(s.get('errors', 0))
-                sk = int(s.get('skipped', 0))
-                p  = t - f - e - sk
-                rows.append({'name': name, 'total': t, 'passed': p, 'failed': f, 'skipped': sk, 'errors': e})
-            return rows
+            files = defaultdict(lambda: {'total': 0, 'passed': 0, 'failed': 0, 'skipped': 0, 'errors': 0})
+            for tc in root.findall('.//testcase'):
+                parts = tc.get('classname', '').split('.')
+                fname = next((p for p in parts if p.startswith('test_')), parts[0] if parts else 'unknown')
+                files[fname]['total'] += 1
+                if tc.find('failure') is not None:
+                    files[fname]['failed'] += 1
+                elif tc.find('error') is not None:
+                    files[fname]['errors'] += 1
+                elif tc.find('skipped') is not None:
+                    files[fname]['skipped'] += 1
+                else:
+                    files[fname]['passed'] += 1
+            return [{'name': n, **c} for n, c in sorted(files.items())]
 
         overall = {'total': 0, 'passed': 0, 'failed': 0, 'skipped': 0, 'errors': 0}
 
