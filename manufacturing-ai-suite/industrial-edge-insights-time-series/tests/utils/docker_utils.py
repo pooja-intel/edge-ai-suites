@@ -1691,18 +1691,17 @@ def execute_influxdb_commands(container_name="ia-influxdb", measurement=None):
         # Step 3: Execute InfluxDB commands inside the container
         if measurement:
             # Query specific measurement(s)
-            if measurement == "weld-sensor-data":
-                query_part = f"SELECT * FROM weld_sensor_data LIMIT 5; SELECT * FROM weld_sensor_anomaly_data LIMIT 5"
+            if measurement == constants.WELD_INGESTED_TOPIC:
+                query_part = f"SELECT * FROM \"{constants.WELD_INGESTED_TOPIC}\" LIMIT 5; SELECT * FROM \"{constants.WELD_ANALYTICS_TOPIC}\" LIMIT 5"
                 verify_tables = ["weld_sensor_data", "weld_sensor_anomaly_data"]
             else:
                 # Default to wind turbine or handle other measurements
-                query_part = f"SELECT * FROM {measurement.replace('-', '_')} LIMIT 5"
+                query_part = f"SELECT * FROM \"{measurement.replace('_', '-')}\" LIMIT 5"
                 verify_tables = [measurement.replace('-', '_')]
         else:
             # Default wind turbine queries for backward compatibility
-            query_part = "SELECT * FROM wind_turbine_data LIMIT 5; SELECT * FROM wind_turbine_anomaly_data LIMIT 5"
+            query_part = f"SELECT * FROM \"{constants.WIND_TURBINE_INGESTED_TOPIC}\" LIMIT 5; SELECT * FROM \"{constants.WIND_TURBINE_ANALYTICS_TOPIC}\" LIMIT 5"
             verify_tables = ["wind_turbine_data", "wind_turbine_anomaly_data"]
-        
         influx_execute = f"SHOW MEASUREMENTS; {query_part}"
 
         exec_command = [
@@ -1761,7 +1760,7 @@ def verify_influxdb_retention_docker(response=None, container_name=constants.CON
             return None, False
 
         # Step 3: Execute InfluxDB query to get the earliest time value
-        influx_execute = "SELECT time, wind_speed FROM wind_turbine_data ORDER BY time ASC LIMIT 1"
+        influx_execute = f"SELECT time, wind_speed FROM \"{constants.WIND_TURBINE_INGESTED_TOPIC}\" ORDER BY time ASC LIMIT 1"
         exec_command = [
             "docker", "exec", container_name,
             "influx", "-username", influxdb_username, "-password", influxdb_password,
@@ -1779,10 +1778,10 @@ def verify_influxdb_retention_docker(response=None, container_name=constants.CON
         output_lines = result.stdout.strip().split('\n')
         time_value = output_lines[3].split()[0] if len(output_lines) >= 4 else ""
         if time_value:
-            logger.info(f"First time value in 'wind_turbine_data': {time_value}")
+            logger.info(f"First time value in 'wind-turbine-data': {time_value}")
             return time_value, True
         else:
-            logger.info("No time data found in 'wind_turbine_data'.")
+            logger.info("No time data found in 'wind-turbine-data'.")
             return None, False
 
     except subprocess.CalledProcessError as e:
