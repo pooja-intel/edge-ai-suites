@@ -417,30 +417,7 @@ def check_and_set_working_directory(return_original=True):
     """
     current_dir = os.getcwd()
     logger.info(f"Current working directory: {current_dir}")
-    
-    # Dynamic path resolution logic similar to current_dir() function
-     
 
-    # # Check if we're already in or below the target directory
-    # if "edge-ai-suites/edge-ai-suites" in current_dir:
-    #     logger.info("Already in edge-ai-suites directory structure")
-        
-    #     # Split the path and find where the target directory starts
-    #     parts = current_dir.split(os.sep)
-        
-    #     try:
-    #         edge_index = parts.index('edge-ai-suites')
-    #         # Take everything up to 'edge-ai-suites' and rebuild the path
-    #         root_parts = parts[:edge_index]
-    #         root_path = os.sep.join(root_parts) if root_parts else os.sep
-            
-    #         # Rebuild the target path
-    #         target_dir = os.path.join(root_path, constants.TARGET_SUBPATH)
-    #     except ValueError:
-    #         # If 'edge-ai-suites' not found in parts, use constants
-    #         target_dir = os.path.join(current_dir, constants.EDGE_AI_SUITES_DIR)
-    # else:
-    #     # If not in edge-ai-suites structure, use constants to build path
     target_dir = constants.EDGE_AI_SUITES_DIR
     
     # Normalize the path to remove any double slashes
