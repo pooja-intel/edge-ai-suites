@@ -406,7 +406,7 @@ def generate_test_credentials(case_type="valid", invalid_field=None):
         raise ValueError(f"Unknown case_type: {case_type}")
     
 def check_and_set_working_directory(return_original=True):
-    """Check current working directory and change to wind turbine directory.
+    """Check current working directory and change to Edge AI Suites directory.
     
     Args:
         return_original (bool): If True, returns the original directory path for later restoration
@@ -1670,7 +1670,7 @@ def execute_influxdb_commands(container_name="ia-influxdb", measurement=None):
             # Query specific measurement(s)
             if measurement == constants.WELD_INGESTED_TOPIC:
                 query_part = f"SELECT * FROM \"{constants.WELD_INGESTED_TOPIC}\" LIMIT 5; SELECT * FROM \"{constants.WELD_ANALYTICS_TOPIC}\" LIMIT 5"
-                verify_tables = ["weld-sensor-data", "weld-sensor-anomaly-data"]
+                verify_tables = [constants.WELD_INGESTED_TOPIC, constants.WELD_ANALYTICS_TOPIC]
             else:
                 # Default to wind turbine or handle other measurements
                 query_part = f"SELECT * FROM \"{measurement.replace('_', '-')}\" LIMIT 5"
@@ -1678,7 +1678,7 @@ def execute_influxdb_commands(container_name="ia-influxdb", measurement=None):
         else:
             # Default wind turbine queries for backward compatibility
             query_part = f"SELECT * FROM \"{constants.WIND_TURBINE_INGESTED_TOPIC}\" LIMIT 5; SELECT * FROM \"{constants.WIND_TURBINE_ANALYTICS_TOPIC}\" LIMIT 5"
-            verify_tables = ["wind-turbine-data", "wind-turbine-anomaly-data"]
+            verify_tables = [constants.WIND_TURBINE_INGESTED_TOPIC, constants.WIND_TURBINE_ANALYTICS_TOPIC]
         influx_execute = f"SHOW MEASUREMENTS; {query_part}"
 
         exec_command = [
@@ -1720,7 +1720,7 @@ def execute_influxdb_commands(container_name="ia-influxdb", measurement=None):
 def verify_influxdb_retention_docker(response=None, container_name=constants.CONTAINERS["influxdb"]["name"]):
     """
     Execute InfluxDB commands inside the InfluxDB Docker container to verify retention.
-    Returns the earliest time value in 'wind_turbine_data' and a success flag.
+    Returns the earliest time value in 'wind-turbine-data' and a success flag.
     """
     logger.info(f"Executing InfluxDB retention check in container '{container_name}'...")
     try:
@@ -1755,10 +1755,10 @@ def verify_influxdb_retention_docker(response=None, container_name=constants.CON
         output_lines = result.stdout.strip().split('\n')
         time_value = output_lines[3].split()[0] if len(output_lines) >= 4 else ""
         if time_value:
-            logger.info(f"First time value in 'wind-turbine-data': {time_value}")
+            logger.info(f"First time value in '{constants.WIND_TURBINE_INGESTED_TOPIC}': {time_value}")
             return time_value, True
         else:
-            logger.info("No time data found in 'wind-turbine-data'.")
+            logger.info(f"No time data found in '{constants.WIND_TURBINE_INGESTED_TOPIC}'.")
             return None, False
 
     except subprocess.CalledProcessError as e:
