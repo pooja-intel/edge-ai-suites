@@ -1720,7 +1720,7 @@ def execute_influxdb_commands(container_name="ia-influxdb", measurement=None):
 def verify_influxdb_retention_docker(response=None, container_name=constants.CONTAINERS["influxdb"]["name"]):
     """
     Execute InfluxDB commands inside the InfluxDB Docker container to verify retention.
-    Returns the earliest time value in 'wind-turbine-data' and a success flag.
+    Returns the earliest time value in the measurement and a success flag.
     """
     logger.info(f"Executing InfluxDB retention check in container '{container_name}'...")
     try:
