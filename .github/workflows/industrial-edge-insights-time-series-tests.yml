@@ -67,10 +67,14 @@ jobs:
       packages: read
     steps:
     - name: Print workflow inputs
+      env:
+        TAG: ${{ inputs.tag || 'main' }}
+        BUILD: ${{ inputs.build || 'yes' }}
+        TESTS: ${{ inputs.tests || 'all-tests' }}
       run: |
-        echo "tag    : ${{ inputs.tag || 'main' }}"
-        echo "build  : ${{ inputs.build || 'yes' }}"
-        echo "tests  : ${{ inputs.tests || 'all-tests' }}"
+        echo "tag    : $TAG"
+        echo "build  : $BUILD"
+        echo "tests  : $TESTS"
 
     - name: Checkout current repository
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

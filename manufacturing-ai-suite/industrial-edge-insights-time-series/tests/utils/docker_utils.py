@@ -421,27 +421,27 @@ def check_and_set_working_directory(return_original=True):
     # Dynamic path resolution logic similar to current_dir() function
      
 
-    # Check if we're already in or below the target directory
-    if "edge-ai-suites" in current_dir:
-        logger.info("Already in edge-ai-suites directory structure")
+    # # Check if we're already in or below the target directory
+    # if "edge-ai-suites/edge-ai-suites" in current_dir:
+    #     logger.info("Already in edge-ai-suites directory structure")
         
-        # Split the path and find where the target directory starts
-        parts = current_dir.split(os.sep)
+    #     # Split the path and find where the target directory starts
+    #     parts = current_dir.split(os.sep)
         
-        try:
-            edge_index = parts.index('edge-ai-suites')
-            # Take everything up to 'edge-ai-suites' and rebuild the path
-            root_parts = parts[:edge_index]
-            root_path = os.sep.join(root_parts) if root_parts else os.sep
+    #     try:
+    #         edge_index = parts.index('edge-ai-suites')
+    #         # Take everything up to 'edge-ai-suites' and rebuild the path
+    #         root_parts = parts[:edge_index]
+    #         root_path = os.sep.join(root_parts) if root_parts else os.sep
             
-            # Rebuild the target path
-            target_dir = os.path.join(root_path, constants.TARGET_SUBPATH)
-        except ValueError:
-            # If 'edge-ai-suites' not found in parts, use constants
-            target_dir = os.path.join(current_dir, constants.EDGE_AI_SUITES_DIR)
-    else:
-        # If not in edge-ai-suites structure, use constants to build path
-        target_dir = constants.EDGE_AI_SUITES_DIR
+    #         # Rebuild the target path
+    #         target_dir = os.path.join(root_path, constants.TARGET_SUBPATH)
+    #     except ValueError:
+    #         # If 'edge-ai-suites' not found in parts, use constants
+    #         target_dir = os.path.join(current_dir, constants.EDGE_AI_SUITES_DIR)
+    # else:
+    #     # If not in edge-ai-suites structure, use constants to build path
+    target_dir = constants.EDGE_AI_SUITES_DIR
     
     # Normalize the path to remove any double slashes
     target_dir = os.path.normpath(target_dir)
@@ -1572,9 +1572,9 @@ def validate_mqtt_alert_system(sample_app=constants.WIND_SAMPLE_APP):
     logger.info(f"\nStep 1: Checking for {alert_type.upper()} alerts configuration pattern...")
     if sample_app == constants.WIND_SAMPLE_APP:
         update_config_pattern = update_config_file(ingestion_type)
-    if not update_config_pattern:
-        logger.error(f"✗ Step 1 FAILED: to update {alert_type.upper()} configuration via REST API")
-        return False
+        if not update_config_pattern:
+            logger.error(f"✗ Step 1 FAILED: to update {alert_type.upper()} configuration via REST API")
+            return False
     
     # Step 2: Check container logs for alert pattern using common_utils for proper weld support
     logger.info(f"\nStep 2: Checking container logs for {alert_type.upper()} alert pattern...")
