@@ -406,7 +406,7 @@ def generate_test_credentials(case_type="valid", invalid_field=None):
         raise ValueError(f"Unknown case_type: {case_type}")
     
 def check_and_set_working_directory(return_original=True):
-    """Check current working directory and change to wind turbine directory using dynamic path resolution.
+    """Check current working directory and change to wind turbine directory.
     
     Args:
         return_original (bool): If True, returns the original directory path for later restoration
@@ -1670,15 +1670,15 @@ def execute_influxdb_commands(container_name="ia-influxdb", measurement=None):
             # Query specific measurement(s)
             if measurement == constants.WELD_INGESTED_TOPIC:
                 query_part = f"SELECT * FROM \"{constants.WELD_INGESTED_TOPIC}\" LIMIT 5; SELECT * FROM \"{constants.WELD_ANALYTICS_TOPIC}\" LIMIT 5"
-                verify_tables = ["weld_sensor_data", "weld_sensor_anomaly_data"]
+                verify_tables = ["weld-sensor-data", "weld-sensor-anomaly-data"]
             else:
                 # Default to wind turbine or handle other measurements
                 query_part = f"SELECT * FROM \"{measurement.replace('_', '-')}\" LIMIT 5"
-                verify_tables = [measurement.replace('-', '_')]
+                verify_tables = [measurement.replace('_', '-')]
         else:
             # Default wind turbine queries for backward compatibility
             query_part = f"SELECT * FROM \"{constants.WIND_TURBINE_INGESTED_TOPIC}\" LIMIT 5; SELECT * FROM \"{constants.WIND_TURBINE_ANALYTICS_TOPIC}\" LIMIT 5"
-            verify_tables = ["wind_turbine_data", "wind_turbine_anomaly_data"]
+            verify_tables = ["wind-turbine-data", "wind-turbine-anomaly-data"]
         influx_execute = f"SHOW MEASUREMENTS; {query_part}"
 
         exec_command = [
