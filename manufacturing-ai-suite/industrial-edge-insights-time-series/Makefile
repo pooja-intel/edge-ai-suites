@@ -7,6 +7,7 @@
 DEFAULT_SAMPLE_APP := wind-turbine-anomaly-detection
 SAMPLE_APP_LIST := wind-turbine-anomaly-detection weld-anomaly-detection
 HELM_REGISTRY := oci://registry-1.docker.io/intel
+MAKEFLAGS += --no-print-directory
 
 ifdef app
 ifeq ($(filter $(app),$(SAMPLE_APP_LIST)),)
@@ -117,6 +118,22 @@ check_env_variables:
 		esac; \
 	done
 
+.PHONY: wait_for_tsam
+wait_for_tsam:
+	@echo "Waiting for Time-Series Analytics microservice to be accessible..."; \
+	max_retries=30; \
+	retry=0; \
+	until [ "$$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:3000/ts-api/health)" != "000" ]; do \
+		retry=$$((retry + 1)); \
+		if [ $$retry -ge $$max_retries ]; then \
+			echo "Timed out waiting for Time-Series Analytics microservice after $$max_retries attempts."; \
+			exit 1; \
+		fi; \
+		echo "  Not accessible yet (attempt $$retry/$$max_retries), retrying in 5s..."; \
+		sleep 5; \
+	done; \
+	echo "Time-Series Analytics microservice is accessible."
+
 .PHONY: upload_zip_file
 upload_zip_file:
 	@echo "Creating UDF deployment zip for $(SAMPLE_APP)..."
@@ -128,10 +145,11 @@ upload_zip_file:
 	if [ -d models ] && [ -n "$$(ls -A models 2>/dev/null)" ]; then folders="$$folders models"; fi; \
 	zip -r $$zip_file $$folders && \
 	echo "Created: $$zip_file"
+	@$(MAKE) wait_for_tsam
 	@echo "Uploading UDF deployment zip for $(SAMPLE_APP) to Time-Series Analytics microservice..."; \
 	zip_file=$(CURDIR)/apps/$(SAMPLE_APP)/time-series-analytics-config/$(SAMPLE_APP).zip; \
 	response=$$(curl -s -o /tmp/upload_response.json -w "%{http_code}" \
-		-X POST https://localhost:3000/ts-api/update_udf_deployment_package \
+		-X POST https://localhost:${GRAFANA_PORT}/ts-api/update_udf_deployment_package \
 		-F "file=@$$zip_file" \
 		-k); \
 	if [ "$$response" = "200" ]; then \
@@ -150,9 +168,10 @@ post_config:
 		echo "Error: config.json not found at $$config_file"; \
 		exit 1; \
 	fi; \
+	$(MAKE) wait_for_tsam; \
 	echo "Posting config for $(SAMPLE_APP) to Time-Series Analytics microservice..."; \
 	response=$$(curl -s -o /tmp/config_response.json -w "%{http_code}" \
-		-X POST https://localhost:3000/ts-api/config \
+		-X POST https://localhost:${GRAFANA_PORT}/ts-api/config \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d @$$config_file \
@@ -186,8 +205,6 @@ up_mqtt_ingestion: check_env_variables down
 		done; \
 		$(DOCKER_COMPOSE) up --scale ia-opcua-server=0 -d $(shell $(DOCKER_COMPOSE) config --services | grep -v ia-mqtt-publisher); \
 	fi; \
-	echo "Waiting 5 seconds before uploading UDF deployment package..."; \
-	sleep 5; \
 	$(MAKE) upload_zip_file app=$(SAMPLE_APP);
 
 # Run Docker containers
@@ -209,8 +226,6 @@ up_opcua_ingestion: check_env_variables down
 	else \
 		$(DOCKER_COMPOSE) up --scale ia-opcua-server=$(num_of_streams) --scale ia-mqtt-publisher=0 -d; \
 	fi; \
-	echo "Waiting 5 seconds before uploading UDF deployment package..."; \
-	sleep 5; \
 	$(MAKE) upload_zip_file app=$(SAMPLE_APP);
 
 
@@ -277,7 +292,6 @@ gen_helm_charts:
 	@rm -rf helm/simulation-data
 	@cp -rf apps/${SAMPLE_APP}/simulation-data helm/
 	@cp -f apps/${SAMPLE_APP}/telegraf-config/*.conf helm
-	@cp -f apps/${SAMPLE_APP}/time-series-analytics-config/config.json helm/
 	@cp -f configs/telegraf/entrypoint.sh helm/telegraf_entrypoint.sh
 	@cp -f configs/nginx/nginx-cert-gen.sh helm/nginx-cert-gen.sh
 	@cp -f configs/nginx/nginx.conf helm/nginx.conf
