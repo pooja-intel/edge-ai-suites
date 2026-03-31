@@ -126,6 +126,54 @@ check_env_variables:
 		esac; \
 	done
 
+.PHONY: upload_zip_file
+upload_zip_file:
+	@echo "Creating UDF deployment zip for weld anomaly detection..."
+	@config_dir=$(CURDIR)/configs/time-series-analytics-microservice; \
+	zip_file=$(CURDIR)/configs/time-series-analytics-microservice/weld_anomaly_detector.zip; \
+	rm -f $$zip_file; \
+	cd $$config_dir && \
+	folders="udfs tick_scripts"; \
+	if [ -d models ] && [ -n "$$(ls -A models 2>/dev/null)" ]; then folders="$$folders models"; fi; \
+	zip -r $$zip_file $$folders && \
+	echo "Created: $$zip_file"
+	@echo "Uploading UDF deployment zip for weld anomaly detection to Time-Series Analytics microservice..."; \
+	zip_file=$(CURDIR)/configs/time-series-analytics-microservice/weld_anomaly_detector.zip; \
+	response=$$(curl -s -o /tmp/upload_response.json -w "%{http_code}" \
+		-X POST https://localhost:3000/ts-api/update_udf_deployment_package \
+		-F "file=@$$zip_file" \
+		-k); \
+	if [ "$$response" = "200" ]; then \
+		echo "Upload successful (HTTP $$response)."; \
+		$(MAKE) post_config; \
+	else \
+		echo "Upload failed (HTTP $$response). Response:"; \
+		cat /tmp/upload_response.json; \
+		exit 1; \
+	fi
+
+.PHONY: post_config
+post_config:
+	@config_file=$(CURDIR)/configs/time-series-analytics-microservice/config.json; \
+	if [ ! -f $$config_file ]; then \
+		echo "Error: config.json not found at $$config_file"; \
+		exit 1; \
+	fi; \
+	echo "Posting config for weld anomaly detection to Time-Series Analytics microservice..."; \
+	response=$$(curl -s -o /tmp/config_response.json -w "%{http_code}" \
+		-X POST https://localhost:3000/ts-api/config \
+		-H 'accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-d @$$config_file \
+		-k); \
+	if [ "$$response" = "200" ]; then \
+		echo "Config posted successfully (HTTP $$response)."; \
+	else \
+		echo "Config post failed (HTTP $$response). Response:"; \
+		cat /tmp/config_response.json; \
+		exit 1; \
+	fi
+
 .PHONY: up
 up: check_env_variables validate_host_ip down
 	@export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "mqtt_consumer:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "mqtt_consumer"; fi); \
@@ -135,7 +183,10 @@ up: check_env_variables validate_host_ip down
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_VALIDATION_FILE) up -d; \
 	else \
 		$(DOCKER_COMPOSE) up -d; \
-	fi;
+	fi; \
+	echo "Waiting 5 seconds before uploading UDF deployment package..."; \
+	sleep 5; \
+	$(MAKE) upload_zip_file
 
 # Status of the deployed containers
 .PHONY: status
@@ -236,3 +287,5 @@ help:
 	@echo "  make gen_helm_charts              - Generate Helm packages for the selected sample app"
 	@echo "  make push_helm_charts             - Package and Push Helm charts to docker registry"
 	@echo "  make help                         - Display this help message"
+	@echo "  make upload_zip_file              - Create and upload a UDF deployment zip"
+	@echo "  make post_config                  - Post config.json to the microservice"

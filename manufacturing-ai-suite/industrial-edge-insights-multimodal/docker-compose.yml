@@ -112,10 +112,6 @@ services:
     - timeseries_network
     volumes:
     - "vol_temp_time_series_analytics_microservice:/tmp/"
-    - ./configs/time-series-analytics-microservice/udfs/:/tmp/weld_anomaly_detector/udfs/:ro
-    - ./configs/time-series-analytics-microservice/tick_scripts/:/tmp/weld_anomaly_detector/tick_scripts/:ro
-    - ./configs/time-series-analytics-microservice/config.json:/app/config.json:ro
-    - ./configs/time-series-analytics-microservice/models/:/tmp/weld_anomaly_detector/models/:ro
     - ${DRI_MOUNT_PATH:-/dev/null}:/dev/dri:ro
     - "/run/udev:/run/udev:ro"
     group_add:

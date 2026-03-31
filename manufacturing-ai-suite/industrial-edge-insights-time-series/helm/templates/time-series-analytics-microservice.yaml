@@ -121,6 +121,8 @@ spec:
           value: '{{ .Values.env.SAMPLE_APP }}'
         - name: REST_API_ROOT_PATH
           value: "/ts-api"
+        - name: UDF_MAX_FILE_SIZE_MB
+          value: "100"
       volumes:
       - name: vol-temp-time-series-analytics-microservice
         emptyDir: {}
