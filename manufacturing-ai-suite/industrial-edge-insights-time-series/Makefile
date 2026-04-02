@@ -149,7 +149,7 @@ upload_zip_file:
 	@echo "Uploading UDF deployment zip for $(SAMPLE_APP) to Time-Series Analytics microservice..."; \
 	zip_file=$(CURDIR)/apps/$(SAMPLE_APP)/time-series-analytics-config/$(SAMPLE_APP).zip; \
 	response=$$(curl -s -o /tmp/upload_response.json -w "%{http_code}" \
-		-X POST https://localhost:${GRAFANA_PORT}/ts-api/update_udf_deployment_package \
+		-X POST https://localhost:${GRAFANA_PORT}/ts-api/udfs/package \
 		-F "file=@$$zip_file" \
 		-k); \
 	if [ "$$response" = "200" ]; then \

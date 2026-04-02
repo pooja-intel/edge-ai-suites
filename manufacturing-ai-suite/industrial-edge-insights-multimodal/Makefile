@@ -158,7 +158,7 @@ upload_zip_file:
 	@echo "Uploading UDF deployment zip for weld anomaly detection to Time-Series Analytics microservice..."; \
 	zip_file=$(CURDIR)/configs/time-series-analytics-microservice/weld_anomaly_detector.zip; \
 	response=$$(curl -s -o /tmp/upload_response.json -w "%{http_code}" \
-		-X POST https://localhost:${GRAFANA_PORT}/ts-api/update_udf_deployment_package \
+		-X POST https://localhost:${GRAFANA_PORT}/ts-api/udfs/package \
 		-F "file=@$$zip_file" \
 		-k); \
 	if [ "$$response" = "200" ]; then \

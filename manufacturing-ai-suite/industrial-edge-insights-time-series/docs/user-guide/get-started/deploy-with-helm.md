@@ -192,7 +192,7 @@ To copy your own or existing model into Time Series Analytics Microservice in or
    rm -f ${SAMPLE_APP}.zip
    zip -r ${SAMPLE_APP}.zip models/ tick_scripts/ udfs/
 
-   curl -X POST https://localhost:30001/ts-api/update_udf_deployment_package -F "file=@${SAMPLE_APP}.zip" -k
+   curl -X POST https://localhost:30001/ts-api/udfs/package -F "file=@${SAMPLE_APP}.zip" -k
    ```
 
 <!--hide_directive:::
@@ -222,7 +222,7 @@ To copy your own or existing model into Time Series Analytics Microservice in or
    rm -f ${SAMPLE_APP}.zip
    zip -r ${SAMPLE_APP}.zip models/ tick_scripts/ udfs/
 
-   curl -X POST https://localhost:30001/ts-api/update_udf_deployment_package -F "file=@${SAMPLE_APP}.zip" -k
+   curl -X POST https://localhost:30001/ts-api/udfs/package -F "file=@${SAMPLE_APP}.zip" -k
    ```
 
 <!--hide_directive:::

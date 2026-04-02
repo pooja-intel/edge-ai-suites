@@ -140,7 +140,7 @@ this sample application in Kubernetes environment:
    rm -f weld_anomaly_detector.zip
    zip -r weld_anomaly_detector udfs/ models/ tick_scripts/
 
-   curl -X POST https://localhost:30001/ts-api/update_udf_deployment_package -F "file=@weld_anomaly_detector.zip" -k
+   curl -X POST https://localhost:30001/ts-api/udfs/package -F "file=@weld_anomaly_detector.zip" -k
    ```
 
 > **Note:**
