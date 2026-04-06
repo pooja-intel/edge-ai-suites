@@ -127,7 +127,6 @@ check_env_variables:
 		esac; \
 	done
 
-.PHONY: wait_for_tsam
 wait_for_tsam:
 	@echo "Waiting for Time-Series Analytics microservice to be accessible..."; \
 	max_retries=30; \
@@ -143,7 +142,6 @@ wait_for_tsam:
 	done; \
 	echo "Time-Series Analytics microservice is accessible."
 
-.PHONY: upload_zip_file
 upload_zip_file:
 	@echo "Creating UDF deployment zip for weld anomaly detection..."
 	@config_dir=$(CURDIR)/configs/time-series-analytics-microservice; \
@@ -170,7 +168,6 @@ upload_zip_file:
 		exit 1; \
 	fi
 
-.PHONY: post_config
 post_config:
 	@config_file=$(CURDIR)/configs/time-series-analytics-microservice/config.json; \
 	if [ ! -f $$config_file ]; then \
@@ -303,5 +300,3 @@ help:
 	@echo "  make gen_helm_charts              - Generate Helm packages for the selected sample app"
 	@echo "  make push_helm_charts             - Package and Push Helm charts to docker registry"
 	@echo "  make help                         - Display this help message"
-	@echo "  make upload_zip_file              - Create and upload a UDF deployment zip"
-	@echo "  make post_config                  - Post config.json to the microservice"

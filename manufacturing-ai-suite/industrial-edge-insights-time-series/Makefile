@@ -134,7 +134,6 @@ wait_for_tsam:
 	done; \
 	echo "Time-Series Analytics microservice is accessible."
 
-.PHONY: upload_zip_file
 upload_zip_file:
 	@echo "Creating UDF deployment zip for $(SAMPLE_APP)..."
 	@config_dir=$(CURDIR)/apps/$(SAMPLE_APP)/time-series-analytics-config; \
@@ -161,7 +160,6 @@ upload_zip_file:
 		exit 1; \
 	fi
 
-.PHONY: post_config
 post_config:
 	@config_file=$(CURDIR)/apps/$(SAMPLE_APP)/time-series-analytics-config/config.json; \
 	if [ ! -f $$config_file ]; then \
@@ -345,12 +343,6 @@ help:
 	@echo "  make push_helm_charts              - Package and push Helm charts to docker registry"
 	@echo "      Optional: app (default: wind-turbine-anomaly-detection)"
 	@echo "      Example: make push_helm_charts app=weld-anomaly-detection"
-	@echo "  make upload_zip_file              - Create and upload a UDF deployment zip from the selected sample app"
-	@echo "      Optional: app (default: wind-turbine-anomaly-detection)"
-	@echo "      Example: make upload_zip_file app=weld-anomaly-detection"
-	@echo "  make post_config                  - Post config.json for the selected sample app to the microservice"
-	@echo "      Optional: app (default: wind-turbine-anomaly-detection)"
-	@echo "      Example: make post_config app=weld-anomaly-detection"
 	@echo "  make help                         - Display this help message"
 	@echo "      No parameters required."
 
