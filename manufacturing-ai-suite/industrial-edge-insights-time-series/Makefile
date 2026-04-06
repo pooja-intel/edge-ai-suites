@@ -118,7 +118,6 @@ check_env_variables:
 		esac; \
 	done
 
-.PHONY: wait_for_tsam
 wait_for_tsam:
 	@echo "Waiting for Time-Series Analytics microservice to be accessible..."; \
 	max_retries=30; \
