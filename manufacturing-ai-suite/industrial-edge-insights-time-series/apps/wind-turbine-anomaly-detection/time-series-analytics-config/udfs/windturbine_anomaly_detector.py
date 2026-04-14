@@ -9,18 +9,18 @@ the windturbine speed and generated power data. """
 
 import os
 import logging
-import pickle
 import time
-import math
 import warnings
-from collections import deque
 from kapacitor.udf.agent import Agent, Handler
 from kapacitor.udf import udf_pb2
 import numpy as np
-import requests
-from sklearnex import patch_sklearn, config_context
-patch_sklearn()
-from sklearn.linear_model import LinearRegression
+intel_scikitlearn_extension = os.environ.get('INTEL_SCIKITLEARN_EXTENSION', 'true').lower()
+if intel_scikitlearn_extension == 'true':
+    from sklearnex import patch_sklearn, config_context
+    patch_sklearn()
+    from sklearnex.linear_model import LinearRegression
+else:
+    from sklearn.linear_model import LinearRegression
 
 warnings.filterwarnings(
     "ignore",
@@ -48,14 +48,7 @@ class AnomalyDetectorHandler(Handler):
     """
     def __init__(self, agent):
         self._agent = agent
-        # read the saved model and load it
-        def load_model(filename):
-            with open(filename, 'rb') as f:
-                model = pickle.load(f)
-            return model
-        model_path = os.getenv('MODEL_PATH')
-        model_path = os.path.abspath(model_path)
-        self.rf = load_model(model_path)
+        # This UDF is DBSCAN-based and does not require loading a persisted model file.
 
         self.device = os.getenv('DEVICE', 'auto').lower()
 
@@ -63,26 +56,22 @@ class AnomalyDetectorHandler(Handler):
         self.x_name = "wind_speed"
         self.y_name = "grid_active_power"
 
-        # hyper-params for anomaly classification
-        self.n_steps = 3
-        self.last_states = deque(self.n_steps*[0], self.n_steps)
-        self.last_anomalies = deque(self.n_steps*[0], self.n_steps)
-        self.error_threshold = 0.15
-        self.anomalies = []
-        self.cut_in_speed = 3
-        self.cut_out_speed = 14
-        self.min_power_th = 50
+        # Residual threshold percentile for anomaly labeling in each batch
+        self.anomaly_percentile = float(os.getenv('ANOMALY_PERCENTILE', '95'))
 
         self.points_received = {}
         global total_no_pts
         self.max_points = int(total_no_pts)
+        self._batch_point_counter = 0
+        self._batch_points = []   # list of raw kapacitor Point objects for the current batch
+        self._batch_begin_ns = None
 
     def info(self):
         """ Return the InfoResponse. Describing the properties of this Handler
         """
         response = udf_pb2.Response()
-        response.info.wants = udf_pb2.STREAM
-        response.info.provides = udf_pb2.STREAM
+        response.info.wants = udf_pb2.BATCH
+        response.info.provides = udf_pb2.BATCH
         return response
 
     def init(self, init_req):
@@ -108,118 +97,129 @@ class AnomalyDetectorHandler(Handler):
         return response
 
     def begin_batch(self, begin_req):
-        """ A batch has begun.
+        """ A batch has begun — reset accumulators for the new window.
         """
-        raise Exception("not supported")
+        self._batch_begin_ns = time.time_ns()
+        logger.info(
+            "Batch started: group=%s, size=%d, begin_time_ns=%d",
+            begin_req.group,
+            begin_req.size,
+            self._batch_begin_ns,
+        )
+        self._batch_points = []
+        self._batch_point_counter = 0
+        response = udf_pb2.Response()
+        response.begin.CopyFrom(begin_req)
+        self._agent.write_response(response)
 
     def point(self, point):
-        """ A point has arrived.
+        """ A point has arrived — accumulate for batch processing in end_batch.
         """
-        start_time = time.time_ns()
-        check_for_anomalies = 1
-        x = None
-        y = None
+        self._batch_point_counter += 1
+        logger.debug("Accumulated point %d for source %s",
+                     self._batch_point_counter,
+                     point.tags.get("source", "<unknown>"))
+        self._batch_points.append(point)
 
-        stream_src = None
-        if "source" in point.tags:
-            stream_src = point.tags["source"]
-        elif "source" in point.fieldsString:
-            stream_src = point.fieldsString["source"]
+    def process_batch(self, points):
+        """Fit LinearRegression on a batch and return residual stats for anomaly labeling."""
+        # Build regression dataset y=grid_active_power, X=[wind_speed].
+        process_batch_start_ns = time.time_ns()
+        valid_idx = []
+        x_values = []
+        y_values = []
+        for i, p in enumerate(points):
+            x = p.fieldsDouble.get(self.x_name)
+            y = p.fieldsDouble.get(self.y_name)
+            if x is not None and y is not None:
+                valid_idx.append(i)
+                x_values.append([x])
+                y_values.append(y)
 
-
-        global enable_benchmarking
-        if enable_benchmarking:
-            if stream_src not in self.points_received:
-                self.points_received[stream_src] = 0
-            if self.points_received[stream_src] >= self.max_points:
-                return
-            self.points_received[stream_src] += 1
-        logger.info("Processing point %s %s for source %s", point.time, time.time(), stream_src)
-
-        def process_the_point(x,y):
-            if (math.isnan(x) or math.isnan(y)):
-                self.last_states.append(0)
-                return 0
-
-            if ((x<=self.cut_in_speed) or (x>self.cut_in_speed and y<self.min_power_th)
-                 or (x>self.cut_out_speed)):
-                self.last_states.append(0)
-                return 0
-
-            return 1
-
-        if self.x_name in point.fieldsDouble:
-            x = point.fieldsDouble[self.x_name]
-
-        if self.y_name in point.fieldsDouble:
-            y = point.fieldsDouble[self.y_name]
-
-        if x is not None and y is not None:
-            # check if the current point is an anomalous point
-            check_for_anomalies = process_the_point(x,y)
-            point.fieldsDouble["analytic"] = True
-
-            if check_for_anomalies:
-                y_pred = self.rf.predict(np.reshape(x,(-1,1)))
-                error = (y_pred[0]-y)/(y)
-                if error>self.error_threshold:
-                    self.last_states.append(1)
-                    self.last_anomalies.append((x,y))
+        residuals = None
+        threshold = None
+        if x_values:
+            X = np.array(x_values, dtype=np.float32)
+            y = np.array(y_values, dtype=np.float32)
+            model = LinearRegression()
+            if intel_scikitlearn_extension == 'true':
+                logger.info("Fitting LinearRegression with Intel Extension for Scikit-learn on device: %s", self.device)
+                if self.device == 'cpu':
+                    # patch_sklearn() already accelerates CPU — skip config_context
+                    # to avoid per-batch context manager overhead on CPU path.
+                    model.fit(X, y)
+                    pred = model.predict(X)
                 else:
-                    self.last_states.append(0)
-
-                # check if there are consecutive 3 anomalies, and then filter out
-                # any false positives
-                if sum(self.last_states) == self.n_steps:
-                    x_feat = list(zip(*self.last_anomalies))[0]
-                    x_feat = np.reshape(x_feat, (-1,1))
-                    y_feat = list(zip(*self.last_anomalies))[1]
-
+                    # GPU / XPU path: config_context is required for device offload.
                     with config_context(target_offload=self.device, allow_fallback_to_host=True):
-                        lm = LinearRegression()
-                        lm.fit(x_feat, y_feat)
+                        model.fit(X, y)
+                        pred = model.predict(X)
+            else:
+                logger.info("Fitting LinearRegression with scikit-learn on CPU")
+                model.fit(X, y)
+                pred = model.predict(X)
 
-                    if abs(lm.coef_)<200:
-                        self.anomalies.append((x,y))
-                        if error<0.3:
-                            point.fieldsDouble["anomaly_status"] = 0.3
-                            # anomaly_type="LOW"
-                        elif error<0.6:
-                            # anomaly_type = "MEDIUM"
-                            point.fieldsDouble["anomaly_status"] = 0.6
-                        else:
-                            # anomaly_type = "HIGH"
-                            point.fieldsDouble["anomaly_status"] = 1.0
-                    else:
-                        self.last_states.append(0)
-        else:
-            logger.error("No input received for %s %s, %s %s. Skipping anomaly detection."
-                         , self.x_name, x, self.y_name, y)
-            point.fieldsDouble["analytic"] = False
+            residuals = np.abs(y - pred)
+            threshold = np.percentile(residuals, self.anomaly_percentile)
+            logger.info(
+                "LinearRegression residual threshold at %.1f percentile: %.6f",
+                self.anomaly_percentile,
+                float(threshold),
+            )
+        process_batch_end_ns = time.time_ns()
+        logger.info("Time taken to process batch of %d points: %.6f ms",
+                    len(points),
+                    (process_batch_end_ns - process_batch_start_ns) / 1e6)
 
-        # write data back to db if it is an anomaly point or there is an alarm for the point
-        response = udf_pb2.Response()
-        # Check if anomaly_status field exists, if not add it with default value
-        if "anomaly_status" not in point.fieldsDouble:
-            point.fieldsDouble["anomaly_status"] = 0.0
-
-        time_now = time.time_ns()
-        processing_time = time_now - start_time
-        end_end_time = time_now - point.time
-        point.fieldsDouble["processing_time"] = processing_time
-        point.fieldsDouble["end_end_time"] = end_end_time
-        response.point.CopyFrom(point)
-
-        self._agent.write_response(response, True)
-
-        end_time = time.time_ns()
-        process_time = (end_time - start_time)/1000
-        logger.debug("Function point took %.4f milliseconds to complete.", process_time)
+        return valid_idx, residuals, threshold
 
     def end_batch(self, end_req):
-        """ The batch is complete.
+        """ The batch is complete — fit LinearRegression and write residual-based anomalies.
         """
-        raise Exception("not supported")
+        start_time = time.time_ns()
+
+        points = self._batch_points
+        valid_idx, residuals, threshold = self.process_batch(points)
+
+        # Write every point back with anomaly_status annotated
+        for i, point in enumerate(points):
+            if residuals is not None and i in valid_idx:
+                pos = valid_idx.index(i)
+                current_residual = float(residuals[pos])
+                point.fieldsDouble["residual_error"] = current_residual
+                point.fieldsDouble["anomaly_status"] = 1.0 if current_residual > float(threshold) else 0.0
+            else:
+                point.fieldsDouble["anomaly_status"] = 0.0
+
+            point.fieldsDouble["processing_time"] = float(time.time_ns() - start_time)
+            response = udf_pb2.Response()
+            response.point.CopyFrom(point)
+            self._agent.write_response(response, True)
+
+        logger.info("Batch write-back complete in %.2f ms",
+                    (time.time_ns() - start_time) / 1e6)
+
+        # Write batch footer
+        response = udf_pb2.Response()
+        response.end.CopyFrom(end_req)
+        self._agent.write_response(response)
+        batch_end_ns = time.time_ns()
+        if self._batch_begin_ns is not None:
+            batch_duration_ms = (batch_end_ns - self._batch_begin_ns) / 1e6
+            logger.info(
+                "Batch ended: processing %d points, group=%s, end_time_ns=%d, batch_duration_ms=%.3f",
+                self._batch_point_counter,
+                end_req.group,
+                batch_end_ns,
+                batch_duration_ms,
+            )
+        else:
+            logger.info(
+                "Batch ended: processing %d points, group=%s, end_time_ns=%d, batch_duration_ms=unavailable",
+                self._batch_point_counter,
+                end_req.group,
+                batch_end_ns,
+            )
 
 
 if __name__ == '__main__':
@@ -227,7 +227,11 @@ if __name__ == '__main__':
     agent = Agent()
 
     # Create a handler and pass it an agent so it can write points
-    h = AnomalyDetectorHandler(agent)
+    try:
+        h = AnomalyDetectorHandler(agent)
+    except Exception as error:
+        logger.exception("Failed to initialize windturbine_anomaly_detector UDF: %s", error)
+        raise
 
     # Set the handler on the agent
     agent.handler = h
