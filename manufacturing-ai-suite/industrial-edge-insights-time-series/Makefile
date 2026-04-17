@@ -145,10 +145,11 @@ define wait_for_tsam
 echo "Waiting for nginx to be up and running..."; \
 max_retries=30; \
 retry=0; \
-until curl -skI https://localhost:${GRAFANA_PORT}/ | grep -iq '^server: nginx'; do \
+until curl -sk -I https://localhost:${GRAFANA_PORT}/ 2>/dev/null | grep -iq '^server: nginx'; do \
 	retry=$$((retry + 1)); \
 	if [ $$retry -ge $$max_retries ]; then \
-		echo "Timed out waiting for nginx after $$max_retries attempts."; \
+		echo "Timed out waiting for nginx after $$max_retries attempts. Last error:"; \
+		curl -sk -I https://localhost:${GRAFANA_PORT}/ 2>&1 | head -5; \
 		exit 1; \
 	fi; \
 	echo "  nginx not accessible yet (attempt $$retry/$$max_retries), retrying in 5s..."; \
@@ -187,7 +188,7 @@ response=$$(curl -s -o /tmp/upload_response.json -w "%{http_code}" \
 	-k); \
 if [ "$$response" = "200" ]; then \
 	echo "Upload successful (HTTP $$response)."; \
-	$(call post_config, app=$(SAMPLE_APP)); \
+	$(post_config); \
 else \
 	echo "Upload failed (HTTP $$response). Response:"; \
 	cat /tmp/upload_response.json; \
@@ -215,8 +216,8 @@ up_mqtt_ingestion: check_env_variables down
 			$(DOCKER_COMPOSE) run -d --name ia-mqtt-publisher-$$i -e INSTANCE_ID=$$i ia-mqtt-publisher; \
 		done; \
 		$(DOCKER_COMPOSE) up --scale ia-opcua-server=0 -d $(shell $(DOCKER_COMPOSE) config --services | grep -v ia-mqtt-publisher); \
-	fi; \
-	$(upload_tar_file)
+	fi
+	@$(upload_tar_file)
 
 # Run Docker containers
 .PHONY: up_opcua_ingestion
@@ -236,8 +237,8 @@ up_opcua_ingestion: check_env_variables down
 		$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_VALIDATION_FILE) up --scale ia-mqtt-publisher=0 -d ;\
 	else \
 		$(DOCKER_COMPOSE) up --scale ia-opcua-server=$(num_of_streams) --scale ia-mqtt-publisher=0 -d; \
-	fi; \
-	$(upload_tar_file)
+	fi
+	@$(upload_tar_file)
 
 
 # Status of the deployed containers
