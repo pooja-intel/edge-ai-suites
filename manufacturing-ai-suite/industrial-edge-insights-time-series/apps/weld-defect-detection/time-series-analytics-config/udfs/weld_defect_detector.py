@@ -196,19 +196,25 @@ class AnomalyDetectorHandler(Handler):
             if stream_src not in self.points_received:
                 self.points_received[stream_src] = 0
             if self.points_received[stream_src] >= self.max_points:
-                logger.info(f"Benchmarking: Reached max points {self.max_points} for source {stream_src}. Skipping further processing.")
+                #logger.info(f"Benchmarking: Reached max points {self.max_points} for source {stream_src}. Skipping further processing.")
                 return
             self.points_received[stream_src] += 1
         fields = {}
         for key, value in point.fieldsDouble.items():
-            fields[key] = value
+            fields[key] = float(np.float32(value))
             
         for key, value in point.fieldsInt.items():
-            fields[key] = value
+            fields[key] = float(np.float32(value))
         for key, value in point.fieldsString.items():
             fields[key] = value
+
+        primary_current = None
+        if "Primary Weld Current" in fields:
+            primary_current = float(np.float32(fields["Primary Weld Current"]))
+        if primary_current is not None:
+            fields["Primary Weld Current"] = primary_current
         
-        if "Primary Weld Current" in fields and fields["Primary Weld Current"] < WELD_CURRENT_THRESHOLD:
+        if primary_current is not None and primary_current < WELD_CURRENT_THRESHOLD:
             point.fieldsString["predicted_category"] = NO_WELD_LABEL
             point.fieldsDouble["Good Weld"] = 0.0
             point.fieldsDouble["Defective Weld"] = 0.0
@@ -218,21 +224,18 @@ class AnomalyDetectorHandler(Handler):
                 WELD_CURRENT_THRESHOLD,
                 NO_WELD_LABEL,
             )
-        elif "Primary Weld Current" in fields and fields["Primary Weld Current"] >= WELD_CURRENT_THRESHOLD:
+        elif primary_current is not None and primary_current >= WELD_CURRENT_THRESHOLD:
             missing_features = [f for f in FEATURES if f not in fields]
             if missing_features:
                 logger.warning("Missing required features for inference: %s", missing_features)
             else:
-                x = np.array(
-                    [[
-                        fields["Pressure"],
-                        fields["CO2 Weld Flow"],
-                        fields["Feed"],
-                        fields["Primary Weld Current"],
-                        fields["Secondary Weld Voltage"],
-                    ]],
-                    dtype=np.float32,
-                )
+                feature_values = []
+                for feat in FEATURES:
+                    value_f32 = float(np.float32(fields[feat]))
+                    fields[feat] = value_f32
+                    feature_values.append(value_f32)
+
+                x = np.asarray(feature_values, dtype=np.float32).reshape(1, -1)
                 
                 with config_context(target_offload=self.device, allow_fallback_to_host=True):
                     pred_idx   = self.pipeline.predict(x)[0]
@@ -266,7 +269,7 @@ class AnomalyDetectorHandler(Handler):
                     point.fieldsString["prediction_details"] = json.dumps(data_prediction)
 
                     if bad_defect > 50:
-                        point.fieldsDouble["anomaly_status"] = 1.0 
+                        point.fieldsDouble["anomaly_status"] = 1.0
                     logger.info("Good Weld: %.2f%%, Defective Weld: %.2f%%", good_defect, bad_defect)
         else:
             logger.debug("Primary Weld Current below threshold (%d). Skipping anomaly detection.", WELD_CURRENT_THRESHOLD)
