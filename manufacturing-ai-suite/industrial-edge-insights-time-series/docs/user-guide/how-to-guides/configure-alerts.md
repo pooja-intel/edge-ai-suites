@@ -178,7 +178,7 @@ data0
 
 #### 2. Upload the new UDF deployment package
 
-To copy the TICK script and upload the new UDF deployment package run the following commands:
+To copy the TICK script and upload the new UDF deployment package, run the following commands:
 
 ```bash
 cd edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/wind-turbine-anomaly-detection # path relative to git  clone   folder
