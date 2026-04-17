@@ -28,7 +28,7 @@ from kapacitor.udf import udf_pb2
 import numpy as np
 import joblib
 
-intel_scikitlearn_extension = os.environ.get('INTEL_SCIKITLEARN_EXTENSION', 'true').lower()
+intel_scikitlearn_extension = os.environ.get('INTEL_SCIKITLEARN_EXTENSION', 'false').lower()
 if intel_scikitlearn_extension == 'true':
     from sklearnex import patch_sklearn, config_context
     patch_sklearn()

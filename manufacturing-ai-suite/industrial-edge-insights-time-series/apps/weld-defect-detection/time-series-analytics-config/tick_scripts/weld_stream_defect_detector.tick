@@ -5,9 +5,6 @@ var data0 = stream
                 .database('datain')
                 .retentionPolicy('autogen')
                 .measurement('weld-sensor-data')
-        |window()
-                .period(1m)
-                .every(1m)
         @weld_defect_detector()
 data0
         |influxDBOut()
