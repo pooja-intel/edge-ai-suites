@@ -5,13 +5,7 @@ var data0 = stream
                 .database('datain')
                 .retentionPolicy('autogen')
                 .measurement('wind-turbine-data')
-                .groupBy('source')
-        |window()
-                .period(1m)
-                .every(1m)
         @windturbine_anomaly_detector()
-        |default()
-                .field('anomaly_status', 0.0)
 data0
         |influxDBOut()
                 .buffer(0)
