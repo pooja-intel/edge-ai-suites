@@ -5,7 +5,10 @@ var data0 = stream
                 .database('datain')
                 .retentionPolicy('autogen')
                 .measurement('wind-turbine-data')
-        @windturbine_anomaly_detector()
+        |window()
+                .period(1m)
+                .every(1m)
+        @windturbine_anomaly_detector_batch()
 data0
         |influxDBOut()
                 .buffer(0)
