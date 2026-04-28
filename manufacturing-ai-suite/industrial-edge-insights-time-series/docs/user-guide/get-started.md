@@ -109,6 +109,12 @@ make up_mqtt_ingestion app="weld-defect-detection"
 <!--hide_directive:::
 ::::hide_directive-->
 
+> **Note:** To run benchmarking with batch processing, append `batch` to the `make` command. For example:
+>
+> ```bash
+> make up_mqtt_ingestion app=weld-defect-detection batch
+> ```
+
 ### Multi-Stream Ingestion support
 
 Multi-stream ingestion enables the simultaneous processing of multiple data streams, improving throughput and scalability.
