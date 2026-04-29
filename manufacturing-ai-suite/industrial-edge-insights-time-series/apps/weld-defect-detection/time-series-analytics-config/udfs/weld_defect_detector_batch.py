@@ -300,10 +300,6 @@ class AnomalyDetectorHandler(Handler):
                 time_now = time.time_ns()
                 point.fieldsDouble["processing_time"] = (time_now - point_start_time) + inference_processing_time
                 point.fieldsDouble["end_end_time"] = time_now - point.time
-                processing_time = time_now - point_start_time
-                logger.info(f"Point processing time: {processing_time} ns")
-                logger.info(f"Point inference time: {inference_processing_time} ns")
-
                 response = udf_pb2.Response()
                 response.point.CopyFrom(point)
                 self._agent.write_response(response)
