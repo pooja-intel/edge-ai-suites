@@ -250,7 +250,7 @@ class AnomalyDetectorHandler(Handler):
                     predictions = self.pipeline.predict(x_array)
                     predictions_proba = self.pipeline.predict_proba(x_array)
             batch_inference_end_time = time.time_ns()
-            inference_processing_time = batch_inference_end_time - batch_inference_start_time
+            inference_processing_time = (batch_inference_end_time - batch_inference_start_time)/len(x_values_for_batch) if x_values_for_batch else 0
 
             pred_idx = 0
             for i, point, fields, is_valid in valid_points_info:

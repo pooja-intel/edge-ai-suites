@@ -194,7 +194,7 @@ class AnomalyDetectorHandler(Handler):
             with config_context(target_offload=self.device, allow_fallback_to_host=True):
                 y_pred_batch = self.rf.predict(x_array)
         batch_inference_end_time = time.time_ns()
-        inference_processing_time = batch_inference_end_time - batch_inference_start_time
+        inference_processing_time = (batch_inference_end_time - batch_inference_start_time)/len(x_values_for_batch) if x_values_for_batch else 0
         pred_idx = 0
         for point, x, y, has_prediction in points_info:
             start_time = time.time_ns()

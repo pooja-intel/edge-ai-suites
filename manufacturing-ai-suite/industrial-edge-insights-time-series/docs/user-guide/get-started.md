@@ -109,11 +109,13 @@ make up_mqtt_ingestion app="weld-defect-detection"
 <!--hide_directive:::
 ::::hide_directive-->
 
-> **Note:** To run benchmarking with batch processing, append `batch` to the `make` command. For example:
->
-> ```bash
-> make up_mqtt_ingestion app=weld-defect-detection batch
-> ```
+### Benchmarking
+
+To run benchmarking with batch processing, append `batch` to the `make` command. For example:
+
+```bash
+make up_mqtt_ingestion batch app=weld-defect-detection
+```
 
 ### Multi-Stream Ingestion support
 
