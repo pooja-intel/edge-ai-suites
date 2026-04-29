@@ -122,8 +122,12 @@ check_env_variables:
 	done
 
 .PHONY: batch
-batch: up_mqtt_ingestion
-	@echo "Batch processing deployment completed for $(SAMPLE_APP)."
+batch:
+	@if [ -z "$(filter up_mqtt_ingestion up_opcua_ingestion,$(MAKECMDGOALS))" ]; then \
+		echo "Error: 'batch' must be used with 'up_mqtt_ingestion' or 'up_opcua_ingestion'."; \
+		echo "Example: make up_mqtt_ingestion batch app=weld-defect-detection"; \
+		exit 1; \
+	fi
 
 define post_config
 config_file=$(CURDIR)/apps/$(SAMPLE_APP)/time-series-analytics-config/$(CONFIG_JSON_FILE); \
@@ -190,11 +194,17 @@ if [ "$(CONFIG_JSON_FILE)" = "config-batch.json" ]; then \
 		src_model=weld_defect_detector.pkl; \
 		dst_model=weld_defect_detector_batch.pkl; \
 	fi; \
-	if [ -n "$$src_model" ] && [ -f $$model_dir/$$src_model ]; then \
-		rm -f $$model_dir/$$dst_model; \
-		cp $$model_dir/$$src_model $$model_dir/$$dst_model; \
-		echo "Prepared batch model: $$dst_model"; \
+	if [ -z "$$src_model" ]; then \
+		echo "Error: '${src_model}' not found for sample app '$(SAMPLE_APP)'."; \
+		exit 1; \
 	fi; \
+	if [ ! -f $$model_dir/$$src_model ]; then \
+		echo "Error: source model not found at $$model_dir/$$src_model"; \
+		exit 1; \
+	fi; \
+	rm -f $$model_dir/$$dst_model; \
+	cp $$model_dir/$$src_model $$model_dir/$$dst_model; \
+	echo "Prepared batch model: $$dst_model"; \
 fi; \
 rm -f $$tar_file; \
 cd $$config_dir && \
@@ -379,9 +389,11 @@ help:
 	@echo "  make push_helm_charts              - Package and push Helm charts to docker registry"
 	@echo "      Optional: app (default: wind-turbine-anomaly-detection)"
 	@echo "      Example: make push_helm_charts app=weld-defect-detection"
-	@echo "  make batch                         - Run the batch processing for the selected sample app"
+	@echo "  make <ingestion_target> batch      - Run batch processing with an ingestion target"
+	@echo "      Required: ingestion_target must be up_mqtt_ingestion or up_opcua_ingestion"
 	@echo "      Optional: app (default: wind-turbine-anomaly-detection)"
-	@echo "      Example: make batch app=weld-defect-detection"
+	@echo "      Example: make up_mqtt_ingestion batch app=weld-defect-detection"
+	@echo "      Example: make up_opcua_ingestion batch app=wind-turbine-anomaly-detection"
 	@echo "  make help                         - Display this help message"
 	@echo "      No parameters required."
 
