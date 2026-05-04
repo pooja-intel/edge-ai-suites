@@ -219,8 +219,8 @@ class AnomalyDetectorHandler(Handler):
                     if stream_src not in self.points_received:
                         self.points_received[stream_src] = 0
                     if self.points_received[stream_src] >= self.max_points:
-                        valid_points_info.append((i, point, fields, False))
-                        continue
+                        logger.info(f"Max points per source for benchmarking reached. Skipping further processing.")
+                        break
                     self.points_received[stream_src] += 1
 
                 weld_current = fields.get("Primary Weld Current", 0.0)

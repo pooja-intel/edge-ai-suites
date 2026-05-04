@@ -232,9 +232,6 @@ endef
 up_mqtt_ingestion: check_env_variables down
 	$(call multi_stream_check,mqtt)
 	@export TELEGRAF_INPUT_PLUGIN=$$(if [ $(INCLUDE) = 'validation' ]; then echo "mqtt_consumer:net:cpu:disk:docker:diskio:kernel:mem:processes:swap:system"; else echo "mqtt_consumer"; fi); \
-	if [ "$(ENABLE_BENCHMARKING)" = "true" ]; then \
-		export BENCHMARK_TOTAL_PTS=$$(($(number_of_data_points_per_stream) * $(num_of_streams))); \
-	fi; \
 	if [ $(num_of_streams) -gt 1 ]; then \
 		export TELEGRAF_CONFIG_PATH=/etc/telegraf/Telegraf_multi_stream.conf; \
     fi; \

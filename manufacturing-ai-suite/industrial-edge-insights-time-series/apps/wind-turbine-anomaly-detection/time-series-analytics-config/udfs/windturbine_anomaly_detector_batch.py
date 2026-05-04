@@ -157,8 +157,8 @@ class AnomalyDetectorHandler(Handler):
                 if stream_src not in self.points_received:
                     self.points_received[stream_src] = 0
                 if self.points_received[stream_src] >= self.max_points:
-                    points_info.append((point, x, y, False))
-                    continue
+                    logger.info(f"Max points per source for benchmarking reached. Skipping further processing.")
+                    break
                 self.points_received[stream_src] += 1
 
             if self.x_name in point.fieldsDouble:
