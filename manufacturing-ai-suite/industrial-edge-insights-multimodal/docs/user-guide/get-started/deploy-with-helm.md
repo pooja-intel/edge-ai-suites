@@ -78,19 +78,11 @@ You can either generate or download the Helm charts.
 > 1. Uninstall Helm charts if already installed.
 > 2. Note the `helm install` command fails if the above required fields are not populated
 >    as per the rules called out in the `values.yaml` file.
-> 3. To deploy with GPU support for inferencing, use the following command:
+> 3. To deploy with GPU or NPU support for inferencing, use the following command:
 >
 >       ```bash
 >       helm install multimodal-weld-defect-detection \
 >           --set privileged_access_required=true \
->           . -n multimodal-sample-app --create-namespace
->       ```
-> 4. To deploy with NPU support for inferencing, use the following command:
->
->       ```bash
->       helm install multimodal-weld-defect-detection \
->           --set privileged_access_required=true \
->           --set npu.enabled=true \
 >           . -n multimodal-sample-app --create-namespace
 >       ```
 
