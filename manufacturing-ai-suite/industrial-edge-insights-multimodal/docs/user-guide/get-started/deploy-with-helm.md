@@ -78,11 +78,19 @@ You can either generate or download the Helm charts.
 > 1. Uninstall Helm charts if already installed.
 > 2. Note the `helm install` command fails if the above required fields are not populated
 >    as per the rules called out in the `values.yaml` file.
-> 3. To deploy with GPU/NPU support for inferencing, use the following command:
+> 3. To deploy with GPU support for inferencing, use the following command:
 >
 >       ```bash
 >       helm install multimodal-weld-defect-detection \
 >           --set privileged_access_required=true \
+>           . -n multimodal-sample-app --create-namespace
+>       ```
+> 4. To deploy with NPU support for inferencing, use the following command:
+>
+>       ```bash
+>       helm install multimodal-weld-defect-detection \
+>           --set privileged_access_required=true \
+>           --set npu.enabled=true \
 >           . -n multimodal-sample-app --create-namespace
 >       ```
 
@@ -161,8 +169,9 @@ You use a Client URL (cURL) command to start the pipeline. Start this pipeline w
 following cURL command.
 
 > **Note:**
-> - By default, UDF for DL Streamer Pipeline Server is configured to run on `CPU`.
-> - To run UDF inference on `GPU` or `NPU` in DL Streamer Pipeline Server, set the `device` value to `GPU` or `NPU` and run the following command.
+> - By default, model for DL Streamer Pipeline Server is configured to run on `CPU`.
+> - The accepted `device` values for this configuration are `CPU`, `GPU`, and `NPU`.
+> - To run model inference on `GPU` or `NPU` in DL Streamer Pipeline Server, set the `device` field to `GPU` or `NPU` exactly as shown and run the following command.
 
 ```bash
 curl -k https://localhost:30001/dsps-api/pipelines/user_defined_pipelines/weld_defect_classification -X POST -H 'Content-Type: application/json' -d '{

@@ -126,10 +126,10 @@ To trigger the UDF inference on `GPU` in Time Series Analytics Microservice, run
      value updated to gpu from cpu>'
 ```
 
-### Running DL Streamer Pipeline Server User Defined Function(UDF) inference on GPU or NPU
+### Running DL Streamer Pipeline Server model inference on GPU or NPU
 
-By default, UDF for DL Streamer Pipeline Server is configured to run on `CPU`.
-To trigger the UDF inference on `GPU` or `NPU` in DL Streamer Pipeline Server, run the following command:
+By default, model for DL Streamer Pipeline Server is configured to run on `CPU`.
+To trigger the model inference on `GPU` or `NPU` in DL Streamer Pipeline Server, run the following command:
 
 > **Note:**
 > Replace `GPU` with `NPU` to run inference on `NPU`.
