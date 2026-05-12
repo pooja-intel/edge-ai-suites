@@ -1,5 +1,49 @@
 # Release Notes: Industrial Edge Insights - Time Series
 
+## Version 2026.1
+
+**May 2026**
+
+This release introduces **batch processing UDFs**, a **new Wind Turbine Anomaly Detection 
+ML model**, **scikit-learn training scripts for Weld Defect Detection**, and various fixes
+ and documentation improvements.
+
+**New**
+
+- **Batch Processing UDFs**: Batch-mode UDF variants for both Wind Turbine Anomaly
+  Detection and Weld Defect Detection are now available, including Kapacitor TICK
+  scripts, per-app `config-batch.json`, and `make batch` support for running
+  Kapacitor windowed batches.
+- **Weld Defect Detection Training Scripts**: Classification training and inference
+  scripts using a scikit-learn (Intel-accelerated) pipeline have been added for the
+  Weld Defect Detection sample app.
+- **Functional Tests**: Comprehensive functional tests for time-series analytics and
+  Helm deployment workflows have been added.
+- **Nginx Readiness Check**: A check to verify nginx is running has been added to
+  the `make up` workflow.
+
+**Improved**
+
+- **New Wind Turbine ML Model**: Wind Turbine Anomaly Detection now uses a
+  RandomForestRegressor model (Intel® Extension for Scikit-learn) for inference,
+  replacing the previous model, with updated training scripts and adjusted anomaly
+  scoring thresholds.
+- **Renamed Sample App**: "Weld Anomaly Detection" has been renamed to
+  "Weld Defect Detection" across all configurations, documentation, and scripts.
+- **UDF Package Format**: UDF sample app archives now use tar format instead of zip.
+- Training dependencies for wind turbine have been cleaned up — unused pip packages
+  removed and `setuptools` updated to the latest version.
+- Updated version to `2026.1.0`.
+- **Security**: `cryptography` bumped from 46.0.5 to 46.0.6. Docker Compose service
+  image versions updated to address security vulnerabilities. `requests` bumped to
+  2.33.0. OPC-UA server port range removed to fix connectivity issues.
+- Helm automation deployment issues have been fixed.
+- Documentation has been improved: Time-Series vs Multimodal Weld Defect Detection
+  distinction clarified, Weld Defect Detection docs updated for GPU usage, OPC-UA
+  alert configuration docs updated, broken references and typos fixed.
+
+---
+
 ## Version 2026.0
 
 **March 2026**
