@@ -13,7 +13,7 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 - Renamed sample app "Weld Anomaly Detection" to "Weld Defect Detection" across all configs, docs, and scripts. ([#2504])
-- Updated Wind Turbine Anomaly Detection to use a RandomForestRegressor model (Intel® Extension for Scikit-learn) for inference, replacing the previous model. ([#2509])
+- Removed LinearRegression model from Wind Turbine Anomaly Detection; RandomForestRegressor (Intel® Extension for Scikit-learn) is now the only inference model, with updated training scripts and adjusted anomaly scoring thresholds. ([#2509])
 - Updated UDF package upload format from zip to tar archives. ([#2441])
 - Removed unused pip packages from wind turbine training `requirements.txt`. ([#2642])
 - Updated `setuptools` to the latest version in training requirements. ([#2647])

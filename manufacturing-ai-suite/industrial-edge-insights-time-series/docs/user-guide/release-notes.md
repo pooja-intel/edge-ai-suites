@@ -4,9 +4,9 @@
 
 **June 2026**
 
-This release introduces **batch processing UDFs**, **new ML models for Wind Turbine
-Anomaly Detection and Weld Defect Detection**, **scikit-learn training scripts for
-Weld Defect Detection**, and various fixes and documentation improvements.
+This release introduces **batch processing UDFs**, **a new ML model for Weld Defect Detection**,
+**scikit-learn training scripts for Weld Defect Detection**, and various fixes and documentation
+improvements.
 
 **New**
 
@@ -27,9 +27,9 @@ Weld Defect Detection**, and various fixes and documentation improvements.
 
 **Improved**
 
-- **New Wind Turbine Anomaly Detection ML Model**: Wind Turbine Anomaly Detection now uses a
-  RandomForestRegressor model (Intel® Extension for Scikit-learn) for inference,
-  replacing the previous linear regression model, with updated training scripts and
+- **Wind Turbine Anomaly Detection ML Model**: The LinearRegression model has been removed
+  from the Wind Turbine Anomaly Detection sample app; RandomForestRegressor (Intel® Extension
+  for Scikit-learn) is now the only inference model, with updated training scripts and
   adjusted anomaly scoring thresholds.
 - **New Weld Defect Detection ML Model**: Weld Defect Detection now uses a
   scikit-learn (Intel-accelerated) classifier model, replacing the previous CatBoost
