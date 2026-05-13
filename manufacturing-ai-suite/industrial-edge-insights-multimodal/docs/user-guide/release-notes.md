@@ -34,7 +34,7 @@ This release introduces **GPU/NPU hardware acceleration**, a **new ML classifier
 - **UDF Package Format**: UDF sample app archives now use tar format instead of zip.
 - **Security**: Docker Compose service image versions updated to address security
   vulnerabilities. Bandit security findings in the weld data simulator and functional
-  tests have been addressed. The `requests` library has been bumped to 2.33.0.
+  tests have been addressed. Functional test dependencies now use `requests` 2.33.0.
 - Documentation has been improved: Time-Series vs Multimodal Weld Defect Detection
   distinction clarified, broken references fixed, and the multimodal article updated.
 
