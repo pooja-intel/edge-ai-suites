@@ -87,7 +87,6 @@ License-Identifier: PSF License
 
 License-Identifier: Apache License 2.0
 aiofiles==25.1.0
-cryptography==47.0.0
 pyOpenSSL==26.2.0
 sortedcontainers==2.4.0
 tzdata==2026.2
@@ -105,7 +104,6 @@ asyncua==1.1.5
 ----------------------------------------------------------------------
 
 License-Identifier: BSD License
-cryptography==47.0.0
 numpy==2.4.4
 pandas==2.2.3
 pycparser==3.0
@@ -117,7 +115,10 @@ typing_extensions==4.15.0
 
 License-Identifier: MIT License / Proprietary
 pip==26.1.1
+----------------------------------------------------------------------
 
+License-Identifier: BSD License or Apache License 2.0
+cryptography==47.0.0
 ---------------------------------------------------------------------------------------------------------------------------
 
 ia-mqtt-publisher microservice:
