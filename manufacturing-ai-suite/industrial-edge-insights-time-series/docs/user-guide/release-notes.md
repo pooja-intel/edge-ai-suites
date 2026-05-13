@@ -2,11 +2,11 @@
 
 ## Version 2026.1
 
-**May 2026**
+**June 2026**
 
-This release introduces **batch processing UDFs**, a **new Wind Turbine Anomaly Detection 
-ML model**, **scikit-learn training scripts for Weld Defect Detection**, and various fixes
- and documentation improvements.
+This release introduces **batch processing UDFs**, **new ML models for Wind Turbine
+Anomaly Detection and Weld Defect Detection**, **scikit-learn training scripts for
+Weld Defect Detection**, and various fixes and documentation improvements.
 
 **New**
 
@@ -19,22 +19,28 @@ ML model**, **scikit-learn training scripts for Weld Defect Detection**, and var
   Weld Defect Detection sample app.
 - **Functional Tests**: Comprehensive functional tests for time-series analytics and
   Helm deployment workflows have been added.
+- **GPU Support for Weld Defect Detection**: Docker Compose and Helm deployments now support
+  GPU acceleration for weld defect detection on the Time Series Analytics microservice image, with
+  updated configuration and user guides for running inference on GPU.
 - **Nginx Readiness Check**: A check to verify nginx is running has been added to
   the `make up` workflow.
 
 **Improved**
 
-- **New Wind Turbine ML Model**: Wind Turbine Anomaly Detection now uses a
+- **New Wind Turbine Anomaly Detection ML Model**: Wind Turbine Anomaly Detection now uses a
   RandomForestRegressor model (Intel® Extension for Scikit-learn) for inference,
-  replacing the previous model, with updated training scripts and adjusted anomaly
-  scoring thresholds.
+  replacing the previous linear regression model, with updated training scripts and
+  adjusted anomaly scoring thresholds.
+- **New Weld Defect Detection ML Model**: Weld Defect Detection now uses a
+  scikit-learn (Intel-accelerated) classifier model, replacing the previous CatBoost
+  classifier, with updated training scripts and model artifacts.
 - **Renamed Sample App**: "Weld Anomaly Detection" has been renamed to
   "Weld Defect Detection" across all configurations, documentation, and scripts.
 - **UDF Package Format**: UDF sample app archives now use tar format instead of zip.
 - Training dependencies for wind turbine have been cleaned up — unused pip packages
   removed and `setuptools` updated to the latest version.
 - Updated version to `2026.1.0`.
-- **Security**: `cryptography` bumped from 46.0.5 to 46.0.6. Docker Compose service
+- **Security**: `cryptography` bumped from 46.0.5 to 47.0.0. Docker Compose service
   image versions updated to address security vulnerabilities. `requests` bumped to
   2.33.0. OPC-UA server port range removed to fix connectivity issues.
 - Helm automation deployment issues have been fixed.

@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [2026.1] - May 2026
+## [2026.1] - June 2026
 
 ### Added
 - Added GPU and NPU support for Docker Compose and Helm deployments, including `/dev/accel` device mounts and updated UDF configuration. ([#2630])

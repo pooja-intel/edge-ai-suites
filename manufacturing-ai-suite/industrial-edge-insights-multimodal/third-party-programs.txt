@@ -98,7 +98,7 @@ pandas==2.3.2
 
 License-Identifier: Apache License 2.0
 opencv-python==4.12.0.88
-tzdata==2025.2
+tzdata==2026.2
 ----------------------------------------------------------------------
 
 License-Identifier: EPL-2.0 OR BSD-3-Clause
@@ -110,7 +110,8 @@ python-dateutil==2.9.0.post0
 ----------------------------------------------------------------------
 
 License-Identifier: MIT License
-pytz==2025.2
+pip==26.1.1
+pytz==2026.2
 six==1.17.0
 ---------------------------------------------------------------------------------------------------------------------------
 
@@ -124,8 +125,8 @@ License-Identifier: PSF License
 License-Identifier: Apache License 2.0
 influxdb==5.3.2
 msgpack==1.1.2
-requests==2.32.5
-tzdata==2025.2
+requests==2.34.0
+tzdata==2026.2
 ----------------------------------------------------------------------
 
 License-Identifier: EPL-2.0 OR BSD-3-Clause
@@ -133,18 +134,19 @@ paho-mqtt==2.1.0
 ----------------------------------------------------------------------
 
 License-Identifier: BSD-3-Clause
-idna==3.11
+idna==3.14
 numpy==2.3.3
 pandas==2.3.3
 python-dateutil==2.9.0.post0
 ----------------------------------------------------------------------
 
 License-Identifier: MIT
-certifi==2025.11.12
-charset-normalizer==3.4.4
-pytz==2025.2
+certifi==2026.4.22
+charset-normalizer==3.4.7
+pip==26.1.1
+pytz==2026.2
 six==1.17.0
-urllib3==2.5.0
+urllib3==2.7.0
 
 ---------------------------------------------------------------------------------------------------------------------------
 Dataset:

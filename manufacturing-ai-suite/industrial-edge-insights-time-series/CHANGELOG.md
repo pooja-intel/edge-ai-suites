@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [2026.1] - May 2026
+## [2026.1] - June 2026
 
 ### Added
 - Added batch processing UDF variants for Wind Turbine Anomaly Detection and Weld Defect Detection apps, including Kapacitor TICK scripts, per-app `config-batch.json`, and `make batch` support. ([#2586])
@@ -20,9 +20,9 @@ All notable changes to this project are documented in this file.
 - Updated version to `2026.1.0`. ([#2387])
 
 ### Security
-- Bumped `cryptography` from 46.0.5 to 46.0.6. ([#2352])
+- Bumped `cryptography` from 46.0.5 to 47.0.0. ([#2352])
 - Updated Docker Compose service image versions to address security vulnerabilities. ([#2579])
-- Bumped `requests` to 2.33.0 in test and UDF requirements. ([#2343])
+- Bumped `requests` to 2.33.0 in test. ([#2343])
 
 ### Fixed
 - Fixed Helm automation deployment issues. ([#2424])

@@ -88,15 +88,15 @@ License-Identifier: PSF License
 License-Identifier: Apache License 2.0
 aiofiles==25.1.0
 cryptography==47.0.0
-pyOpenSSL==25.1.0
+pyOpenSSL==26.2.0
 sortedcontainers==2.4.0
-tzdata==2025.2
+tzdata==2026.2
 ----------------------------------------------------------------------
 
 License-Identifier: MIT License
-aiosqlite==0.21.0
+aiosqlite==0.22.1
 cffi==2.0.0
-pytz==2025.2
+pytz==2026.2
 six==1.17.0
 ----------------------------------------------------------------------
 
@@ -106,9 +106,9 @@ asyncua==1.1.5
 
 License-Identifier: BSD License
 cryptography==47.0.0
-numpy==2.3.5
+numpy==2.4.4
 pandas==2.2.3
-pycparser==2.23
+pycparser==3.0
 python-dateutil==2.9.0.post0
 
 License-Identifier: PSF-2.0
@@ -116,7 +116,7 @@ typing_extensions==4.15.0
 ----------------------------------------------------------------------
 
 License-Identifier: MIT License / Proprietary
-pip==25.3
+pip==26.1.1
 
 ---------------------------------------------------------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ License-Identifier: PSF License
 2. requirements.txt
 
 License-Identifier: Apache License 2.0
-tzdata==2025.2
+tzdata==2026.2
 ----------------------------------------------------------------------
 
 License-Identifier: EPL-1.0 / EDL-1.0
@@ -138,14 +138,14 @@ paho-mqtt==1.4.0
 
 
 License-Identifier: BSD License
-numpy==2.3.5
+numpy==2.4.4
 pandas==2.3.1
 python-dateutil==2.9.0.post0
 ----------------------------------------------------------------------
 
 License-Identifier: MIT License
-pip==25.3
-pytz==2025.2
+pip==26.1.1
+pytz==2026.2
 six==1.17.0
 
 ---------------------------------------------------------------------------------------------------------------------------
