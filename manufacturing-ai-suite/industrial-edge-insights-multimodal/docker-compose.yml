@@ -345,7 +345,7 @@ services:
       MR_VERIFY_CERT: ${MR_VERIFY_CERT:-""}
       MQTT_HOST: ia-mqtt-broker
       MQTT_PORT: 1883
-      LOG_LEVEL: DEBUG
+      LOG_LEVEL: ${LOG_LEVEL}
     volumes:
     - vol_pipeline_root:/var/cache/pipeline_root:uid=1999,gid=1999
     - /var/tmp:/var/tmp
