@@ -345,7 +345,7 @@ services:
       MR_VERIFY_CERT: ${MR_VERIFY_CERT:-""}
       MQTT_HOST: ia-mqtt-broker
       MQTT_PORT: 1883
-      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_LEVEL: DEBUG
     volumes:
     - vol_pipeline_root:/var/cache/pipeline_root:uid=1999,gid=1999
     - /var/tmp:/var/tmp
@@ -582,7 +582,6 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: size=${SEAWEEDFS_VOLUME_TMPFS_SIZE:-2g}
   seaweed_filer_data:
     driver: local
     driver_opts:
@@ -600,4 +599,3 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: size=${SEAWEEDFS_S3_TMPFS_SIZE:-128m}
