@@ -71,7 +71,7 @@ To apply changes to the UDF deployment package or `config.json`, update the file
    ```sh
    export SAMPLE_APP="<wind-turbine-anomaly-detection or weld-defect-detection>"
    # Navigate to the directory containing your UDF deployment package files
-   cd edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/${SAMPLE_APP}
+   cd edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/${SAMPLE_APP}/time-series-analytics-config/
    rm -f ${SAMPLE_APP}.tar
    tar cf ${SAMPLE_APP}.tar models/ tick_scripts/ udfs/
    ```
@@ -103,7 +103,7 @@ To apply changes to the UDF deployment package or `config.json`, update the file
    ```sh
    export SAMPLE_APP="<wind-turbine-anomaly-detection or weld-defect-detection>"
    # Navigate to the directory containing your UDF deployment package files
-   cd edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/${SAMPLE_APP}
+   cd edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-time-series/apps/${SAMPLE_APP}/time-series-analytics-config/
    rm -f ${SAMPLE_APP}.tar
    tar cf ${SAMPLE_APP}.tar models/ tick_scripts/ udfs/
    ```

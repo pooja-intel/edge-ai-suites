@@ -106,7 +106,7 @@ An array defining one or more video output destinations. Each entry requires a `
 
 The UDF deployment package used for
 weld data is available
-at `edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-multimodal/config/time-series-analytics-microservice`. Directory details are as below:
+at `edge-ai-suites/manufacturing-ai-suite/industrial-edge-insights-multimodal/configs/time-series-analytics-microservice`. Directory details are as below:
 
 ###### `config.json`
 

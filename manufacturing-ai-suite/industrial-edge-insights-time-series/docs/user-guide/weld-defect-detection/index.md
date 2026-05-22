@@ -21,7 +21,7 @@ for Time-series applications.
 
 ## App Architecture
 
-As seen in the following architecture diagram, the sample app at a high-level comprising of data simulators(can act as data destinations if configured) - these in the real world would be the physical devices, the generic Time Series AI stack based on **TICK Stack** comprising of Telegraf, InfluxDB, Time Series Analytics microservice using Kapacitor and Grafana.
+As seen in the following architecture diagram, the sample app, at a high level, comprises data simulators (which can act as data destinations if configured) - these in the real world would be the physical devices - and the generic Time Series AI stack based on **TICK Stack**, comprising Telegraf, InfluxDB, Time Series Analytics microservice using Kapacitor, and Grafana.
 
 ![Weld Defect Detection - Time Series AI Stack Architecture Diagram](../_assets/weld-defect-detection-timeseries-ai-stack-architecture.png)
 
