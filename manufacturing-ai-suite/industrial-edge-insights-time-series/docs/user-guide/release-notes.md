@@ -8,6 +8,8 @@ This release introduces **batch processing UDFs**, **a new ML model for Weld Def
 **scikit-learn training scripts for Weld Defect Detection**, and various fixes and documentation
 improvements.
 
+**Deprecated:** The Weld Defect Detection Time Series Sample App is deprecated and will be removed in the next 2026.2 release.
+
 **New**
 
 - **Batch Processing UDFs**: Batch-mode UDF variants for both Wind Turbine Anomaly
@@ -21,7 +23,6 @@ improvements.
 - **GPU Support for Weld Defect Detection**: Docker Compose and Helm deployments now support
   GPU acceleration for weld defect detection on the Time Series Analytics microservice image, with
   updated configuration and user guides for running inference on GPU.
-- The Weld Defect Detection sample app is planned for removal in the upcoming 2026.2 release.
 
 **Improved**
 
