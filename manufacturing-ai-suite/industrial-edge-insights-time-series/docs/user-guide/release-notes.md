@@ -21,6 +21,7 @@ improvements.
 - **GPU Support for Weld Defect Detection**: Docker Compose and Helm deployments now support
   GPU acceleration for weld defect detection on the Time Series Analytics microservice image, with
   updated configuration and user guides for running inference on GPU.
+- The Weld Defect Detection sample app is planned for removal in the upcoming 2026.2 release.
 
 **Improved**
 
