@@ -8,7 +8,7 @@ This release introduces **batch processing UDFs**, **a new ML model for Weld Def
 **scikit-learn training scripts for Weld Defect Detection**, and various fixes and documentation
 improvements.
 
-**Deprecated:** The Weld Defect Detection Time Series Sample App is deprecated and will be removed in the next 2026.2 release.
+**Deprecated:** The Weld Defect Detection Time Series Sample App is deprecated and will be removed in the 2026.2 release.
 
 **New**
 
