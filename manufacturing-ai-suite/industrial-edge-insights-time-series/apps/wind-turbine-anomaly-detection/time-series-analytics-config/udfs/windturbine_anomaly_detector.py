@@ -16,8 +16,8 @@ import warnings
 from kapacitor.udf.agent import Agent, Handler
 from kapacitor.udf import udf_pb2
 import numpy as np
-from sklearnex import patch_sklearn, config_context
-patch_sklearn()
+# from sklearnex import patch_sklearn, config_context
+# patch_sklearn()
 
 warnings.filterwarnings(
     "ignore",
@@ -163,22 +163,22 @@ class AnomalyDetectorHandler(Handler):
             point.fieldsDouble["analytic"] = True
  
             if check_for_anomalies:
-                with config_context(target_offload=self.device,
-                                            allow_fallback_to_host=True):
-                    y_pred = self.rf.predict(np.array([x], dtype=np.float32).reshape(-1, 1))
+                # with config_context(target_offload=self.device,
+                #                             allow_fallback_to_host=True):
+                y_pred = self.rf.predict(np.array([x], dtype=np.float32).reshape(-1, 1))
 
-                    # Relative error vs predicted (stable when actual power is near zero)
-                    pred = np.float32(y_pred[0])
-                    if pred > np.float32(0.0):
-                        error = np.float32((pred - y) / pred)
-                        if error > np.float32(self.error_threshold):
-                            self.anomalies.append((x, y))
-                            if error < np.float32(0.3):
-                                point.fieldsDouble["anomaly_status"] = 0.3  # LOW
-                            elif error < np.float32(0.6):
-                                point.fieldsDouble["anomaly_status"] = 0.6  # MEDIUM
-                            else:
-                                point.fieldsDouble["anomaly_status"] = 1.0  # HIGH
+                # Relative error vs predicted (stable when actual power is near zero)
+                pred = np.float32(y_pred[0])
+                if pred > np.float32(0.0):
+                    error = np.float32((pred - y) / pred)
+                    if error > np.float32(self.error_threshold):
+                        self.anomalies.append((x, y))
+                        if error < np.float32(0.3):
+                            point.fieldsDouble["anomaly_status"] = 0.3  # LOW
+                        elif error < np.float32(0.6):
+                            point.fieldsDouble["anomaly_status"] = 0.6  # MEDIUM
+                        else:
+                            point.fieldsDouble["anomaly_status"] = 1.0  # HIGH
         else:
             logger.error("No input received for %s %s, %s %s. Skipping anomaly detection."
                          , self.x_name, x, self.y_name, y)
