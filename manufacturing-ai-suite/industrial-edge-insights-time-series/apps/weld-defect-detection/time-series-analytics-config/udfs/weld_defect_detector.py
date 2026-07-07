@@ -27,8 +27,8 @@ from kapacitor.udf.agent import Agent, Handler
 from kapacitor.udf import udf_pb2
 import numpy as np
 import joblib
-from sklearnex import patch_sklearn, config_context
-patch_sklearn()
+# from sklearnex import patch_sklearn, config_context
+# patch_sklearn()
 
 warnings.filterwarnings(
     "ignore",
@@ -234,40 +234,40 @@ class AnomalyDetectorHandler(Handler):
                     dtype=np.float32,
                 )
                 
-                with config_context(target_offload=self.device, allow_fallback_to_host=True):
-                    pred_idx   = self.pipeline.predict(x)[0]
-                    pred_proba = self.pipeline.predict_proba(x)[0]
-                    classes = list(self.le.classes_)
-                    prob_map = {cls: float(p) for cls, p in zip(classes, pred_proba)}
+                # with config_context(target_offload=self.device, allow_fallback_to_host=True):
+                pred_idx   = self.pipeline.predict(x)[0]
+                pred_proba = self.pipeline.predict_proba(x)[0]
+                classes = list(self.le.classes_)
+                prob_map = {cls: float(p) for cls, p in zip(classes, pred_proba)}
 
-                    predicted_category = self.le.inverse_transform([pred_idx])[0]
-                    point.fieldsString["predicted_category"] = str(predicted_category)
-                    good_weld_prob = prob_map.get(GOOD_WELD_LABEL, 0.0)
-                    good_defect = good_weld_prob * 100.0
-                    bad_defect = (1.0 - good_weld_prob) * 100.0
-                    confidence = round(float(np.max(pred_proba)), 6)
-                    if MODEL_WITH_EXPLANATION:
-                        explanation = self._build_explanation(fields, predicted_category, prob_map, self.info_data)
+                predicted_category = self.le.inverse_transform([pred_idx])[0]
+                point.fieldsString["predicted_category"] = str(predicted_category)
+                good_weld_prob = prob_map.get(GOOD_WELD_LABEL, 0.0)
+                good_defect = good_weld_prob * 100.0
+                bad_defect = (1.0 - good_weld_prob) * 100.0
+                confidence = round(float(np.max(pred_proba)), 6)
+                if MODEL_WITH_EXPLANATION:
+                    explanation = self._build_explanation(fields, predicted_category, prob_map, self.info_data)
 
-                    data_prediction = {
-                            "predicted_category": predicted_category,
-                            "is_defect": predicted_category != GOOD_WELD_LABEL,
-                            "defect_probability": round(1.0 - good_weld_prob, 6),
-                            "good_weld_probability": round(good_weld_prob, 6),
-                            "confidence": confidence,
-                            "probabilities": prob_map,
-                            "explanation": explanation if MODEL_WITH_EXPLANATION else "N/A",
-                        }
-                    logger.debug(
-                        "Prediction details: %s",
-                        data_prediction,
-                    )
+                data_prediction = {
+                        "predicted_category": predicted_category,
+                        "is_defect": predicted_category != GOOD_WELD_LABEL,
+                        "defect_probability": round(1.0 - good_weld_prob, 6),
+                        "good_weld_probability": round(good_weld_prob, 6),
+                        "confidence": confidence,
+                        "probabilities": prob_map,
+                        "explanation": explanation if MODEL_WITH_EXPLANATION else "N/A",
+                    }
+                logger.debug(
+                    "Prediction details: %s",
+                    data_prediction,
+                )
 
-                    point.fieldsString["prediction_details"] = json.dumps(data_prediction)
+                point.fieldsString["prediction_details"] = json.dumps(data_prediction)
 
-                    if bad_defect > 50:
-                        point.fieldsDouble["anomaly_status"] = 1.0 
-                    logger.info("Good Weld: %.2f%%, Defective Weld: %.2f%%", good_defect, bad_defect)
+                if bad_defect > 50:
+                    point.fieldsDouble["anomaly_status"] = 1.0 
+                logger.info("Good Weld: %.2f%%, Defective Weld: %.2f%%", good_defect, bad_defect)
         else:
             logger.debug("Primary Weld Current below threshold (%d). Skipping anomaly detection.", WELD_CURRENT_THRESHOLD)
 
