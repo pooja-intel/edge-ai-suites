@@ -128,9 +128,9 @@ Returns:
 {"run_id": "abc123", "status": "started"}
 ```
 
-### Auto-trigger
+### Auto-trigger (continuous flow, default)
 
-Set `AUTO_RUN_ON_DETECTION=true` in the use-case `.env` file. The agent pipeline fires automatically after each MQTT detection batch is saved.
+`AUTO_RUN_ON_DETECTION=true` by default in the use-case `.env` file. The agent pipeline fires automatically, in real time, for every MQTT detection batch saved to storage — no manual trigger required, matching a continuous detect-then-analyze flow. Set `AUTO_RUN_ON_DETECTION=false` to fall back to the manual "Run Agents" button / `POST /agents/run` API only.
 
 
 ## Stage 5 — Multi-Agent Reasoning (LangGraph)

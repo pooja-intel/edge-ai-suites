@@ -74,8 +74,7 @@ The most important variables are:
 | `LLM_MODEL_NAME` | `microsoft/Phi-4-mini-instruct` | Language model used by the agent pipeline |
 | `LLM_DEVICE` | `CPU` | Inference device: `CPU`, `GPU`, or `NPU` |
 | `LLM_WEIGHT_FORMAT` | `int4` | Model quantization format: `fp32`, `fp16`, `int8`, or `int4` |
-| `AUTO_RUN_ON_DETECTION` | `false` | Automatically trigger the agent pipeline after `AUTO_RUN_THRESHOLD` detections |
-| `AUTO_RUN_THRESHOLD` | `100` | Number of detections that triggers an automatic agent run |
+| `AUTO_RUN_ON_DETECTION` | `true` | Automatically trigger the agent pipeline in real time for every detection event (continuous flow). Set to `false` to require the manual "Run Agents" button instead |
 
 If you are using a gated Hugging Face model, you must set your API token:
 

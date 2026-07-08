@@ -102,6 +102,8 @@ tr:hover td { background: #fafcff; }
 .status-completed { background: #e8f5e9; color: var(--success); }
 .status-running   { background: #fff8e1; color: #f57f17; }
 .status-error     { background: #ffebee; color: var(--error); }
+.status-note { color: var(--muted, #666); margin: 0.5rem 0; font-size: 0.9rem; }
+.status-note .status-badge { margin-right: 0.5rem; }
 
 .priority-badge { padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: 700; }
 .priority-high   { background: #ffebee; color: var(--error); }

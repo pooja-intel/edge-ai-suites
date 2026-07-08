@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 _AGENT_URL   = os.environ.get("AGENT_SERVICE_URL",   "http://apm-agent:5002")
 _STORAGE_URL = os.environ.get("STORAGE_SERVICE_URL", "http://apm-storage:5001")
 _USE_CASE_ID = os.environ.get("USE_CASE_ID",         "unknown")
+_AUTO_RUN_ENABLED = os.environ.get("AUTO_RUN_ON_DETECTION", "false").lower() == "true"
 _TIMEOUT     = 15.0
 
 app = FastAPI(title="APM UI", docs_url=None, redoc_url=None)
@@ -47,7 +48,12 @@ async def index(request: Request):
 
     return templates.TemplateResponse(
         request=request, name="index.html",
-        context={"use_case_id": _USE_CASE_ID, "summary": summary, "runs": runs},
+        context={
+            "use_case_id": _USE_CASE_ID,
+            "summary": summary,
+            "runs": runs,
+            "auto_run_enabled": _AUTO_RUN_ENABLED,
+        },
     )
 
 

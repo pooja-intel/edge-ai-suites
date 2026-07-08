@@ -17,7 +17,7 @@
 - Prometheus metrics exposed by both the storage service and agent service.
 - Reference use case: `pipeline-defect-detection` with four defect classes — Rupture, Deformation, Disconnect, and Obstacle.
 - Data preparation script for downloading and building sample video from a public Kaggle dataset.
-- `AUTO_RUN_ON_DETECTION` support for automatic agent pipeline triggering after a configurable number of detections.
+- Continuous flow by default: `AUTO_RUN_ON_DETECTION` triggers the agent pipeline automatically in real time for every detection event, without a manual "Run Agents" step. Can be disabled for manual/on-demand triggering.
 
 **Hardware Used for Validation**:
 

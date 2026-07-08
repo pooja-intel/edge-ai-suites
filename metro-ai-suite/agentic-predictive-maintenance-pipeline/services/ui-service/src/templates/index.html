@@ -47,8 +47,16 @@
 
     <section class="card">
       <h2>Agent Pipeline</h2>
+      {% if auto_run_enabled %}
+      <p class="status-note">
+        <span class="status-badge status-completed">&#9679; Continuous mode ON</span>
+        The agent pipeline runs automatically in real time for every new detection.
+      </p>
+      {% else %}
+      <p class="status-note">Continuous mode is OFF — trigger the agent pipeline manually.</p>
+      {% endif %}
       <form method="POST" action="/run">
-        <button type="submit" class="btn-primary">&#9654; Run Agents</button>
+        <button type="submit" class="btn-primary">&#9654; Run Agents Now</button>
       </form>
     </section>
 

@@ -5,6 +5,7 @@
 
 import logging
 import os
+import threading
 import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -147,20 +148,34 @@ def _execute_run(run_id: str, config_path: str | None, prompts_dir: str | None):
         _runs[run_id] = {"status": "error", "result": {"error": str(exc)}}
 
 
-_auto_run_count = 0
-_AUTO_RUN_THRESHOLD = int(os.environ.get("AUTO_RUN_THRESHOLD", "100"))
+# Serializes real-time auto-triggered runs so a burst of detection events doesn't
+# spawn overlapping agent pipeline runs against the shared LLM/OVMS backend. A run
+# already in flight simply absorbs the next detection event once it completes.
+_auto_run_lock = threading.Lock()
 
 
 def _auto_trigger(detection_count: int):
-    """Trigger a pipeline run automatically after accumulating enough detections."""
-    global _auto_run_count
-    _auto_run_count += detection_count
-    if _auto_run_count >= _AUTO_RUN_THRESHOLD:
-        _auto_run_count = 0
-        run_id = str(uuid.uuid4())
-        _runs[run_id] = {"status": "running", "result": None}
-        import threading
-        threading.Thread(
-            target=_execute_run, args=(run_id, _CONFIG_PATH, _PROMPTS_DIR), daemon=True
-        ).start()
-        log.info("Auto-triggered run %s after %d detections", run_id, _AUTO_RUN_THRESHOLD)
+    """Trigger a pipeline run automatically in real time for each detection event.
+
+    Runs continuously: every batch of detections written by the MQTT subscriber
+    immediately kicks off an agent pipeline run (policy -> analysis -> evidence ->
+    ticketing), mirroring the reference app's single continuous detect-then-analyze
+    flow instead of requiring a manual "Run Agents" click in the UI.
+    """
+    if detection_count <= 0:
+        return
+    if not _auto_run_lock.acquire(blocking=False):
+        log.debug("Auto-run already in progress; skipping trigger for this detection batch")
+        return
+
+    run_id = str(uuid.uuid4())
+    _runs[run_id] = {"status": "running", "result": None}
+
+    def _run_and_release():
+        try:
+            _execute_run(run_id, _CONFIG_PATH, _PROMPTS_DIR)
+        finally:
+            _auto_run_lock.release()
+
+    threading.Thread(target=_run_and_release, daemon=True).start()
+    log.info("Auto-triggered run %s in real-time mode (detections=%d)", run_id, detection_count)

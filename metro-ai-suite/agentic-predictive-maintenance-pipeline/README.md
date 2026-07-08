@@ -214,8 +214,7 @@ echo "weld-defect-detection/FP16/weld-model.xml" > apps/weld-defect-detection/mo
 | `LLM_MODEL_NAME` | `microsoft/Phi-3.5-vision-instruct` | Model served by OVMS |
 | `LLM_DEVICE` | `CPU` | Inference device: CPU, GPU, NPU |
 | `LLM_WEIGHT_FORMAT` | `int4` | Quantization: fp32, fp16, int8, int4 |
-| `AUTO_RUN_ON_DETECTION` | `false` | Auto-trigger agents after N detections |
-| `AUTO_RUN_THRESHOLD` | `100` | Detection count to trigger auto-run |
+| `AUTO_RUN_ON_DETECTION` | `true` | Continuous flow: auto-trigger the agent pipeline in real time for every detection event. Set `false` for manual "Run Agents" only |
 | `MQTT_TOPIC` | `dlstreamer/detections` | MQTT topic for detection events |
 
 ## Development
