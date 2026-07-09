@@ -6,30 +6,7 @@ use cases without code changes.
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                        Browser / Dashboard                           │
-└───────────────────────────┬──────────────────────────────────────────┘
-                            │ HTTP (nginx :8080)
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-        ┌──────────┐ ┌──────────┐ ┌──────────────┐
-        │ ui-service│ │agent-svc │ │storage-service│
-        │  :5003   │ │  :5002   │ │   :5001       │
-        └──────────┘ └────┬─────┘ └──────┬────────┘
-                          │ REST          │ SQLite
-                          │               │
-              ┌───────────┘               │
-              ▼                           │
-     ┌─────────────────┐  MQTT   ┌────────────────────┐
-     │ OpenVINO Model  │◄───────►│dlstreamer-pipeline  │
-     │  Server :8010   │         │  server :8554       │
-     └─────────────────┘         └────────────────────┘
-              ▲
-              │ OpenAI API
-     LangGraph Multi-Agent Pipeline:
-       policy → analysis → evidence → ticketing
-```
+![Agentic Predictive Maintenance architecture](docs/user-guide/_assets/apm-arch.jpg)
 
 **3 new microservices** + **4 reused** from `edge-ai-libraries/microservices/`:
 
