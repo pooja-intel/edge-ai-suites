@@ -87,6 +87,20 @@ validate_env() {
     # HOST_IP is optional — default to localhost if not set in the env file
     export HOST_IP="${HOST_IP:-localhost}"
 
+    # LLM_MODEL_PATH is stored relative to the repo root in the use-case env
+    # file (e.g. "./apps/.../Phi-4-mini-instruct") for portability across
+    # machines/users. Docker Compose resolves relative volume host paths
+    # against the compose file's directory (docker/), not the caller's CWD —
+    # so a relative LLM_MODEL_PATH silently binds an empty/auto-created stub
+    # directory instead of the real model, and OVMS then fails to serve any
+    # model ("No version found for model in path" / "Mediapipe graph
+    # definition with requested name is not found"). Normalize it to an
+    # absolute path here (anchored at the repo root, same convention as
+    # USE_CASE_DIR below) before it reaches docker compose.
+    if [ -n "${LLM_MODEL_PATH:-}" ] && [[ "${LLM_MODEL_PATH}" != /* ]]; then
+        export LLM_MODEL_PATH="$(cd "${PWD}" && realpath -m "${LLM_MODEL_PATH}")"
+    fi
+
     # Validate required variables (LLM_MODEL_NAME/LLM_MODEL_PATH not needed in fallback mode)
     local required_vars=()
     if [ "${LLM_MODE:-llm}" != "fallback" ]; then
@@ -230,33 +244,7 @@ case "${ACTION}" in
                 return 1 2>/dev/null || exit 1
             fi
             echo -e "${GREEN}Application started. UI available at: http://${HOST_IP}:${APP_HOST_PORT}${NC}"
-
-            # Auto-start DL Streamer pipeline if sample video is available
-            SAMPLE_VIDEO="${USE_CASE_RESOURCES_DIR}/videos/sample.mp4"
-            if [ -f "${SAMPLE_VIDEO}" ]; then
-                echo -e "${BLUE}Sample video found — waiting for DL Streamer REST API...${NC}"
-                DLS_PORT="${PIPELINE_SERVER_PORT:-8554}"
-                # Wait up to 30s for DL Streamer to be ready
-                for i in $(seq 1 15); do
-                    sleep 2
-                    if curl -sf "http://localhost:${DLS_PORT}/pipelines" >/dev/null 2>&1; then
-                        PIPELINE_ID=$(curl -sf -X POST \
-                            "http://localhost:${DLS_PORT}/pipelines/user_defined_pipelines/pipeline_defect_detection" \
-                            -H "Content-Type: application/json" \
-                            -d '{}')
-                        if [ -n "${PIPELINE_ID}" ]; then
-                            echo -e "${GREEN}DL Streamer pipeline started (ID: ${PIPELINE_ID})${NC}"
-                        else
-                            echo -e "${YELLOW}DL Streamer pipeline start returned empty — check logs with: docker logs apm-dlstreamer${NC}"
-                        fi
-                        break
-                    fi
-                done
-            else
-                echo -e "${YELLOW}No sample video at ${SAMPLE_VIDEO} — DL Streamer pipeline not started.${NC}"
-                echo -e "${YELLOW}Run: python scripts/download_and_prep_data.py <url> --use-case ${USE_CASE}${NC}"
-                echo -e "${YELLOW}Then start pipeline: curl -X POST http://localhost:\${PIPELINE_SERVER_PORT:-8554}/pipelines/user_defined_pipelines/pipeline_defect_detection -d '{}'${NC}"
-            fi
+            echo -e "${BLUE}Click \"Run Pipeline\" on the dashboard to run one detect-then-reason cycle over the sample video.${NC}"
         fi
         ;;
 esac

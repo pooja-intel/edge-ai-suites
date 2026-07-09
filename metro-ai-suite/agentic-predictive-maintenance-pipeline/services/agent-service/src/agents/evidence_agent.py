@@ -16,9 +16,16 @@ def run(
     use_case_id: str,
     config: dict,
     prompts_dir: str | None = None,
+    min_id: int | None = None,
+    max_id: int | None = None,
 ) -> dict[str, Any]:
-    """Return a structured evidence record for audit compliance."""
-    summary = storage_client.get_summary()
+    """Return a structured evidence record for audit compliance.
+
+    Scoped to the same detection-id window (id > min_id, id <= max_id) as the
+    analysis agent so the audit trail reflects what was actually reasoned about
+    in this run, rather than the full all-time detection history every time.
+    """
+    summary = storage_client.get_summary(min_id=min_id, max_id=max_id)
 
     if llm_client.is_fallback_mode():
         return _fallback_evidence(summary)
@@ -29,7 +36,9 @@ def run(
     top_detections: dict[str, list] = {}
     for cls in summary.get("by_class", []):
         label = cls["label"]
-        records = storage_client.get_detections(label=label, min_confidence=0.0, limit=5)
+        records = storage_client.get_detections(
+            label=label, min_confidence=0.0, min_id=min_id, max_id=max_id, limit=5,
+        )
         top_detections[label] = [
             {"frame_id": d["frame_id"], "confidence": round(d["confidence"], 3),
              "bbox": [d["x"], d["y"], d["width"], d["height"]]}

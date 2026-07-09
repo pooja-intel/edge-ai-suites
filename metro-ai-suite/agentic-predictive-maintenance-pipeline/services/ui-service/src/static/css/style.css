@@ -189,3 +189,74 @@ footer {
   border-top: 1px solid #e0e0e0;
   background: #fff;
 }
+
+/* Live pipeline banner (header) */
+.live-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(255,255,255,0.15);
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  display: inline-block;
+}
+.live-on .live-dot { background: #4caf50; box-shadow: 0 0 0 rgba(76,175,80,0.6); animation: live-pulse 1.6s infinite; }
+.live-off .live-dot { background: #bdbdbd; }
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(76,175,80,0.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(76,175,80,0); }
+  100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
+}
+
+/* Live pipeline stats grid */
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.live-stat {
+  background: var(--intel-light);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+.live-stat-value { display: block; font-size: 1.6rem; font-weight: 700; color: var(--intel-blue); }
+.live-stat-label { display: block; font-size: 0.78rem; color: #666; margin-top: 0.2rem; }
+
+/* Run Pipeline action row */
+.run-now-form { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 1rem; }
+#pending-hint { margin: 0; }
+
+/* Pipeline Configuration panel */
+.pipeline-config {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.75rem 1rem 1rem;
+  margin: 0;
+  width: 100%;
+}
+.pipeline-config legend { padding: 0 0.4rem; font-size: 0.85rem; color: var(--muted, #666); }
+.pipeline-config:disabled, .pipeline-config[disabled] { opacity: 0.6; }
+.config-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.config-field { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; min-width: 180px; }
+.config-field span { color: var(--muted, #666); font-weight: 600; }
+.config-field select {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+

@@ -14,8 +14,13 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 from .meta_agent import run_pipeline
-from .mqtt_subscriber import start_subscriber, set_on_detection_callback
-from .utility.dlstreamer_client import start_watchdog
+from .mqtt_subscriber import start_subscriber
+from .utility import storage_client
+from .utility.dlstreamer_client import (
+    run_pipeline_to_completion,
+    list_available_videos,
+    PipelineRunError,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,24 +28,28 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# In-memory run store (keyed by run_id)
+# In-memory run store (keyed by run_id). Each run tracks a "phase" so the UI
+# can show real progress across the two-stage detect-then-reason cycle:
+#   "detecting" -> "reasoning" -> "completed" / "error"
 _runs: dict[str, dict] = {}
 
 _CONFIG_PATH  = os.environ.get("AGENTS_CONFIG_PATH", None)
 _PROMPTS_DIR  = os.environ.get("USE_CASE_PROMPTS_DIR", None)
-_AUTO_RUN     = os.environ.get("AUTO_RUN_ON_DETECTION", "false").lower() == "true"
+_DETECTION_TIMEOUT = float(os.environ.get("DLSTREAMER_RUN_TIMEOUT", "600"))
+
+# Only one detect-then-reason cycle may run at a time (single shared DL Streamer
+# pipeline + shared LLM/OVMS backend). New /agents/run calls are rejected with
+# 409 while a run is already in flight.
+_run_lock = threading.Lock()
+_active_run_id: str | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start MQTT subscriber (non-blocking background thread)
+    # Start MQTT subscriber (non-blocking background thread) so detection
+    # events are persisted to storage whenever the DL Streamer pipeline runs.
     if os.environ.get("MQTT_DISABLED", "false").lower() != "true":
-        if _AUTO_RUN:
-            set_on_detection_callback(_auto_trigger)
         start_subscriber()
-    # Start DL Streamer pipeline watchdog (ensures pipeline is always running)
-    if os.environ.get("DLSTREAMER_WATCHDOG_DISABLED", "false").lower() != "true":
-        start_watchdog()
     yield
 
 
@@ -57,6 +66,8 @@ app = FastAPI(
 class RunRequest(BaseModel):
     config_path: Optional[str] = None
     prompts_dir: Optional[str] = None
+    device: Optional[str] = "CPU"
+    video_filename: Optional[str] = None
 
 
 class RunResponse(BaseModel):
@@ -68,19 +79,46 @@ class RunResponse(BaseModel):
 
 @app.post("/agents/run", response_model=RunResponse, status_code=202)
 async def trigger_run(req: RunRequest, background_tasks: BackgroundTasks):
-    """Trigger a new agent pipeline run (async background task)."""
+    """Trigger one full detect-then-reason cycle (async background task).
+
+    Mirrors the reference CLI: starts the DL Streamer pipeline, waits for it to
+    finish processing the source video, then runs the 4-agent pipeline bounded
+    to exactly the detections produced by this run. Rejects a new run with 409
+    while one is already in flight.
+    """
+    global _active_run_id
+    if not _run_lock.acquire(blocking=False):
+        raise HTTPException(
+            status_code=409,
+            detail={"message": "A run is already in progress", "run_id": _active_run_id},
+        )
+
+    device = (req.device or "CPU").upper()
+    if device not in {"CPU", "GPU", "NPU"}:
+        _run_lock.release()
+        raise HTTPException(status_code=422, detail=f"Unsupported device: {req.device!r}")
+
     run_id = str(uuid.uuid4())
-    _runs[run_id] = {"status": "running", "result": None}
-    background_tasks.add_task(_execute_run, run_id, req.config_path, req.prompts_dir)
+    _active_run_id = run_id
+    _runs[run_id] = {"status": "running", "phase": "detecting", "result": None}
+    background_tasks.add_task(
+        _execute_detect_and_reason_run,
+        run_id,
+        req.config_path,
+        req.prompts_dir,
+        device,
+        req.video_filename,
+    )
     return RunResponse(run_id=run_id, status="running")
 
 
 @app.get("/agents/status/{run_id}")
 def get_status(run_id: str):
-    """Return the status of a pipeline run."""
+    """Return the status (and current phase) of a pipeline run."""
     if run_id not in _runs:
         raise HTTPException(status_code=404, detail="Run not found")
-    return {"run_id": run_id, "status": _runs[run_id]["status"]}
+    run = _runs[run_id]
+    return {"run_id": run_id, "status": run["status"], "phase": run.get("phase")}
 
 
 @app.get("/agents/results/{run_id}")
@@ -90,18 +128,24 @@ def get_results(run_id: str):
         raise HTTPException(status_code=404, detail="Run not found")
     run = _runs[run_id]
     if run["status"] == "running":
-        raise HTTPException(status_code=202, detail="Run still in progress")
+        raise HTTPException(status_code=202, detail=f"Run still in progress (phase={run.get('phase')})")
     return {"run_id": run_id, **run["result"]}
 
 
 @app.get("/agents/runs")
 def list_runs(id: Optional[str] = None):
-    """List all runs with their status. Optionally filter by run id."""
+    """List all runs with their status/phase. Optionally filter by run id."""
     if id is not None:
         if id not in _runs:
             raise HTTPException(status_code=404, detail="Run not found")
-        return [{"run_id": id, "status": _runs[id]["status"]}]
-    return [{"run_id": k, "status": v["status"]} for k, v in _runs.items()]
+        return [{"run_id": id, "status": _runs[id]["status"], "phase": _runs[id].get("phase")}]
+    return [{"run_id": k, "status": v["status"], "phase": v.get("phase")} for k, v in _runs.items()]
+
+
+@app.get("/agents/videos")
+def get_available_videos():
+    """List video filenames available under the shared resources/videos directory."""
+    return {"videos": list_available_videos()}
 
 
 @app.get("/health")
@@ -135,47 +179,65 @@ def metrics():
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-def _execute_run(run_id: str, config_path: str | None, prompts_dir: str | None):
+def _execute_detect_and_reason_run(
+    run_id: str,
+    config_path: str | None,
+    prompts_dir: str | None,
+    device: str = "CPU",
+    video_filename: str | None = None,
+):
+    """Run one full detect-then-reason cycle for ``run_id``.
+
+    1. Bookmark the current max detection id (start_id).
+    2. Start the DL Streamer pipeline (on ``device``, optionally overriding the
+       source video with ``video_filename``) and block until it finishes
+       (COMPLETED/ERROR).
+    3. Bookmark the max detection id again (end_id).
+    4. Run the 4-agent pipeline bounded to (start_id, end_id] — exactly the
+       detections produced by this run, regardless of any earlier history.
+    """
+    global _active_run_id
     try:
+        try:
+            start_id = storage_client.get_max_id().get("max_id", 0)
+        except Exception as exc:
+            log.warning("Could not resolve starting detection watermark, defaulting to 0: %s", exc)
+            start_id = 0
+
+        _runs[run_id]["phase"] = "detecting"
+        log.info(
+            "Run %s: starting DL Streamer pipeline (device=%s, video=%s, from detection id %d)...",
+            run_id, device, video_filename or "<default>", start_id,
+        )
+        pipeline_status = run_pipeline_to_completion(
+            device=device, video_filename=video_filename, timeout=_DETECTION_TIMEOUT
+        )
+        log.info("Run %s: detection finished (%s)", run_id, pipeline_status)
+
+        try:
+            end_id = storage_client.get_max_id().get("max_id", start_id)
+        except Exception as exc:
+            log.warning("Could not resolve ending detection watermark, defaulting to no upper bound: %s", exc)
+            end_id = None
+
+        _runs[run_id]["phase"] = "reasoning"
+        log.info("Run %s: reasoning over detections (id>%s, id<=%s)...", run_id, start_id, end_id)
         result = run_pipeline(
             config_path=config_path or _CONFIG_PATH,
             prompts_dir=prompts_dir or _PROMPTS_DIR,
+            min_id=start_id,
+            max_id=end_id,
         )
-        _runs[run_id] = {"status": "completed", "result": result}
+        result["pipeline_status"] = pipeline_status
+        _runs[run_id] = {"status": "completed", "phase": "completed", "result": result}
         log.info("Run %s completed", run_id)
+
+    except PipelineRunError as exc:
+        log.error("Run %s failed during detection: %s", run_id, exc)
+        _runs[run_id] = {"status": "error", "phase": "error", "result": {"error": str(exc)}}
     except Exception as exc:
         log.error("Run %s failed: %s", run_id, exc)
-        _runs[run_id] = {"status": "error", "result": {"error": str(exc)}}
-
-
-# Serializes real-time auto-triggered runs so a burst of detection events doesn't
-# spawn overlapping agent pipeline runs against the shared LLM/OVMS backend. A run
-# already in flight simply absorbs the next detection event once it completes.
-_auto_run_lock = threading.Lock()
-
-
-def _auto_trigger(detection_count: int):
-    """Trigger a pipeline run automatically in real time for each detection event.
-
-    Runs continuously: every batch of detections written by the MQTT subscriber
-    immediately kicks off an agent pipeline run (policy -> analysis -> evidence ->
-    ticketing), mirroring the reference app's single continuous detect-then-analyze
-    flow instead of requiring a manual "Run Agents" click in the UI.
-    """
-    if detection_count <= 0:
-        return
-    if not _auto_run_lock.acquire(blocking=False):
-        log.debug("Auto-run already in progress; skipping trigger for this detection batch")
-        return
-
-    run_id = str(uuid.uuid4())
-    _runs[run_id] = {"status": "running", "result": None}
-
-    def _run_and_release():
-        try:
-            _execute_run(run_id, _CONFIG_PATH, _PROMPTS_DIR)
-        finally:
-            _auto_run_lock.release()
-
-    threading.Thread(target=_run_and_release, daemon=True).start()
-    log.info("Auto-triggered run %s in real-time mode (detections=%d)", run_id, detection_count)
+        _runs[run_id] = {"status": "error", "phase": "error", "result": {"error": str(exc)}}
+    finally:
+        _active_run_id = None
+        _run_lock.release()

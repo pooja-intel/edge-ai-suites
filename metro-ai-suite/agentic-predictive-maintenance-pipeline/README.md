@@ -199,8 +199,8 @@ echo "weld-defect-detection/FP16/weld-model.xml" > apps/weld-defect-detection/mo
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/agents/run` | Trigger pipeline run (async) |
-| GET | `/agents/status/{run_id}` | Check run status |
+| POST | `/agents/run` | Trigger one detect-then-reason cycle: starts the DL Streamer pipeline, waits for it to finish processing the source video, then runs the agent pipeline over exactly the detections it produced (async; 202). Returns 409 if a run is already in progress |
+| GET | `/agents/status/{run_id}` | Check run status and current phase (`detecting`/`reasoning`/`completed`/`error`) |
 | GET | `/agents/results/{run_id}` | Get run results |
 | GET | `/agents/runs` | List all runs |
 | GET | `/health` | Health check |
@@ -214,8 +214,9 @@ echo "weld-defect-detection/FP16/weld-model.xml" > apps/weld-defect-detection/mo
 | `LLM_MODEL_NAME` | `microsoft/Phi-3.5-vision-instruct` | Model served by OVMS |
 | `LLM_DEVICE` | `CPU` | Inference device: CPU, GPU, NPU |
 | `LLM_WEIGHT_FORMAT` | `int4` | Quantization: fp32, fp16, int8, int4 |
-| `AUTO_RUN_ON_DETECTION` | `true` | Continuous flow: auto-trigger the agent pipeline in real time for every detection event. Set `false` for manual "Run Agents" only |
+| `DLSTREAMER_RUN_TIMEOUT` | `600` | Max seconds to wait for the DL Streamer pipeline to finish one run before the agent-service reports a failure |
 | `MQTT_TOPIC` | `dlstreamer/detections` | MQTT topic for detection events |
+
 
 ## Development
 

@@ -69,6 +69,8 @@ class SQLiteClient:
 
     def get_detections(self, label: Optional[str] = None,
                        min_confidence: Optional[float] = None,
+                       min_id: Optional[int] = None,
+                       max_id: Optional[int] = None,
                        limit: Optional[int] = None) -> list[dict]:
         conditions = []
         params: list = []
@@ -78,6 +80,12 @@ class SQLiteClient:
         if min_confidence is not None:
             conditions.append("confidence >= ?")
             params.append(min_confidence)
+        if min_id is not None:
+            conditions.append("id > ?")
+            params.append(min_id)
+        if max_id is not None:
+            conditions.append("id <= ?")
+            params.append(max_id)
 
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
         limit_clause = f"LIMIT {int(limit)}" if limit else ""
@@ -87,25 +95,58 @@ class SQLiteClient:
             rows = conn.execute(sql, params).fetchall()
         return [dict(r) for r in rows]
 
-    def get_summary(self) -> dict:
-        """Return per-class detection counts and confidence stats."""
-        sql = """
+    def get_summary(self, min_id: Optional[int] = None,
+                    max_id: Optional[int] = None) -> dict:
+        """Return per-class detection counts and confidence stats.
+
+        Optionally scoped to a detection-id window (id > min_id and id <= max_id)
+        so callers can summarize only the detections accumulated since a previous
+        analysis run, instead of always aggregating the entire (potentially
+        unbounded, ever-growing) detection history.
+        """
+        conditions = []
+        params: list = []
+        if min_id is not None:
+            conditions.append("id > ?")
+            params.append(min_id)
+        if max_id is not None:
+            conditions.append("id <= ?")
+            params.append(max_id)
+        where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+        sql = f"""
         SELECT label,
                COUNT(*)          AS count,
                AVG(confidence)   AS avg_confidence,
                MAX(confidence)   AS max_confidence,
                MIN(confidence)   AS min_confidence
         FROM detections
+        {where}
         GROUP BY label
         ORDER BY count DESC
         """
         with self._get_conn() as conn:
-            rows = conn.execute(sql).fetchall()
+            rows = conn.execute(sql, params).fetchall()
         return {"by_class": [dict(r) for r in rows]}
 
-    def count(self) -> int:
+    def get_max_id(self) -> int:
+        """Return the highest detection id currently stored (0 if empty)."""
         with self._get_conn() as conn:
-            return conn.execute("SELECT COUNT(*) FROM detections").fetchone()[0]
+            row = conn.execute("SELECT COALESCE(MAX(id), 0) FROM detections").fetchone()
+        return int(row[0])
+
+    def count(self, min_id: Optional[int] = None, max_id: Optional[int] = None) -> int:
+        conditions = []
+        params: list = []
+        if min_id is not None:
+            conditions.append("id > ?")
+            params.append(min_id)
+        if max_id is not None:
+            conditions.append("id <= ?")
+            params.append(max_id)
+        where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+        with self._get_conn() as conn:
+            return conn.execute(f"SELECT COUNT(*) FROM detections {where}", params).fetchone()[0]
 
     def clear(self):
         with self._get_conn() as conn:

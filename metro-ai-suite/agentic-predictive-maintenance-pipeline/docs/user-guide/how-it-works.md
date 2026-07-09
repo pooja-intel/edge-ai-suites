@@ -1,6 +1,6 @@
 # How It Works
 
-The Agentic Predictive Maintenance (APM) blueprint runs a continuous detection and analysis loop: a video inference pipeline feeds detection events into a storage layer, and a multi-agent reasoning pipeline periodically processes those detections to generate structured maintenance tickets. This page describes each stage so you can understand, verify, and debug the pipeline independently.
+The Agentic Predictive Maintenance (APM) blueprint mirrors the reference CLI's batch model: clicking "Run Pipeline" starts the DL Streamer video-inference pipeline, waits for it to finish processing the (finite) source video, and then triggers a multi-agent reasoning pass over exactly the detections that run produced, generating structured maintenance tickets. This page describes each stage so you can understand, verify, and debug the pipeline independently.
 
 ## System Overview
 
@@ -111,26 +111,45 @@ Expected `stats` response:
 ```
 
 
-## Stage 4 — Triggering the Agent Pipeline
+## Stage 4 — Triggering the Detect-Then-Reason Cycle
 
-The multi-agent pipeline can be triggered in two ways:
+Clicking "Run Pipeline" (or calling `POST /agents/run`) runs one full
+detect-then-reason cycle, matching the reference CLI:
 
-### Manual trigger (recommended for testing)
+1. **Detect** — the agent-service starts the DL Streamer pipeline and blocks
+   until it processes the entire (finite) source video and reaches a
+   terminal state (`COMPLETED`/`ERROR`/`ABORTED`).
+2. **Reason** — the agent-service then runs the 4-agent pipeline bounded to
+   exactly the detections produced by that run (via an `id`-based
+   `start_id`/`end_id` window), never any earlier history.
+
+Only one run may be in flight at a time — a concurrent `POST /agents/run`
+call is rejected with `409` and the id of the currently-running run.
+
+### Manual trigger (the "Run Pipeline" button)
 
 ```bash
-curl -X POST http://localhost:8080/api/agents/runs \
+curl -X POST http://localhost:8080/api/agents/run \
   -H "Content-Type: application/json" -d '{}'
 ```
 
 Returns:
 
 ```json
-{"run_id": "abc123", "status": "started"}
+{"run_id": "abc123", "status": "running"}
 ```
 
-### Auto-trigger (continuous flow, default)
+Poll progress (the `phase` field moves `detecting` → `reasoning` → `completed`/`error`):
 
-`AUTO_RUN_ON_DETECTION=true` by default in the use-case `.env` file. The agent pipeline fires automatically, in real time, for every MQTT detection batch saved to storage — no manual trigger required, matching a continuous detect-then-analyze flow. Set `AUTO_RUN_ON_DETECTION=false` to fall back to the manual "Run Agents" button / `POST /agents/run` API only.
+```bash
+curl http://localhost:8080/api/agents/status/abc123
+# {"run_id": "abc123", "status": "running", "phase": "detecting"}
+```
+
+> Note: true live/continuous background detection (independent of the
+> "Run Pipeline" click) is planned for a future iteration; the current
+> release runs one detect-then-reason cycle per click, over the finite
+> sample video.
 
 
 ## Stage 5 — Multi-Agent Reasoning (LangGraph)

@@ -35,6 +35,8 @@ services:
       USE_CASE_PROMPTS_DIR: /app/prompts
       USE_CASE_CONFIGS_DIR: /app/config
       FALLBACK_POLICY_PATH: /app/config/policy_fallback.json
+      # Available source videos (read-only view of the same dir DL Streamer uses)
+      VIDEOS_DIR: /app/videos
       # Outputs
       OUTPUT_DIR: /app/output
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -42,6 +44,7 @@ services:
       - ${USE_CASE_CONFIGS_DIR:-/tmp/apm-placeholder}/agents.yaml:/app/config/agents.yaml:ro
       - ${USE_CASE_CONFIGS_DIR:-/tmp/apm-placeholder}/policy_fallback.json:/app/config/policy_fallback.json:ro
       - ${USE_CASE_PROMPTS_DIR:-/tmp/apm-placeholder}:/app/prompts:ro
+      - ${USE_CASE_RESOURCES_DIR:-/tmp/resources}/videos:/app/videos:ro
       - apm_agent_output:/app/output
     ports:
       - "${AGENT_PORT:-5002}:5002"

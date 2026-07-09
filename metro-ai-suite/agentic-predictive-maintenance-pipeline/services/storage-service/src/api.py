@@ -7,8 +7,9 @@ Storage Service — FastAPI REST wrapper over SQLite for detection persistence.
 Endpoints:
   POST   /detections          Insert one detection
   POST   /detections/batch    Bulk insert detections
-  GET    /detections          Query detections (filter by label, confidence)
-  GET    /detections/summary  Per-class statistics
+  GET    /detections          Query detections (filter by label, confidence, id window)
+  GET    /detections/summary  Per-class statistics (optionally scoped to an id window)
+  GET    /detections/max_id   Current max detection id + total count (watermark)
   DELETE /detections          Clear all detections
   GET    /health              Health check
   GET    /metrics             Prometheus-style metrics
@@ -115,17 +116,35 @@ def insert_batch(batch: DetectionBatch):
 def get_detections(
     label: str | None = Query(None, description="Filter by defect class"),
     min_confidence: float | None = Query(None, ge=0.0, le=1.0),
+    min_id: int | None = Query(None, ge=0, description="Only detections with id > min_id"),
+    max_id: int | None = Query(None, ge=0, description="Only detections with id <= max_id"),
     limit: int | None = Query(None, ge=1),
 ):
     global db, _request_count
     _request_count += 1
-    return db.get_detections(label=label, min_confidence=min_confidence, limit=limit)
+    return db.get_detections(
+        label=label, min_confidence=min_confidence, min_id=min_id, max_id=max_id, limit=limit,
+    )
 
 
 @app.get("/detections/summary")
-def get_summary():
+def get_summary(
+    min_id: int | None = Query(None, ge=0, description="Only detections with id > min_id"),
+    max_id: int | None = Query(None, ge=0, description="Only detections with id <= max_id"),
+):
     global db
-    return db.get_summary()
+    return db.get_summary(min_id=min_id, max_id=max_id)
+
+
+@app.get("/detections/max_id")
+def get_max_id():
+    """Return the current highest detection id (watermark) and total row count.
+
+    Used by the agent-service to bound a "since last analysis run" window, and by
+    the UI to show how many new detections are pending analysis.
+    """
+    global db
+    return {"max_id": db.get_max_id(), "total_count": db.count()}
 
 
 @app.delete("/detections", status_code=204)

@@ -18,6 +18,8 @@ _NO_PROXY = {"http": None, "https": None}  # bypass system proxy for internal Do
 def get_detections(
     label: str | None = None,
     min_confidence: float | None = None,
+    min_id: int | None = None,
+    max_id: int | None = None,
     limit: int | None = 500,
 ) -> list[dict]:
     params: dict = {}
@@ -25,6 +27,10 @@ def get_detections(
         params["label"] = label
     if min_confidence is not None:
         params["min_confidence"] = min_confidence
+    if min_id is not None:
+        params["min_id"] = min_id
+    if max_id is not None:
+        params["max_id"] = max_id
     if limit is not None:
         params["limit"] = limit
     r = requests.get(f"{_STORAGE_URL}/detections", params=params, timeout=_TIMEOUT, proxies=_NO_PROXY)
@@ -32,8 +38,20 @@ def get_detections(
     return r.json()
 
 
-def get_summary() -> dict:
-    r = requests.get(f"{_STORAGE_URL}/detections/summary", timeout=_TIMEOUT, proxies=_NO_PROXY)
+def get_summary(min_id: int | None = None, max_id: int | None = None) -> dict:
+    params: dict = {}
+    if min_id is not None:
+        params["min_id"] = min_id
+    if max_id is not None:
+        params["max_id"] = max_id
+    r = requests.get(f"{_STORAGE_URL}/detections/summary", params=params, timeout=_TIMEOUT, proxies=_NO_PROXY)
+    r.raise_for_status()
+    return r.json()
+
+
+def get_max_id() -> dict:
+    """Return the current detection watermark: {"max_id": int, "total_count": int}."""
+    r = requests.get(f"{_STORAGE_URL}/detections/max_id", timeout=_TIMEOUT, proxies=_NO_PROXY)
     r.raise_for_status()
     return r.json()
 

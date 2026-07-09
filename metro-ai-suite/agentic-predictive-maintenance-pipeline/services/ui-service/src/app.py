@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 _AGENT_URL   = os.environ.get("AGENT_SERVICE_URL",   "http://apm-agent:5002")
 _STORAGE_URL = os.environ.get("STORAGE_SERVICE_URL", "http://apm-storage:5001")
 _USE_CASE_ID = os.environ.get("USE_CASE_ID",         "unknown")
-_AUTO_RUN_ENABLED = os.environ.get("AUTO_RUN_ON_DETECTION", "false").lower() == "true"
 _TIMEOUT     = 15.0
 
 app = FastAPI(title="APM UI", docs_url=None, redoc_url=None)
@@ -31,20 +30,37 @@ templates = Jinja2Templates(directory=os.path.join(_src_dir, "templates"))
 
 # ── Pages ─────────────────────────────────────────────────────────────────────
 
+async def _fetch_summary_and_runs(client: httpx.AsyncClient):
+    try:
+        summary_r = await client.get(f"{_STORAGE_URL}/detections/summary")
+        summary = summary_r.json() if summary_r.status_code == 200 else {}
+    except Exception:
+        summary = {}
+
+    try:
+        runs_r = await client.get(f"{_AGENT_URL}/agents/runs")
+        runs = runs_r.json() if runs_r.status_code == 200 else []
+    except Exception:
+        runs = []
+
+    return summary, runs
+
+
+async def _fetch_videos(client: httpx.AsyncClient):
+    try:
+        r = await client.get(f"{_AGENT_URL}/agents/videos")
+        return r.json().get("videos", []) if r.status_code == 200 else []
+    except Exception:
+        return []
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        try:
-            summary_r = await client.get(f"{_STORAGE_URL}/detections/summary")
-            summary = summary_r.json() if summary_r.status_code == 200 else {}
-        except Exception:
-            summary = {}
+        summary, runs = await _fetch_summary_and_runs(client)
+        videos = await _fetch_videos(client)
 
-        try:
-            runs_r = await client.get(f"{_AGENT_URL}/agents/runs")
-            runs = runs_r.json() if runs_r.status_code == 200 else []
-        except Exception:
-            runs = []
+    active_run = next((r for r in reversed(runs) if r.get("status") == "running"), None)
 
     return templates.TemplateResponse(
         request=request, name="index.html",
@@ -52,9 +68,37 @@ async def index(request: Request):
             "use_case_id": _USE_CASE_ID,
             "summary": summary,
             "runs": runs,
-            "auto_run_enabled": _AUTO_RUN_ENABLED,
+            "active_run": active_run,
+            "videos": videos,
+            "devices": ["CPU", "GPU", "NPU"],
         },
     )
+
+
+@app.get("/api/status")
+async def api_status():
+    """Lightweight JSON snapshot used by the dashboard to poll live pipeline status
+    (detection counts + agent run counts) without a full page reload."""
+    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        summary, runs = await _fetch_summary_and_runs(client)
+
+    by_class = summary.get("by_class", [])
+    total_detections = sum(c.get("count", 0) for c in by_class)
+    completed = sum(1 for r in runs if r.get("status") == "completed")
+    running = sum(1 for r in runs if r.get("status") == "running")
+    failed = sum(1 for r in runs if r.get("status") == "error")
+    active_run = next((r for r in reversed(runs) if r.get("status") == "running"), None)
+
+    return {
+        "total_detections": total_detections,
+        "by_class": by_class,
+        "runs_total": len(runs),
+        "runs_completed": completed,
+        "runs_running": running,
+        "runs_failed": failed,
+        "active_run": active_run,
+        "recent_runs": list(reversed(runs))[:10],
+    }
 
 
 @app.get("/detections", response_class=HTMLResponse)
@@ -109,6 +153,12 @@ async def detections_page(
 async def results_page(request: Request, run_id: str):
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
         try:
+            status_r = await client.get(f"{_AGENT_URL}/agents/status/{run_id}")
+            phase = status_r.json().get("phase") if status_r.status_code == 200 else None
+        except Exception:
+            phase = None
+
+        try:
             r = await client.get(f"{_AGENT_URL}/agents/results/{run_id}")
             if r.status_code == 404:
                 raise HTTPException(status_code=404, detail="Run not found")
@@ -120,17 +170,33 @@ async def results_page(request: Request, run_id: str):
 
     return templates.TemplateResponse(
         request=request, name="results.html",
-        context={"use_case_id": _USE_CASE_ID, "run_id": run_id, "result": result},
+        context={"use_case_id": _USE_CASE_ID, "run_id": run_id, "result": result, "phase": phase},
     )
 
 
 # ── Actions ───────────────────────────────────────────────────────────────────
 
 @app.post("/run")
-async def trigger_run():
-    """Trigger a new agent pipeline run via the agent-service."""
+async def trigger_run(
+    device: str = Form("CPU"),
+    video_filename: str = Form(""),
+):
+    """Trigger a new detect-then-reason pipeline run via the agent-service.
+
+    If a run is already in progress, redirect to its results page instead of
+    erroring — only one detect-then-reason cycle can run at a time.
+    """
+    payload: dict = {"device": device}
+    if video_filename:
+        payload["video_filename"] = video_filename
+
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        r = await client.post(f"{_AGENT_URL}/agents/run", json={})
+        r = await client.post(f"{_AGENT_URL}/agents/run", json=payload)
+        if r.status_code == 409:
+            active_run_id = (r.json().get("detail") or {}).get("run_id")
+            if active_run_id:
+                return RedirectResponse(url=f"/results/{active_run_id}", status_code=303)
+            return RedirectResponse(url="/", status_code=303)
         r.raise_for_status()
         data = r.json()
     return RedirectResponse(url=f"/results/{data['run_id']}", status_code=303)

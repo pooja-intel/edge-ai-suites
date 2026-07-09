@@ -18,9 +18,17 @@ def run(
     config: dict,
     prompts_dir: str | None = None,
     min_confidence: float = 0.5,
+    min_id: int | None = None,
+    max_id: int | None = None,
 ) -> dict[str, Any]:
-    """Analyse detections and return a structured report."""
-    detections = storage_client.get_detections(min_confidence=min_confidence)
+    """Analyse detections and return a structured report.
+
+    When ``min_id``/``max_id`` are provided, only detections accumulated since the
+    previous analysis run (id > min_id, id <= max_id) are considered — this keeps
+    each "Run Pipeline" pass bounded to new evidence instead of reprocessing the
+    entire, ever-growing detection history on every run.
+    """
+    detections = storage_client.get_detections(min_confidence=min_confidence, min_id=min_id, max_id=max_id)
 
     if llm_client.is_fallback_mode():
         return _fallback_analysis(detections)

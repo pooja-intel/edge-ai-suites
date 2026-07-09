@@ -18,6 +18,8 @@ class AgentState(TypedDict):
     use_case_id: str
     config: dict
     prompts_dir: str | None
+    min_id: int | None
+    max_id: int | None
     policy_result: dict
     analysis_result: dict
     evidence_result: dict
@@ -40,7 +42,8 @@ def _run_analysis(state: AgentState) -> AgentState:
     try:
         min_conf = state["config"].get("analysis", {}).get("min_confidence", 0.5)
         result = analysis_agent.run(
-            state["use_case_id"], state["config"], state.get("prompts_dir"), min_conf
+            state["use_case_id"], state["config"], state.get("prompts_dir"), min_conf,
+            min_id=state.get("min_id"), max_id=state.get("max_id"),
         )
         return {**state, "analysis_result": result}
     except Exception as exc:
@@ -51,7 +54,8 @@ def _run_analysis(state: AgentState) -> AgentState:
 def _run_evidence(state: AgentState) -> AgentState:
     try:
         result = evidence_agent.run(
-            state["use_case_id"], state["config"], state.get("prompts_dir")
+            state["use_case_id"], state["config"], state.get("prompts_dir"),
+            min_id=state.get("min_id"), max_id=state.get("max_id"),
         )
         return {**state, "evidence_result": result}
     except Exception as exc:
@@ -105,8 +109,18 @@ def get_graph():
 def run_pipeline(
     config_path: str | None = None,
     prompts_dir: str | None = None,
+    min_id: int | None = None,
+    max_id: int | None = None,
 ) -> dict[str, Any]:
-    """Run the full multi-agent pipeline and return all agent outputs."""
+    """Run the full multi-agent pipeline and return all agent outputs.
+
+    ``min_id``/``max_id`` bound the analysis/evidence agents to detections
+    accumulated since the previous run (id > min_id, id <= max_id). This mirrors
+    the reference pipeline's "reason once over everything gathered so far" model,
+    adapted for our continuously-running detection stream: each explicit
+    "Run Pipeline" invocation reasons over exactly the new window of detections,
+    instead of ever-growing full history.
+    """
     config = load_config(config_path)
     use_case_id = get_use_case_id(config)
 
@@ -114,6 +128,8 @@ def run_pipeline(
         "use_case_id": use_case_id,
         "config": config,
         "prompts_dir": prompts_dir,
+        "min_id": min_id,
+        "max_id": max_id,
         "policy_result": {},
         "analysis_result": {},
         "evidence_result": {},
@@ -130,4 +146,5 @@ def run_pipeline(
         "evidence": final_state.get("evidence_result", {}),
         "ticket":   final_state.get("ticket_result", {}),
         "error":    final_state.get("error"),
+        "window":   {"min_id": min_id, "max_id": max_id},
     }
