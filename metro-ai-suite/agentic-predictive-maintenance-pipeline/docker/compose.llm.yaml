@@ -6,7 +6,7 @@
 
 services:
   apm-llm:
-    image: openvino/model_server:${OVMS_TAG:-latest}
+    image: openvino/model_server:${OVMS_TAG:-2026.2}
     container_name: apm-llm
     hostname: apm-llm
     # The mounted /model directory contains a pre-converted mediapipe graph

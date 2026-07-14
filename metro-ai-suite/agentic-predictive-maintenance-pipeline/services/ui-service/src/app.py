@@ -20,6 +20,8 @@ _AGENT_URL   = os.environ.get("AGENT_SERVICE_URL",   "http://apm-agent:5002")
 _STORAGE_URL = os.environ.get("STORAGE_SERVICE_URL", "http://apm-storage:5001")
 _USE_CASE_ID = os.environ.get("USE_CASE_ID",         "unknown")
 _TIMEOUT     = 15.0
+_API_KEY     = os.environ.get("APM_API_KEY", "")
+_SERVICE_HEADERS = {"X-API-Key": _API_KEY} if _API_KEY else {}
 
 app = FastAPI(title="APM UI", docs_url=None, redoc_url=None)
 
@@ -32,13 +34,13 @@ templates = Jinja2Templates(directory=os.path.join(_src_dir, "templates"))
 
 async def _fetch_summary_and_runs(client: httpx.AsyncClient):
     try:
-        summary_r = await client.get(f"{_STORAGE_URL}/detections/summary")
+        summary_r = await client.get(f"{_STORAGE_URL}/detections/summary", headers=_SERVICE_HEADERS)
         summary = summary_r.json() if summary_r.status_code == 200 else {}
     except Exception:
         summary = {}
 
     try:
-        runs_r = await client.get(f"{_AGENT_URL}/agents/runs")
+        runs_r = await client.get(f"{_AGENT_URL}/agents/runs", headers=_SERVICE_HEADERS)
         runs = runs_r.json() if runs_r.status_code == 200 else []
     except Exception:
         runs = []
@@ -48,7 +50,7 @@ async def _fetch_summary_and_runs(client: httpx.AsyncClient):
 
 async def _fetch_videos(client: httpx.AsyncClient):
     try:
-        r = await client.get(f"{_AGENT_URL}/agents/videos")
+        r = await client.get(f"{_AGENT_URL}/agents/videos", headers=_SERVICE_HEADERS)
         return r.json().get("videos", []) if r.status_code == 200 else []
     except Exception:
         return []
@@ -124,13 +126,13 @@ async def detections_page(
 
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
         try:
-            r = await client.get(f"{_STORAGE_URL}/detections", params=params)
+            r = await client.get(f"{_STORAGE_URL}/detections", params=params, headers=_SERVICE_HEADERS)
             detections = r.json() if r.status_code == 200 else []
         except Exception:
             detections = []
 
         try:
-            summary_r = await client.get(f"{_STORAGE_URL}/detections/summary")
+            summary_r = await client.get(f"{_STORAGE_URL}/detections/summary", headers=_SERVICE_HEADERS)
             summary = summary_r.json() if summary_r.status_code == 200 else {}
             total_count = sum(c.get("count", 0) for c in summary.get("by_class", []))
         except Exception:
@@ -153,13 +155,13 @@ async def detections_page(
 async def results_page(request: Request, run_id: str):
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
         try:
-            status_r = await client.get(f"{_AGENT_URL}/agents/status/{run_id}")
+            status_r = await client.get(f"{_AGENT_URL}/agents/status/{run_id}", headers=_SERVICE_HEADERS)
             phase = status_r.json().get("phase") if status_r.status_code == 200 else None
         except Exception:
             phase = None
 
         try:
-            r = await client.get(f"{_AGENT_URL}/agents/results/{run_id}")
+            r = await client.get(f"{_AGENT_URL}/agents/results/{run_id}", headers=_SERVICE_HEADERS)
             if r.status_code == 404:
                 raise HTTPException(status_code=404, detail="Run not found")
             result = r.json() if r.status_code == 200 else {"status": "running"}
@@ -191,7 +193,7 @@ async def trigger_run(
         payload["video_filename"] = video_filename
 
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        r = await client.post(f"{_AGENT_URL}/agents/run", json=payload)
+        r = await client.post(f"{_AGENT_URL}/agents/run", json=payload, headers=_SERVICE_HEADERS)
         if r.status_code == 409:
             active_run_id = (r.json().get("detail") or {}).get("run_id")
             if active_run_id:
@@ -206,7 +208,7 @@ async def trigger_run(
 async def clear_detections():
     """Clear all detections from storage."""
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        await client.delete(f"{_STORAGE_URL}/detections")
+        await client.delete(f"{_STORAGE_URL}/detections", headers=_SERVICE_HEADERS)
     return RedirectResponse(url="/", status_code=303)
 
 

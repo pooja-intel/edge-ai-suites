@@ -74,6 +74,7 @@ services:
       http_proxy: ${http_proxy:-}
       https_proxy: ${https_proxy:-}
       no_proxy: ${no_proxy:-},localhost
+      APM_API_KEY: ${APM_API_KEY:-change-me-apm-key}
       SQLITE_DB_PATH: /data/detections.db
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
@@ -114,19 +115,15 @@ services:
       - ${USE_CASE_MODELS_DIR:-/tmp/models}:/home/pipeline-server/models:ro
       - ${USE_CASE_RESOURCES_DIR:-/tmp/resources}:/home/pipeline-server/resources:ro
       - apm_model_cache:/home/pipeline-server/model_cache
-      - /dev:/dev
-      - /tmp:/tmp
     tmpfs:
+      - /tmp:rw,nosuid,nodev,size=1g
       - /var/cache/pipeline_root:uid=1999,gid=1999,mode=0755
     group_add:
       - "109"
       - "110"
       - "992"
-    device_cgroup_rules:
-      - 'c 189:* rmw'
-      - 'c 209:* rmw'
     devices:
-      - /dev:/dev
+      - /dev/dri:/dev/dri
     depends_on:
       mqtt-broker:
         condition: service_healthy
@@ -137,7 +134,7 @@ services:
       - no-new-privileges
 
   model-download:
-    image: ${REGISTRY:-intel/}model-download:${MODEL_DOWNLOAD_TAG:-latest}
+    image: ${REGISTRY:-intel/}model-download:${MODEL_DOWNLOAD_TAG:-2026.1.0}
     container_name: apm-model-download
     hostname: model-download
     # The model-download entrypoint only accepts the plugin list via the

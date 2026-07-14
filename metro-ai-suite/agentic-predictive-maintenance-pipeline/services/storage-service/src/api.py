@@ -20,7 +20,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
@@ -35,6 +35,7 @@ logger = logging.getLogger("storage-service")
 
 # ── Config ───────────────────────────────────────────────────────────────────
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/data/detections.db")
+APM_API_KEY = os.getenv("APM_API_KEY", "")
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 db: SQLiteClient | None = None
@@ -57,6 +58,14 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")) -> None:
+    """Enforce API key auth for mutating endpoints."""
+    if not APM_API_KEY:
+        return
+    if x_api_key != APM_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 # ── Pydantic Models ───────────────────────────────────────────────────────────
 
@@ -93,7 +102,7 @@ def health():
 
 
 @app.post("/detections", response_model=InsertResponse, status_code=201)
-def insert_detection(detection: Detection):
+def insert_detection(detection: Detection, _auth: None = Depends(require_api_key)):
     global db, _request_count
     _request_count += 1
     row_id = db.insert_detection(
@@ -104,7 +113,7 @@ def insert_detection(detection: Detection):
 
 
 @app.post("/detections/batch", response_model=InsertResponse, status_code=201)
-def insert_batch(batch: DetectionBatch):
+def insert_batch(batch: DetectionBatch, _auth: None = Depends(require_api_key)):
     global db, _request_count
     _request_count += 1
     records = [d.model_dump() for d in batch.detections]
@@ -148,7 +157,7 @@ def get_max_id():
 
 
 @app.delete("/detections", status_code=204)
-def clear_detections():
+def clear_detections(_auth: None = Depends(require_api_key)):
     global db
     db.clear()
 

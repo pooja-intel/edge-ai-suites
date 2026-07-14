@@ -11,8 +11,10 @@ import requests
 log = logging.getLogger(__name__)
 
 _STORAGE_URL = os.environ.get("STORAGE_SERVICE_URL", "http://apm-storage:5001")
+_API_KEY = os.environ.get("APM_API_KEY", "")
 _TIMEOUT = 10
 _NO_PROXY = {"http": None, "https": None}  # bypass system proxy for internal Docker calls
+_HEADERS = {"X-API-Key": _API_KEY} if _API_KEY else {}
 
 
 def get_detections(
@@ -33,7 +35,13 @@ def get_detections(
         params["max_id"] = max_id
     if limit is not None:
         params["limit"] = limit
-    r = requests.get(f"{_STORAGE_URL}/detections", params=params, timeout=_TIMEOUT, proxies=_NO_PROXY)
+    r = requests.get(
+        f"{_STORAGE_URL}/detections",
+        params=params,
+        headers=_HEADERS,
+        timeout=_TIMEOUT,
+        proxies=_NO_PROXY,
+    )
     r.raise_for_status()
     return r.json()
 
@@ -44,19 +52,36 @@ def get_summary(min_id: int | None = None, max_id: int | None = None) -> dict:
         params["min_id"] = min_id
     if max_id is not None:
         params["max_id"] = max_id
-    r = requests.get(f"{_STORAGE_URL}/detections/summary", params=params, timeout=_TIMEOUT, proxies=_NO_PROXY)
+    r = requests.get(
+        f"{_STORAGE_URL}/detections/summary",
+        params=params,
+        headers=_HEADERS,
+        timeout=_TIMEOUT,
+        proxies=_NO_PROXY,
+    )
     r.raise_for_status()
     return r.json()
 
 
 def get_max_id() -> dict:
     """Return the current detection watermark: {"max_id": int, "total_count": int}."""
-    r = requests.get(f"{_STORAGE_URL}/detections/max_id", timeout=_TIMEOUT, proxies=_NO_PROXY)
+    r = requests.get(
+        f"{_STORAGE_URL}/detections/max_id",
+        headers=_HEADERS,
+        timeout=_TIMEOUT,
+        proxies=_NO_PROXY,
+    )
     r.raise_for_status()
     return r.json()
 
 
 def post_detection(payload: dict) -> dict:
-    r = requests.post(f"{_STORAGE_URL}/detections", json=payload, timeout=_TIMEOUT, proxies=_NO_PROXY)
+    r = requests.post(
+        f"{_STORAGE_URL}/detections",
+        json=payload,
+        headers=_HEADERS,
+        timeout=_TIMEOUT,
+        proxies=_NO_PROXY,
+    )
     r.raise_for_status()
     return r.json()

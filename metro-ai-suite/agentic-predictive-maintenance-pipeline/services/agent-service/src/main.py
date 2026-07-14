@@ -10,7 +10,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 from .meta_agent import run_pipeline
@@ -36,6 +36,7 @@ _runs: dict[str, dict] = {}
 _CONFIG_PATH  = os.environ.get("AGENTS_CONFIG_PATH", None)
 _PROMPTS_DIR  = os.environ.get("USE_CASE_PROMPTS_DIR", None)
 _DETECTION_TIMEOUT = float(os.environ.get("DLSTREAMER_RUN_TIMEOUT", "600"))
+_APM_API_KEY = os.environ.get("APM_API_KEY", "")
 
 # Only one detect-then-reason cycle may run at a time (single shared DL Streamer
 # pipeline + shared LLM/OVMS backend). New /agents/run calls are rejected with
@@ -61,6 +62,14 @@ app = FastAPI(
 )
 
 
+def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")) -> None:
+    """Enforce API key auth for control-plane endpoints."""
+    if not _APM_API_KEY:
+        return
+    if x_api_key != _APM_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
 # ── Request / Response models ─────────────────────────────────────────────────
 
 class RunRequest(BaseModel):
@@ -78,7 +87,11 @@ class RunResponse(BaseModel):
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.post("/agents/run", response_model=RunResponse, status_code=202)
-async def trigger_run(req: RunRequest, background_tasks: BackgroundTasks):
+async def trigger_run(
+    req: RunRequest,
+    background_tasks: BackgroundTasks,
+    _auth: None = Depends(require_api_key),
+):
     """Trigger one full detect-then-reason cycle (async background task).
 
     Mirrors the reference CLI: starts the DL Streamer pipeline, waits for it to
