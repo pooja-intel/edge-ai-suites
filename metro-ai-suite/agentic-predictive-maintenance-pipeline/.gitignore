@@ -16,3 +16,5 @@ apm/
 
 # Downloaded/converted LLM models (fetched via model-download service at runtime)
 apps/*/models/llm_model*/
+
+.venv/

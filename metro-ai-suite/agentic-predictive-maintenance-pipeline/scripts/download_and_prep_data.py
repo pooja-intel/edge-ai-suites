@@ -293,17 +293,23 @@ def create_video_from_images(images_dir: Path, video_path: Path, fps: int = 30) 
     # GStreamer qtdemux only scans the first 10 MB, so it fails to find moov.
     # Repack with ffmpeg -movflags +faststart to move moov to the front.
     tmp_path = video_path.with_suffix(".faststart.mp4")
-    ret = subprocess.run(
-        ["ffmpeg", "-y", "-i", str(video_path), "-c", "copy",
-         "-movflags", "+faststart", str(tmp_path)],
-        capture_output=True,
-    )
-    if ret.returncode == 0:
-        tmp_path.replace(video_path)
-    else:
-        tmp_path.unlink(missing_ok=True)
-        print("   ⚠️  ffmpeg faststart repack failed — video may not stream correctly.")
-        print(ret.stderr.decode(errors="replace")[-300:])
+    try:
+        ret = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(video_path), "-c", "copy",
+             "-movflags", "+faststart", str(tmp_path)],
+            capture_output=True,
+            check=False,
+            shell=False,
+        )
+        if ret.returncode == 0:
+            tmp_path.replace(video_path)
+        else:
+            tmp_path.unlink(missing_ok=True)
+            print("   ⚠️  ffmpeg faststart repack failed — video may not stream correctly.")
+            print(ret.stderr.decode(errors="replace")[-300:])
+    except (FileNotFoundError, OSError):
+        print("   ⚠️  ffmpeg not found — video may not stream correctly.")
+        print("      Install ffmpeg to optimize video streaming.")
 
     print(f"   ✅ {video_path}  ({written} frames @ {fps} fps, {written/fps:.1f}s)")
     return True

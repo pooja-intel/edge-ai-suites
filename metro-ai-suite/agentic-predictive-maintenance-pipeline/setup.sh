@@ -86,6 +86,11 @@ validate_env() {
 
     # HOST_IP is optional — default to localhost if not set in the env file
     export HOST_IP="${HOST_IP:-localhost}"
+    
+    #GPU Configuration
+    # Check if render device exist
+    echo -e "\nRENDER device exist. Getting the GID...\n"
+    export RENDER_GROUP_ID=$(stat -c "%g" /dev/dri/render* | head -n 1)
 
     # LLM_MODEL_PATH is stored relative to the repo root in the use-case env
     # file (e.g. "./apps/.../Phi-4-mini-instruct") for portability across

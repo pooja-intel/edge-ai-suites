@@ -54,8 +54,8 @@ agentic-predictive-maintenance/
 ## Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/open-edge-platform/edge-ai-libraries.git
-cd edge-ai-libraries/sample-applications/agentic-predictive-maintenance
+git clone https://github.com/open-edge-platform/edge-ai-suites.git
+cd edge-ai-suites/metro-ai-suite/agentic-predictive-maintenance
 ```
 
 ## Step 2 — Configure the Environment
@@ -89,8 +89,10 @@ HUGGINGFACEHUB_API_TOKEN=hf_your_token_here
 The DL Streamer pipeline needs a video file to run. Use the included script to download the Kaggle pipeline-defect dataset and build a sample video automatically:
 
 ```bash
-pip install opencv-python
+pip install opencv-python ffmpeg
+```
 
+```bash
 python scripts/download_and_prep_data.py \
     "https://www.kaggle.com/api/v1/datasets/download/simplexitypipeline/pipeline-defect-dataset" \
     --use-case pipeline-defect-detection
@@ -114,7 +116,7 @@ not download or convert the model for you. Use the
 model configured via `LLM_MODEL_NAME`/`LLM_DEVICE`/`LLM_WEIGHT_FORMAT`:
 
 ```bash
-./scripts/download_llm_model.sh --use-case pipeline-defect-detection
+source ./scripts/download_llm_model.sh --use-case pipeline-defect-detection
 ```
 
 This script starts `apm-model-download`, submits a download+conversion request for the
@@ -130,13 +132,13 @@ as `LLM_MODEL_PATH`. `setup.sh` mounts this path read-only into the `apm-llm` co
 **LLM mode** (requires the LLM/OVMS service; uses AI-generated analysis):
 
 ```bash
-./setup.sh --use-case pipeline-defect-detection
+source ./setup.sh --use-case pipeline-defect-detection
 ```
 
 **Fallback mode** (rule-based; no GPU or LLM service required):
 
 ```bash
-LLM_MODE=fallback ./setup.sh --use-case pipeline-defect-detection
+LLM_MODE=fallback source ./setup.sh --use-case pipeline-defect-detection
 ```
 
 The setup script validates your environment, sources the use-case `.env` file, and starts all required services via Docker Compose.
@@ -176,13 +178,13 @@ Navigate to `http://localhost:8080` in your browser. The dashboard displays:
 Stop all running containers:
 
 ```bash
-./setup.sh --stop
+source ./setup.sh --stop
 ```
 
 Stop containers and remove all stored detection data:
 
 ```bash
-./setup.sh --clean-data
+source ./setup.sh --clean-data
 ```
 
 ## Configuration Reference
@@ -236,7 +238,7 @@ vi apps/weld-defect-detection/configs/policy_fallback.json
 vi apps/weld-defect-detection/prompts/weld-defect-detection.txt
 
 # Launch with the new use case
-./setup.sh --use-case weld-defect-detection
+source ./setup.sh --use-case weld-defect-detection
 ```
 
 No code changes are needed — the blueprint reads all behavior from the configuration files at startup.
