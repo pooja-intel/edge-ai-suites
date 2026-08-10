@@ -353,8 +353,8 @@ gen_helm_charts_targz: gen_helm_charts
 .PHONY: push_helm_charts
 push_helm_charts: gen_helm_charts_targz
 	@echo "Pushing helm charts for ${SAMPLE_APP}"
-	helm push $$pkg_file $(HELM_REGISTRY) && echo "Helm chart package pushed successfully to $(HELM_REGISTRY)"; \
-	cd ..
+	@pkg_file=$$(ls helm-packages/*.tgz | head -1); \
+	helm push $$pkg_file $(HELM_REGISTRY) && echo "Helm chart package pushed successfully to $(HELM_REGISTRY)"
 
 # Help
 .PHONY: help
