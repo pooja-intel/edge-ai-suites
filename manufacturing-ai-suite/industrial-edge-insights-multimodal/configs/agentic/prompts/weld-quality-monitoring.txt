@@ -25,71 +25,50 @@ Rules:
 - Do not reproduce raw JSON, input data blocks, or prompt instruction headers in your response.
 
 [POLICY]
-Purpose
 Determine whether the supplied weld data constitutes a policy violation.
 
-Inputs
-- fusion_result records
-- summary statistics
-- previous policy output
-
 Rules
-- Your response must contain ONLY the formatted Output block defined below. Do not include any JSON, raw data, or input context in your response.
-- If fusion_result records are available, use fusion_classification as authoritative.
-- If only summary statistics are available, evaluate only actionable classes using avg_confidence from the supplied data.
-- For each actionable class in the supplied data, compare its avg_confidence to the exact minimum threshold for its priority tier below.
-- A class qualifies ONLY if avg_confidence >= its tier minimum. Do not qualify a class if avg_confidence is below its threshold.
-- A class whose avg_confidence is below its tier minimum must not appear anywhere in the Output — not in Qualifying Defects, not as Primary Defect, not in Justification as a qualifier.
-- Identify ALL classes that qualify and include every one of them in Qualifying Defects.
-- Choose the highest-priority qualifying class as the Primary Defect. Break ties by count (higher wins), then by avg_confidence (higher wins).
-- Report confidence values exactly as supplied; do not round, estimate, or substitute values from other classes.
-- If no actionable defect satisfies the policy, report Policy Status: No Policy Violation and Policy Decision: No Action Required.
-- Never include non-actionable classes (Good Weld, No Weld, No Label) in Qualifying Defects.
-- If the pre-computed qualifying defects list is non-empty, Policy Status MUST be "Policy Violation Detected" and Policy Decision MUST be "Action Required".
+- Evaluate actionable classes only. Exclude Good Weld, No Weld, No Label.
+- A class qualifies ONLY when avg_confidence >= its tier minimum (see table below).
+- A class whose avg_confidence < its tier minimum is ineligible and must not appear in the output.
 
-Priority thresholds — apply exactly as written
-- CRITICAL (min avg_confidence 0.80): Burnthrough, Crater Cracks, Lack of Fusion
-- HIGH    (min avg_confidence 0.75): Excessive Penetration
-- MEDIUM  (min avg_confidence 0.65): Porosity, Porosity with Excessive Penetration, Undercut, Warping
-- LOW     (min avg_confidence 0.55): Overlap, Spatter, Excessive Convexity
+Priority thresholds (fixed — tier assignment never changes)
+- CRITICAL (min 0.80): Burnthrough, Crater Cracks, Lack of Fusion
+- HIGH    (min 0.75): Excessive Penetration
+- MEDIUM  (min 0.65): Porosity, Porosity with Excessive Penetration, Undercut, Warping
+- LOW     (min 0.55): Overlap, Spatter, Excessive Convexity
 
-Tier immutability rule
-Each class's tier is fixed in the table above and never changes regardless of confidence level.
-- Lack of Fusion requires avg_confidence >= 0.80 to qualify; below 0.80 it is excluded entirely.
-- Spatter is always LOW — never promote it to MEDIUM or CRITICAL regardless of confidence.
-- Overlap is always LOW — never omit it if avg_confidence >= 0.55.
+Selection (apply after qualification)
+- From eligible classes, pick the highest-priority tier that contains at least one eligible class.
+- Within that tier, choose the class with the highest avg_confidence.
+- Tie-break: higher count first; if still tied, lexicographically smaller class name.
+- If no class is eligible, output No Policy Violation and No Action Required.
 
-Threshold check examples
-- Lack of Fusion avg_confidence 0.68 < 0.80 → EXCLUDED — do not list as Primary Defect or in Qualifying Defects, even if it is the only CRITICAL candidate in the data
-- Lack of Fusion avg_confidence 0.78 < 0.80 → EXCLUDED — same rule applies regardless of count
-- Crater Cracks avg_confidence 0.91 >= 0.80 → qualifies as CRITICAL, include it
-- Burnthrough avg_confidence 0.79 < 0.80 → EXCLUDED — 0.79 is below the 0.80 threshold
-- Burnthrough avg_confidence 0.83 >= 0.80 → qualifies as CRITICAL, include it
-- Excessive Penetration avg_confidence 0.92 >= 0.75 → qualifies as HIGH, include it
-- Porosity avg_confidence 0.88 >= 0.65 → qualifies as MEDIUM, include it
-- Spatter avg_confidence 0.82 >= 0.55 → qualifies as LOW (tier fixed — not MEDIUM)
-- Overlap avg_confidence 0.77 >= 0.55 → qualifies as LOW, include it
-- Tie-break: Crater Cracks (CRITICAL, count 51) vs Burnthrough (CRITICAL, count 181) → Burnthrough is Primary Defect (count 181 > 51)
+Evaluation procedure (complete all three steps before writing Output)
+Step 1 — for every class in the Detection summary JSON, do this exact check:
+  Find the class in the Threshold rules to get its tier and min_required.
+  A class is ONLY eligible when avg_confidence >= min_required.
+  If avg_confidence < min_required, the class is INELIGIBLE and must be skipped — it cannot be selected as Primary Defect.
+  Example: avg_confidence=0.6455, min_required=0.8000 → 0.6455 - 0.8000 = -0.1545 → INELIGIBLE.
+  Example: avg_confidence=0.9399, min_required=0.7500 → 0.9399 - 0.7500 = +0.1899 → ELIGIBLE.
+Step 2 — build the eligible set from Step 1, then select:
+  2a. From the eligible set ONLY, check if any class has Tier=CRITICAL. If yes, pick the CRITICAL class with highest avg_confidence.
+  2b. If zero CRITICAL classes are in the eligible set, check if any class has Tier=HIGH. If yes, pick the HIGH class with highest avg_confidence.
+  2c. If zero HIGH classes are in the eligible set, check if any class has Tier=MEDIUM. If yes, pick the MEDIUM class with highest avg_confidence.
+  2d. If zero MEDIUM classes are in the eligible set, check if any class has Tier=LOW. If yes, pick the LOW class with highest avg_confidence.
+  2e. If the eligible set is empty (no class passed Step 1), skip to Step 3 with no selection.
+  Tie-break within a tier: higher count first; if still tied, lexicographically smaller class name.
+  CRITICAL tier having zero eligible classes means you must NOT select any CRITICAL class — move to HIGH.
+Step 3 — write the Output block using only the class selected in Step 2.
+  The Output values MUST match your Step 2 conclusion. Do not revert to an earlier choice.
+  Output ONLY the five fields below. No explanation, no reasoning, no extra text.
 
-Mandatory evaluation procedure — complete all steps before writing Output
-Step 1: Copy the exact avg_confidence for each actionable class directly from supplied data. Do not compute, round, or estimate.
-Step 2: For EVERY actionable class in the data write one check line:
-  <Class> | avg_confidence: <exact value> | threshold: <tier minimum> | qualifies? YES → <TIER> | NO → EXCLUDED
-  Classes marked EXCLUDED must not appear anywhere in the Output — not in Qualifying Defects, not as Primary Defect.
-Step 3: Build Qualifying Defects from ONLY the YES classes from Step 2. Every YES class must appear; every EXCLUDED class must be absent.
-Step 4: Self-check — for each entry in Qualifying Defects, confirm avg_confidence >= its tier minimum. If any entry fails, remove it before continuing.
-Step 5: Select Primary Defect from Qualifying Defects only: highest-priority tier; break ties by count (higher wins), then avg_confidence.
-Step 6: Write the Output block using only values from Steps 2–5.
-
-Output
+Output (write after completing the evaluation procedure)
 Policy Status: <Policy Violation Detected | No Policy Violation>
-Priority: <CRITICAL | HIGH | MEDIUM | LOW>
-Primary Defect: <Defect Class>
-Reported Confidence: <Confidence>
+Priority: <tier of selected class, or N/A if none eligible>
+Primary Defect: <name of selected class, or None if none eligible>
+Reported Confidence: <avg_confidence of selected class exactly as supplied, or N/A if none eligible>
 Policy Decision: <Action Required | No Action Required>
-Qualifying Defects:
-- <Defect Class> | Priority: <CRITICAL|HIGH|MEDIUM|LOW> | Confidence: <value> | Count: <value if available>
-Justification: <few sentences>
 
 [ANALYSIS]
 Purpose
@@ -104,33 +83,30 @@ Rules
 - Your response must contain ONLY the formatted Output block defined below. Do not include any JSON, raw data, or input context in your response.
 - Policy output is authoritative for policy status, priority, primary defect, confidence, and decision.
 - Prefer fusion_result records when available. Fall back to summary statistics if unavailable.
-- Good Weld, No Weld, and No Label may appear in Summary as context (e.g. counts), but must never appear in Findings, Recommendations, or trigger any corrective action.
+- Good Weld, No Weld, and No Label must never appear in Findings or as the primary defect.
+- Every actionable defect class present in the supplied data must appear in Findings. Do not omit any class.
+- Show all actionable defect classes in Findings regardless of threshold eligibility.
 - Do not invent root causes, corrective actions, or missing fields.
 - Do not infer event-level details from summary data.
 - Do not emit the sentence "No actionable weld defects were identified" if Policy Decision is "Action Required".
-- Copy confidence and count values exactly from the policy Qualifying Defects list.
+- Do not reproduce raw JSON, detection statistics, input data blocks, or any supplied context in your response.
+- For each class in Findings, add one short process-oriented recommended action.
+- Policy Alignment must contain exactly one of the two allowed statements below. Never include both.
 
 Output
 Summary
-<one paragraph: state policy status, primary defect, priority, and total number of qualifying defects>
+<one or two sentences: name the primary defect, state its avg_confidence, and explain in plain language why it was selected. If multiple CRITICAL-tier classes are eligible (avg_confidence >= 0.80), name all of them and state which one was chosen as primary and why. If no defect was eligible, write "No eligible defects were detected. No policy violation." Do not copy the raw policy fields.>
 
 Findings
-- Use the `qualifying_defects` array from the policy result JSON as the authoritative source; one bullet per entry.
-- Format: <label> — Priority: <tier> | Confidence: <avg_confidence> | Count: <count>
-- Do not omit any entry from `qualifying_defects`.
-- Do not add classes that are not in `qualifying_defects`.
-
-Recommendations
-- Provide one concrete corrective action for every class listed in Findings.
-- Format: <Class>: <specific corrective action>
-- Do not write a single generic recommendation covering multiple classes.
-- Do not add or omit classes relative to the Findings section.
+| Class | Count | Avg Confidence | Max Confidence | Min Confidence | Recommended Action |
+|-------|-------|----------------|----------------|----------------|--------------------|
+<one row per actionable defect class from the supplied data; every class must appear; exclude Good Weld, No Weld, and No Label>
 
 Policy Alignment
 Policy Decision: <copy exactly from policy output>
-<If Policy Decision is "Action Required": write "Corrective actions are required for all qualifying defects listed above.">
-<If Policy Decision is "No Action Required": write "No actionable weld defects were identified. No corrective action is recommended.">
-Write exactly one of the two lines above — never both.
+<If Policy Decision is "Action Required": write exactly this line: "The selected primary defect is the active policy issue requiring action.">
+<If Policy Decision is "No Action Required": write exactly this line: "No actionable weld defects were identified. No corrective action is recommended.">
+Do not add any additional sentence after the line above. Do not include both lines in the same response.
 
 [EVIDENCE]
 Purpose
@@ -200,11 +176,15 @@ Rules
 - Do not recalculate priority, classification, decision, or confidence.
 - If the policy identifies a non-actionable class, do not generate a ticket.
 - Use analysis output only to enrich description and recommended action.
+- Focus the ticket on the selected primary defect, but briefly mention the other actionable defects identified in the analysis output as supporting context only.
+- Do not list the other defects as tags or as a comma-separated list. Mention them in a short descriptive sentence if needed.
+- Describe the defect in enough detail to explain the weld quality issue, its severity, and why it requires action.
+- Recommended Action must be more specific and operational than a generic phrase: include the control action, the inspection step, and any immediate process adjustment.
 - Do not invent timestamps, affected components, or resolution times unless explicitly provided.
+- Do not generate a Tags field. Tags are not allowed in the ticket output.
 
 Output
 Priority: <CRITICAL | HIGH | MEDIUM | LOW>
 Title: <one-line summary of the primary defect and action>
-Description: <2-3 sentences summarising the violation, primary defect, and scope of qualifying defects>
-Recommended Action: <specific next step derived from analysis recommendations>
-Tags: <comma-separated list of qualifying defect class names>
+Description: <2-3 sentences explaining the primary defect, the severity implied by the policy, the impact on weld quality, and a brief note about other actionable defects observed in the analysis>
+Recommended Action: <single specific next step derived from the selected primary defect, with a clear process adjustment and immediate inspection or correction action>
