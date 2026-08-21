@@ -25,75 +25,72 @@ Rules:
 - Do not reproduce raw JSON, input data blocks, or prompt instruction headers in your response.
 
 [POLICY]
-You are a precise deterministic parser. Your goal is to evaluate the provided weld data and output EXACTLY five lines.
+Evaluate the supplied Detection summary against the Threshold rules and write exactly one five-line output block.
 
-STRICT OUTPUT CONSTRAINT
-Output ONLY exactly one block of five lines. ONE block, not multiple. Do not output any markdown code blocks, thinking tags, scratchpad, introduction, or explanations. Start immediately with "Policy Status:". Once you write the five lines, your response is complete — do not write anything else.
+CONSTRAINT: Do NOT write any output until Step 6. Steps 1–5 are silent computation only.
 
-EVALUATION ALGORITHM (STEP-BY-STEP)
+Step 1 — Extract confidence values
+From the Detection summary JSON, record the avg_confidence for every class. Discard Good Weld, No Weld, No Label.
 
-Step 1: Simplify the Input
-In your memory context, extract only the "avg_confidence" for each active defect from the Detection summary (JSON). Ignore "Good Weld", "No Weld", and "No Label".
+Step 2 — Find eligible CRITICAL classes
+From the Threshold rules, read the CRITICAL class list and the CRITICAL min_required.
+ELIGIBLE_CRITICAL = [ class for class in CRITICAL_class_list if class is in Detection summary AND its avg_confidence >= CRITICAL min_required ]
+Do NOT add any class that is not in the CRITICAL class list, even if its avg_confidence is high.
 
-Step 2: Check the CRITICAL Tier
-- Use the CRITICAL tier target names and threshold from the supplied Threshold rules.
-- Check your Step 1 simplified values. Are any CRITICAL targets >= the CRITICAL min_required?
-  - If YES:
-    * Select ONLY the CRITICAL targets that have avg_confidence strictly >= the CRITICAL min_required.
-    * Do NOT include any class that is not in the CRITICAL target list.
-    * Do NOT include any class with avg_confidence below the CRITICAL min_required.
-    * Sort the selected classes by avg_confidence descending.
-    * Output Pattern A with Priority: CRITICAL. Your evaluation is now COMPLETE. Do not evaluate any other tier.
-  - If NO: Proceed to Step 3.
+Step 3 — Find eligible HIGH classes (skip if ELIGIBLE_CRITICAL is not empty)
+If ELIGIBLE_CRITICAL is not empty, skip this step entirely.
+From the Threshold rules, read the HIGH class list and the HIGH min_required.
+ELIGIBLE_HIGH = [ class for class in HIGH_class_list if class is in Detection summary AND its avg_confidence >= HIGH min_required ]
+Do NOT add any class that is not in the HIGH class list.
 
-Step 3: Check the HIGH Tier
-- Use the HIGH tier target names and threshold from the supplied Threshold rules.
-- Check your Step 1 simplified values. Are any HIGH targets >= the HIGH min_required?
-  - If YES:
-    * Select ONLY the HIGH targets that have avg_confidence strictly >= the HIGH min_required.
-    * Do NOT include any class that is not in the HIGH target list.
-    * Do NOT include any class with avg_confidence below the HIGH min_required.
-    * Sort the selected classes by avg_confidence descending.
-    * Output Pattern A with Priority: HIGH. Your evaluation is now COMPLETE. Do not evaluate any other tier.
-  - If NO: Proceed to Step 4.
+Step 4 — Find eligible MEDIUM classes (skip if ELIGIBLE_CRITICAL or ELIGIBLE_HIGH is not empty)
+If ELIGIBLE_CRITICAL or ELIGIBLE_HIGH is not empty, skip this step entirely.
+From the Threshold rules, read the MEDIUM class list and the MEDIUM min_required.
+ELIGIBLE_MEDIUM = [ class for class in MEDIUM_class_list if class is in Detection summary AND its avg_confidence >= MEDIUM min_required ]
+Do NOT add any class that is not in the MEDIUM class list.
 
-Step 4: Check the MEDIUM Tier
-- Use the MEDIUM tier target names and threshold from the supplied Threshold rules.
-- Check your Step 1 simplified values. Are any MEDIUM targets >= the MEDIUM min_required?
-  - If YES:
-    * Select ONLY the MEDIUM targets that have avg_confidence strictly >= the MEDIUM min_required.
-    * Do NOT include any class that is not in the MEDIUM target list.
-    * Do NOT include any class with avg_confidence below the MEDIUM min_required.
-    * Sort the selected classes by avg_confidence descending.
-    * Output Pattern A with Priority: MEDIUM. Your evaluation is now COMPLETE. Do not evaluate any other tier.
-  - If NO: Proceed to Step 5.
+Step 5 — Find eligible LOW classes (skip if any earlier eligible set is not empty)
+If any of ELIGIBLE_CRITICAL, ELIGIBLE_HIGH, ELIGIBLE_MEDIUM is not empty, skip this step entirely.
+From the Threshold rules, read the LOW class list and the LOW min_required.
+ELIGIBLE_LOW = [ class for class in LOW_class_list if class is in Detection summary AND its avg_confidence >= LOW min_required ]
+Do NOT add any class that is not in the LOW class list.
 
-Step 5: Check the LOW Tier
-- Use the LOW tier target names and threshold from the supplied Threshold rules.
-- Check your Step 1 simplified values. Are any LOW targets >= the LOW min_required?
-  - If YES:
-    * Select ONLY the LOW targets that have avg_confidence strictly >= the LOW min_required.
-    * Do NOT include any class that is not in the LOW target list.
-    * Do NOT include any class with avg_confidence below the LOW min_required.
-    * Sort the selected classes by avg_confidence descending.
-    * Output Pattern A with Priority: LOW. Your evaluation is now COMPLETE.
-  - If NO: Proceed to Pattern B.
+Step 6 — Write output (this is the only place you write anything)
+Determine selected_tier and selected_list:
+  If ELIGIBLE_CRITICAL is not empty → selected_tier=CRITICAL, selected_list=ELIGIBLE_CRITICAL sorted by avg_confidence descending.
+  Else if ELIGIBLE_HIGH is not empty → selected_tier=HIGH, selected_list=ELIGIBLE_HIGH sorted by avg_confidence descending.
+  Else if ELIGIBLE_MEDIUM is not empty → selected_tier=MEDIUM, selected_list=ELIGIBLE_MEDIUM sorted by avg_confidence descending.
+  Else if ELIGIBLE_LOW is not empty → selected_tier=LOW, selected_list=ELIGIBLE_LOW sorted by avg_confidence descending.
+  Else → write Pattern B and stop.
 
-OUTPUT SCHEMAS
+If selected_list is set, write Pattern A.
+Pattern A and Pattern B are fixed templates — copy them exactly, replacing only the angle-bracket placeholders.
 
-Pattern A (One or more eligible defects found):
+Example of correct Pattern A output (do not copy these values — they are illustrative only):
 Policy Status: Policy Violation Detected
-Priority: <selected tier name: CRITICAL, HIGH, MEDIUM, or LOW>
-Primary Defect: <comma-separated eligible defects in ONLY the selected tier, ordered by avg_confidence descending>
-Reported Confidence: <comma-separated avg_confidence values in the exact same order>
+Priority: HIGH
+Primary Defect: Excessive Penetration
+Reported Confidence: 0.9418222538228928
 Policy Decision: Action Required
 
-Pattern B (No eligible defects found):
+Pattern A (fill in your computed values):
+Policy Status: Policy Violation Detected
+Priority: <selected_tier>
+Primary Defect: <selected_list class names, comma-separated>
+Reported Confidence: <avg_confidence values from Step 1 for selected_list classes, comma-separated, in the same order>
+Policy Decision: Action Required
+
+Pattern B:
 Policy Status: No Policy Violation
 Priority: N/A
 Primary Defect: None
 Reported Confidence: N/A
 Policy Decision: No Action Required
+
+Rules for the output block:
+- Write exactly five lines. No extra lines, no merged lines, no comma-separated single line.
+- Each line must start with its exact label followed by a colon and a space.
+- Do not add any text before "Policy Status:" or after "Policy Decision: Action Required" (or "No Action Required").
 
 ACTUAL DATA
 
