@@ -207,7 +207,7 @@ up: check_env_variables validate_host_ip down
 	export NGINX_CONFIG_PATH=./configs/nginx/nginx.conf; \
 	echo "Starting Docker containers..."; \
 	echo "GPU device path set to: $(DRI_MOUNT_PATH) based on its existence"; \
-	rm configs/grafana/provisioning/*.json; \
+	rm -f configs/grafana/provisioning/*.json; \
 	cp configs/grafana/dashboards_jsons/weld_defect_detection.json configs/grafana/provisioning/weld_defect_detection.json || exit 1; \
 	$(DOCKER_COMPOSE) up -d; \
 	$(MAKE) upload_tar_file
@@ -263,7 +263,7 @@ up_vllm: check_hardware check_models check_env_variables validate_host_ip down
 	export NGINX_CONFIG_PATH=./configs/nginx/nginx_vllm.conf; \
 	echo "Starting Docker containers..."; \
 	echo "GPU device path set to: $(DRI_MOUNT_PATH) based on its existence"; \
-	rm configs/grafana/provisioning/*.json; \
+	rm -f configs/grafana/provisioning/*.json; \
 	cp configs/grafana/dashboards_jsons/weld_defect_detection_vlm.json configs/grafana/provisioning/weld_defect_detection.json || exit 1; \
 	$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_FILE_VLLM) up -d; \
 	$(MAKE) upload_tar_file
@@ -332,7 +332,7 @@ up_agentic: check_hardware check_models check_env_variables validate_host_ip dow
 	export NGINX_CONFIG_PATH=./configs/nginx/nginx_agentic.conf; \
 	echo "Starting Docker containers..."; \
 	echo "GPU device path set to: $(DRI_MOUNT_PATH) based on its existence"; \
-	rm configs/grafana/provisioning/*.json; \
+	rm -f configs/grafana/provisioning/*.json; \
 	cp configs/grafana/dashboards_jsons/weld_defect_detection_vlm.json configs/grafana/provisioning/weld_defect_detection.json || exit 1; \
 	cp configs/grafana/dashboards_jsons/weld_defect_detection_agentic.json configs/grafana/provisioning/weld_defect_detection_agentic.json || exit 1; \
 	$(MAKE) download_model; \
