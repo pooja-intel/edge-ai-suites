@@ -1,4 +1,4 @@
-# Time Series Analytics Microservice reference (delegates to `time-series-analytics-user`)
+# Time Series Analytics Microservice reference (`ts` mode — delegates to `time-series-analytics-user`)
 
 > **Skill pointer:** for choosing the UDF pattern (threshold, rate-of-change,
 > rolling z-score, or pretrained model) and writing the UDF's `Handler`
@@ -6,17 +6,24 @@
 > follow its `references/patterns.md` + `references/udf-authoring.md` +
 > `references/tickscript-basics.md`. Below are recipe-specific overrides for
 > landing that output inside an `apps/{{APP_NAME}}/` folder with this repo's
-> three config-variant convention.
+> three config-variant convention. For the flat `{{STACK_DIR}}/` shape used
+> by `fusion`/`vlm`/`agentic` modes, see [`TIMESERIES.md`](TIMESERIES.md)
+> instead.
 
-## `config.json` — three variants, same `udfs`/`alerts` shape
+## `config.json` — two variants, same `udfs`/`alerts` shape
 
 | File | When to ship it | Difference from `config.json` |
 |---|---|---|
 | `config.json` | always | streaming, per-point UDF (`time-series-analytics-user`'s default pattern) |
-| `config-batch.json` | `{{BATCH_MODE}}=yes` | same shape, but `udfs.name`/`udfs.models` point at a **batch** UDF variant (e.g. `windturbine_anomaly_detector_batch`/`.pkl`) built with `|window()` + `begin_batch`/`end_batch` per `time-series-analytics-user`'s batch pattern |
 | `config-opcua.json` | `{{ALERT_CHANNEL}}=opcua` | `alerts` section omits `mqtt` — OPC-UA alerting is wired in the TICKscript's `.post(...)` call, not `config.json` (see below) |
 
-All three share this shape (fill in from the chosen pattern):
+**Do not ship `config-batch.json`/windowed-batch UDFs** — the reference
+`Makefile`'s `upload_tar_file` only sets `src_model`/`dst_model` inside its
+`wind-turbine-anomaly-detection` branch; for any other `{{APP_NAME}}` it
+exits with a "source model not found" error before the upload ever runs.
+Only the streaming pattern is supported for newly scaffolded apps.
+
+Both share this shape (fill in from the chosen pattern):
 
 ```json
 {
@@ -39,8 +46,8 @@ All three share this shape (fill in from the chosen pattern):
 - **Max size is 5 KB** — never embed model weights here.
 - If the pattern is "pretrained model" and no existing model file or
   training dataset is available, stop before generating this file and ask
-  the user for one — see SKILL.md's *Sensor model availability* section.
-  Do not point `udfs.models` at a filename that will never exist on disk.
+  the user for one — see SKILL.md's *Model availability* section. Do not
+  point `udfs.models` at a filename that will never exist on disk.
 - **Pre-upload consistency check** (do this even when `config.json` was
   copied/adapted from another app, not just when authoring from scratch):
   if `udfs.models` is present, confirm the exact named file exists under
@@ -51,11 +58,6 @@ All three share this shape (fill in from the chosen pattern):
   a stub file is missing). If the UDF is rule-based, delete the `models` key
   from `config.json` and drop the `models/` folder from the tar entirely
   instead of inventing a file to match a stale key.
-- Which variant gets POSTed is a `make` target choice, not a runtime
-  auto-detect: `make batch up_mqtt_ingestion app={{APP_NAME}}` posts
-  `config-batch.json`; the plain target posts `config.json`. Confirm the
-  Makefile's `post_config` step resolves `$(CONFIG_JSON_FILE)` to the file
-  you actually generated before declaring success.
 
 ## Alert channel — enable exactly one
 
@@ -98,11 +100,15 @@ repo's convention names the tar after the **app**, not the UDF, when there is
 exactly one UDF per app — confirm against the reference's own
 `wind-turbine-anomaly-detection.tar` naming before deviating).
 
-Deploy via the Makefile's `post_config` step (which already handles the
-`--cacert`/`-k` + `--noproxy` + REST sequencing against
-`https://localhost:${GRAFANA_PORT}/ts-api/config`), not a hand-written curl —
-call `make up_{{INGEST_TRANSPORT}}_ingestion app={{APP_NAME}}` and let it
-run `upload_tar_file` + `post_config` for you.
+Deploy via the Makefile's `post_config` step (REST sequencing against
+`https://localhost:${GRAFANA_PORT}/ts-api/config`, with `-k` for the
+self-signed cert), not a hand-written curl — call
+`make up_{{INGEST_TRANSPORT}}_ingestion app={{APP_NAME}}` and let it
+run `upload_tar_file` + `post_config` for you. **Note:** as of this writing
+`post_config`/`upload_tar_file` do not pass `--noproxy '*'`, so with a host
+proxy configured these can still be routed through it and fail — this is a
+gap in the reference Makefile, not something this recipe's own guardrail
+fixes for you.
 
 ## Verifying the UDF in isolation
 

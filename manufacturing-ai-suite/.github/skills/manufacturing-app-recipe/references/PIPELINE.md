@@ -1,12 +1,15 @@
-# DLSPS vision pipeline reference (the video half)
+# DLSPS vision pipeline reference (the video half — `vision`/`fusion`/`vlm`/`agentic` modes)
 
 > **Skill pointer:** for DL Streamer Pipeline Server deployment/operation
 > (startup, REST launch/stop/status, MQTT/S3/publisher wiring, GPU/NPU device
 > access), invoke external `dlsps-user` when available; for authoring a novel
 > GStreamer element chain, invoke `dlstreamer-coding-agent`. Below are
-> recipe-specific overrides for the vision half of the fusion pipeline.
+> recipe-specific overrides for the vision half of this skill's stacks. In
+> `vision` mode (demo/PoC), only the pipeline shape below applies — skip the
+> MQTT/WebRTC/S3 destination wiring, which exists to feed Fusion Analytics
+> and the dashboard in the other modes.
 
-## Required env
+## Required env (`fusion`/`vlm`/`agentic` modes)
 
 - `REST_SERVER_PORT=8080`, `SERVICE_NAME=dlstreamer-pipeline-server`,
   `MQTT_HOST=ia-mqtt-broker`, `MQTT_PORT=1883`.
@@ -53,11 +56,11 @@ rtspsrc add-reference-timestamp-meta=true location="rtsp://mediamtx:8554/live.st
 ```
 
 - `add-reference-timestamp-meta=true` on `rtspsrc` + `add-rtp-timestamp=true`
-  on `gvametaconvert` are **required** — Fusion Analytics matches vision and
-  sensor messages by the RTP sender timestamp
-  (`metadata.rtp.sender_ntp_unix_timestamp_ns`); omitting either flag means
-  the vision message has no timestamp to fuse on and Fusion Analytics will
-  never flag a vision-side event.
+  on `gvametaconvert` are **required** for `fusion`/`vlm`/`agentic` modes —
+  Fusion Analytics matches vision and sensor messages by the RTP sender
+  timestamp (`metadata.rtp.sender_ntp_unix_timestamp_ns`); omitting either
+  flag means the vision message has no timestamp to fuse on and Fusion
+  Analytics will never flag a vision-side event.
 - **Known startup caveat:** DLSPS may not emit RTP sender timestamps for the
   first ~300 packets after a pipeline (re)start — expect a short warm-up
   before Fusion Analytics output appears; do not treat this as a failure in
@@ -76,7 +79,7 @@ inference-region=1 name=classification` (classifier optional) exactly as in
 — reuse that skill's GPU/NPU `vapostproc` guidance verbatim if this vertical
 needs bounding-box localization instead of a whole-frame label.
 
-## Destination configuration — three sinks, all required
+## Destination configuration — three sinks, all required (`fusion`/`vlm`/`agentic` modes)
 
 ```json
 "destination": {
@@ -102,6 +105,10 @@ needs bounding-box localization instead of a whole-frame label.
   subscribes to as its vision-side input; keep it in sync with
   `FUSION.md`'s `VISION_TOPIC` env var.
 
+In `vision` mode (demo/PoC), drop the `destination` block above entirely —
+emit to a simple file sink or annotated RTSP/appsink, per
+[`DEMO_POC.md`](DEMO_POC.md).
+
 ## GPU/NPU variants
 
 Same as `metro-ai-app-recipe`: replace `decodebin` with
@@ -113,7 +120,9 @@ memory for overlay + WebRTC encode.
 ## Starting/switching device at runtime
 
 DLSPS pipelines are started via REST, not `auto_start` alone, when swapping
-device:
+device (`-k` here assumes the default `{{HOST_IP}}=localhost` — if `{{HOST_IP}}`
+is a real LAN address, use `--cacert`/`--resolve` instead, per SKILL.md's
+*Execution guardrails*):
 
 ```bash
 for id in $(curl -k --noproxy '*' https://<HOST_IP>:${GRAFANA_PORT}/dsps-api/pipelines/status | grep -oP '"id":\s*"\K[^"]+'); do

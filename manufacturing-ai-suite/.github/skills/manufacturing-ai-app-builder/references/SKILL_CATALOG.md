@@ -5,19 +5,23 @@ Map the user's **business objective** (Step 1 answers, especially "what feeds
 the decision") to a **primary** skill and any **supporting** skills, then plan
 + delegate.
 
-> `manufacturing-timeseries-app-recipe` and `manufacturing-multimodal-app-recipe`
-> ship in **this workspace** under `.agents/skills/` — no install needed.
+> `manufacturing-app-recipe` ships in **this workspace** under
+> `.github/skills/` — no install needed; it covers `vision`/`ts`/`fusion`/
+> `vlm`/`agentic` deployment modes.
 > `metro-ai-app-recipe`, `dlsps-user`, `dlstreamer-coding-agent`, and
-> `time-series-analytics-user` also ship locally here; if a target
-> environment lacks one, see [`DISCOVERY.md`](DISCOVERY.md) for the fetch path
-> (`npx skills@1.5.23 add open-edge-platform/skills --skill <name>`, or
+> `time-series-analytics-user` live in **other** repos/suites, not under
+> this suite's `.github/skills/` — never assume one is present; confirm and
+> install per [`DISCOVERY.md`](DISCOVERY.md) before delegating to it
+> (`npx skills@latest add open-edge-platform/skills --skill <name>`, or
 > `open-edge-platform/dlstreamer` for `dlstreamer-coding-agent`).
 
 ## 1. Vision + sensor fusion — one correlated verdict from both a camera and a sensor
 
 | If the user wants… | Primary skill | Supporting |
 |---|---|---|
-| A defect/anomaly verdict that must **combine** a camera-side defect signal **and** a sensor-side anomaly signal (AND/OR logic, timestamp-correlated) — e.g. weld quality (vision + pressure/gas/current), machining (surface defect + vibration), PCB (visual + electrical test) | **`manufacturing-multimodal-app-recipe`** | `dlsps-user` (vision pipeline ops), `time-series-analytics-user` (sensor UDF pattern), `model-download-user` (custom vision IR) |
+| A defect/anomaly verdict that must **combine** a camera-side defect signal **and** a sensor-side anomaly signal (AND/OR logic, timestamp-correlated) — e.g. weld quality (vision + pressure/gas/current), machining (surface defect + vibration), PCB (visual + electrical test) | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=fusion`) | `dlsps-user` (vision pipeline ops), `time-series-analytics-user` (sensor UDF pattern), `model-download-user` (custom vision IR) |
+| The same, plus a natural-language explanation of each fused alert | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=vlm`) | same as above |
+| The same, plus full agent orchestration (LangGraph meta-agent, metrics) over the explanation layer | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=agentic`) | same as above |
 
 Deliverable shape: end-to-end Compose stack (DLSPS + Telegraf/InfluxDB + Time
 Series Analytics + Fusion Analytics + Grafana + Nginx). Route here **only**
@@ -29,7 +33,7 @@ to §2 or §3 instead.
 
 | If the user wants… | Primary skill | Supporting |
 |---|---|---|
-| A **full deployable app** for a new sensor-monitoring vertical — simulator or real OPC-UA/MQTT ingest, Kapacitor UDF, MQTT/OPC-UA alerting, Grafana dashboard, registered as a new `apps/<name>/` sample app | **`manufacturing-timeseries-app-recipe`** | `time-series-analytics-user` (the UDF/TICKscript pattern itself) |
+| A **full deployable app** for a new sensor-monitoring vertical — simulator or real OPC-UA/MQTT ingest, Kapacitor UDF, MQTT/OPC-UA alerting, Grafana dashboard, registered as a new `apps/<name>/` sample app | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`) | `time-series-analytics-user` (the UDF/TICKscript pattern itself) |
 | Just a **UDF + TICKscript** deployed onto an **already-running** Time Series Analytics Microservice — no simulator, no Grafana, no app registry | **`time-series-analytics-user`** | — |
 
 Deliverable shape: end-to-end Compose stack + new `apps/<name>/` folder for
@@ -59,7 +63,7 @@ Grafana/MQTT/dashboard layer.
   picks the entire primary-skill family, not just a parameter.
 - **"Full stack" vs "just the building block"** is the second-strongest
   signal within §2 and §3: a dashboard + alerting + simulator scaffold routes
-  to the recipe skill (`manufacturing-timeseries-app-recipe` /
+  to the recipe skill (`manufacturing-app-recipe` /
   `metro-ai-app-recipe`); a bare UDF or bare pipeline-server operation routes
   to the underlying microservice-user skill (`time-series-analytics-user` /
   `dlsps-user`).
@@ -75,7 +79,7 @@ Grafana/MQTT/dashboard layer.
   `metro-ai-app-builder` catalog.
 - **Multi-camera spatial correlation with no sensor** is NOT time-series
   fusion — it's `scenescape-setup` via `metro-ai-app-recipe` (§3), not
-  `manufacturing-multimodal-app-recipe` (§1), because there's no sensor
+  `manufacturing-app-recipe`'s `fusion` mode (§1), because there's no sensor
   stream to correlate against.
 - When the objective spans two skills (e.g. prototype a UDF now, scaffold the
   full app later), sequence them and confirm the **whole pipeline** once.

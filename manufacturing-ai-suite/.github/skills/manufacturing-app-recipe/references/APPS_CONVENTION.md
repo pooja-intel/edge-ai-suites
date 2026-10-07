@@ -1,10 +1,12 @@
-# The `apps/<name>/` convention — this skill's core differentiator
+# The `apps/<name>/` convention — `ts` mode's core differentiator
 
 The Time Series AI Stack is one shared Compose topology
 (`docker-compose.yml`, `Makefile`, `configs/` at the repo root) that many
 verticals plug into via a per-vertical `apps/<name>/` folder. Adding a new
 sample app means creating this folder and registering it — it does **not**
-mean writing a new `docker-compose.yml`.
+mean writing a new `docker-compose.yml`. This convention applies only to
+`ts` mode; `fusion`/`vlm`/`agentic` modes generate a flat, standalone
+`{{STACK_DIR}}/` instead (see [`INSTALL.md`](INSTALL.md)).
 
 ## Steps (mirrors the reference `create-a-new-sample-app.md`)
 
@@ -17,7 +19,10 @@ mean writing a new `docker-compose.yml`.
    sensor tags, time-ordered, one row per ingestion tick. Only needed when
    `{{INGEST_TRANSPORT}}` uses the bundled simulator rather than a real
    device; see [`INGEST.md`](INGEST.md) for the exact column-to-tag mapping
-   both simulators expect.
+   both simulators expect — **the bundled OPC-UA simulator is hardcoded to
+   the wind-turbine schema**, not column-generic like the MQTT one, so
+   `{{INGEST_TRANSPORT}}=opcua` additionally needs either a per-app
+   simulator adapter or a switch to `mqtt` (see INGEST.md).
 
 3. **`telegraf-config/Telegraf.conf`** — copy the reference file's
    `[agent]`/`[[outputs.influxdb]]` blocks verbatim (they are
@@ -27,7 +32,7 @@ mean writing a new `docker-compose.yml`.
    wiring.
 
 4. **`time-series-analytics-config/`** — the UDF deployment package:
-   `config.json` (+ `config-batch.json`/`config-opcua.json` variants),
+   `config.json` (+ `config-opcua.json` variant),
    `udfs/{{SENSOR_UDF_NAME}}.py`, `tick_scripts/{{SENSOR_UDF_NAME}}.tick`,
    `models/{{SENSOR_UDF_NAME}}.pkl` (if pretrained). **Do not author these by
    hand** — delegate the pattern choice and file contents to
@@ -40,8 +45,8 @@ mean writing a new `docker-compose.yml`.
 5. **`grafana-dashboard.json`** — one Grafana dashboard JSON, volume-mounted
    directly by the repo-root `docker-compose.yml` at
    `./apps/${SAMPLE_APP}/grafana-dashboard.json` (note: **not** a directory
-   like the multimodal recipe's `dashboards_jsons/` — this repo mounts the
-   single file straight into Grafana's provisioning path). See
+   like the `fusion`/`vlm`/`agentic` modes' `dashboards_jsons/` — this repo
+   mounts the single file straight into Grafana's provisioning path). See
    [`PROXY_UI.md`](PROXY_UI.md) for the panel requirements.
 
 6. **`training/README.md`** (optional) — only if `{{SENSOR_UDF_NAME}}` is
@@ -65,10 +70,6 @@ SAMPLE_APP_LIST := wind-turbine-anomaly-detection {{APP_NAME}}
   should become the default when `make up_*` is run with no `app=` argument
   — otherwise leave the existing default untouched so other apps keep
   working unmodified.
-- If deploying via Helm too, mirror the same registration in
-  `helm/values.yaml`'s app-selection field — see
-  [`references/INSTALL.md`](INSTALL.md) for the Compose-only path; Helm
-  parity is out of scope unless explicitly requested.
 
 ## Running the new app
 
@@ -77,18 +78,3 @@ make up_{{INGEST_TRANSPORT}}_ingestion app={{APP_NAME}}
 make status
 make down
 ```
-
-`app=` is a Makefile variable, not an env var — always pass it on the
-command line, not via `.env`.
-
-## What NOT to touch per-app
-
-- `docker-compose.yml`, root `configs/{grafana,influxdb,mqtt-broker,nginx,telegraf}/`
-  — these are stack-level and shared by every app; only
-  `apps/<name>/telegraf-config/Telegraf.conf` and
-  `apps/<name>/grafana-dashboard.json` are per-app.
-- `.env` — shared secrets/ports across all apps; do not fork a per-app
-  `.env`.
-- The `simulator/` Dockerfiles themselves — only their **input CSV**
-  (`apps/<name>/simulation-data/`) is per-app; the simulator code that reads
-  and replays that CSV is shared.

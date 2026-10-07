@@ -23,9 +23,10 @@ compatibility: >-
 
 Build an end-to-end `{{OBJECT}}`-fusion-analytics stack on Intel hardware in
 `./{{STACK_DIR}}/` with Docker Compose. **Vertical-agnostic:** the same
-eleven-container topology (Nginx, DLSPS, MediaMTX, Coturn, SeaweedFS S3,
-Mosquitto, Telegraf, InfluxDB, Time Series Analytics Microservice, Fusion
-Analytics, Grafana) serves any vision-defect + sensor-anomaly fusion use case —
+fifteen-container topology (Nginx, DLSPS, MediaMTX, Coturn, SeaweedFS master,
+SeaweedFS volume, SeaweedFS filer, SeaweedFS S3, Mosquitto, Telegraf,
+InfluxDB, Time Series Analytics Microservice, Fusion Analytics, Grafana, and
+the data simulator) serves any vision-defect + sensor-anomaly fusion use case —
 only the vision model, sensor UDF/TICKscript, fusion topics/mode, and
 dashboard differ. Follows the open-edge-platform
 [Industrial Edge Insights — Multimodal](https://github.com/open-edge-platform/edge-ai-suites/tree/main/manufacturing-ai-suite/industrial-edge-insights-multimodal)
@@ -258,7 +259,9 @@ The generated `README.md` MUST document, at minimum:
 - **Architecture** — the two-path data flow (vision + sensor) meeting in
   Fusion Analytics, decoupled video (`DLSPS WHIP → MediaMTX → browser WHEP`),
   Coturn ICE/TURN, SeaweedFS stored-frame S3 write, behind the Nginx TLS
-  proxy; include the ASCII diagram + eleven containers.
+  proxy; include the ASCII diagram + all fifteen containers (note: a
+  sixteenth, `seaweedfs-volumes-init`, is a one-shot init job, not a
+  long-running service).
 - **Quick start** — `./install.sh` → `docker compose up -d` (or `make up`),
   plus status/down commands.
 - **Access URLs + credentials** — dashboard `https://<HOST_IP>:${GRAFANA_PORT}/`
@@ -283,10 +286,17 @@ the dashboard JSON, or a test file is a syntax error.
   failing container. Never loop.
 - Before `compose up`: confirm the Nginx TLS port and Coturn UDP port are free
   on the host.
-- **Bypass host proxy for all localhost/LAN curl** — corporate proxies route
-  `https://localhost/...` through an unreachable proxy. Every curl MUST use
-  `--noproxy '*'` (+ `-k`/`--cacert` for the self-signed cert generated at
-  startup).
+- **Bypass host proxy for localhost/LAN curl, but don't blanket-disable TLS
+  verification** — corporate proxies route `https://localhost/...` through an
+  unreachable proxy, so every curl MUST use `--noproxy '*'`. `-k` is only
+  safe for the literal `https://localhost/...` bootstrap check (self-signed
+  cert, no network path for a MITM); for anything hitting a real
+  `${HOST_IP}`/LAN address, extract the generated cert instead (`docker cp
+  <nginx-container>:/opt/nginx/certs/cert.pem ./nginx-cert.pem`) and use
+  `--cacert ./nginx-cert.pem --resolve ${HOST_IP}:${GRAFANA_PORT}:127.0.0.1`
+  (the cert is `CN=localhost` with no SAN, so `--resolve` is required for
+  hostname verification to match) — never fall back to `-k` on a
+  non-localhost target.
 - Test fusion end-to-end via MQTT, not just REST 200s: `docker exec
   <mqtt-broker> mosquitto_sub -h localhost -v -t '#'` and confirm all three
   topics (`{{VISION_TOPIC}}`, `{{TS_TOPIC}}`, `{{FUSION_TOPIC}}`) appear.
@@ -334,7 +344,6 @@ this skill.
 | `fusion-analytics/{Dockerfile,fusion.py,api.py,requirements.txt}` (generalize label lists — see [FUSION.md](references/FUSION.md)) | `training/` (weld classifier/VLM training scripts) — the new vertical's model is either supplied by the user or fetched via `model-download-user`, not trained here |
 | the data simulator's `Dockerfile`/`publisher.py` control flow (paired video+CSV replay) | `docs/user-guide/weld-defect-detection/`, `README-dockerhub.md`, `CHANGELOG.md`, `third-party-programs.txt` — reference-repo metadata, not part of the generated sample |
 | one dashboard JSON as a layout template | the reference's other dashboard variants (`*_agentic.json`, `*_vlm.json`) unless `{{AGENTIC}}=yes` |
-| `helm/` **only if Kubernetes deployment was requested** | `helm/` otherwise — the plan's one-line Kubernetes note is enough; don't carry the full chart into a Compose-only stack |
 | `tests/` structure/pattern from [TESTS.md](references/TESTS.md) | the reference's actual weld-assertion test bodies — write new assertions against `{{VISION_TOPIC}}`/`{{TS_TOPIC}}`/`{{FUSION_TOPIC}}` |
 
 ### Renaming rule — no leftover vertical-specific names
@@ -399,7 +408,7 @@ missing model file is not a substitute for asking up front.
    (not `AND`/`OR`) exits non-zero.
 3. `docker compose up -d` → all containers `running`/`healthy` (incl.
    `mediamtx`, `coturn`, `seaweedfs-*`).
-4. `curl -k --noproxy '*' https://<HOST_IP>:${GRAFANA_PORT}/dsps-api/pipelines/status` shows the pipeline `RUNNING`.
+4. `curl -k --noproxy '*' https://<HOST_IP>:${GRAFANA_PORT}/dsps-api/pipelines/status` shows the pipeline `RUNNING` (`-k` only valid when `{{HOST_IP}}=localhost`; otherwise use `--cacert`/`--resolve` per *Execution guardrails*).
 5. `curl -k --noproxy '*' https://<HOST_IP>:${GRAFANA_PORT}/ts-api/kapacitor/v1/ping` returns 204/200.
 6. MQTT `{{VISION_TOPIC}}` carries classification/detection metadata within
    30 s of pipeline start.

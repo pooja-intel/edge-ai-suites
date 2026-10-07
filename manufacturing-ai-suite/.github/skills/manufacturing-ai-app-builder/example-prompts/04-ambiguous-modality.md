@@ -13,14 +13,14 @@ disambiguation (still no technology):
    (e.g. a camera confirms what a sensor already flagged)?
 2. Do you already have a camera pointed at the process, sensors wired up, or
    neither yet?
-3. Quick demo, a single-host solution, or a cluster?
+3. Quick demo, or a single-host Docker Compose solution?
 
 **Discovery (Step 2):** route on the answer using
 [`../references/SKILL_CATALOG.md`](../references/SKILL_CATALOG.md):
 - visual-only defect → **`metro-ai-app-recipe`**
-- measurement-only anomaly → **`manufacturing-timeseries-app-recipe`**
+- measurement-only anomaly → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`)
   (or `time-series-analytics-user` if no dashboard/scaffold is wanted)
-- both, correlated into one verdict → **`manufacturing-multimodal-app-recipe`**
+- both, correlated into one verdict → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=fusion`, or `vlm`/`agentic` for a narrative explanation)
 
 If still unclear after question 1, present **two** candidate plans (e.g.
 vision-only vs the full fusion stack) and let the user pick, rather than
@@ -32,6 +32,6 @@ before building.
 
 **Key behavior:** never guess "fusion" just because both a camera and a
 sensor exist somewhere in the process — only route to
-`manufacturing-multimodal-app-recipe` when the user confirms both signals
-must combine into **one** decision. Clarify the business intent first, route
-deterministically, then confirm.
+`manufacturing-app-recipe`'s `fusion`/`vlm`/`agentic` modes when the user
+confirms both signals must combine into **one** decision. Clarify the
+business intent first, route deterministically, then confirm.

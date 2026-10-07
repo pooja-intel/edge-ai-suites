@@ -1,4 +1,4 @@
-# Ingestion reference — OPC-UA / MQTT simulators + Telegraf wiring
+# Ingestion reference — OPC-UA / MQTT simulators + Telegraf wiring (`ts` mode)
 
 ## Choosing a transport
 
@@ -16,7 +16,22 @@ picking the transport is a `make` target choice, not a `.env` edit.
 
 ## OPC-UA path (`{{INGEST_TRANSPORT}}=opcua`, default)
 
-- `ia-opcua-server` (simulator) reads
+- **Not generic — hardcoded to the wind-turbine schema.**
+  `simulator/opcua-server/opcua_server.py` has no `{{APP_NAME}}`/CSV-path
+  parameterization: it always opens the literal path
+  `./simulation-data/wind-turbine-anomaly-detection.csv` and creates
+  exactly two fixed variables, `grid_active_power` and `wind_speed` — it
+  does **not** iterate CSV columns. A new app that only drops in its own
+  CSV and Telegraf nodes will fail before ingestion ever starts. Either:
+  1. fork/edit `opcua_server.py` for this vertical (parameterize the CSV
+     path and replace the two hardcoded `add_variable` calls with one per
+     `{{SENSOR_TAGS}}` column), and point the app's Compose service at that
+     adapter instead of the shared `ia-opcua-server` image, or
+  2. use `{{INGEST_TRANSPORT}}=mqtt` instead — `ia-mqtt-publisher` **is**
+     generic (globs any CSV in `simulation-data/` and publishes whatever
+     columns it finds, see the MQTT path below) — for any vertical whose
+     dataset isn't wind-turbine's exact two columns.
+- If (1), `ia-opcua-server` (the adapted one) reads
   `apps/{{APP_NAME}}/simulation-data/<dataset>.csv` and serves it as OPC-UA
   nodes on port `4840` internally (host-mapped via
   `${OPCUA_SERVER_PORT_MAPPING:-30003}`).
@@ -24,8 +39,8 @@ picking the transport is a `make` target choice, not a `.env` edit.
   entry per `{{SENSOR_TAGS}}` column, each with `namespace`, `identifier_type`
   (`i` for integer identifiers), and `identifier` matching what the
   simulator assigns per CSV column (increments per column in file order —
-  confirm the exact identifier-to-column mapping against the simulator's own
-  source before hand-writing these, do not guess):
+  confirm the exact identifier-to-column mapping against the adapted
+  simulator's own source before hand-writing these, do not guess):
 
   ```conf
   [[inputs.opcua]]

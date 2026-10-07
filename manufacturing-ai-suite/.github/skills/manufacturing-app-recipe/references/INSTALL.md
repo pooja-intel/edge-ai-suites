@@ -1,6 +1,6 @@
-# File layout, `.env`, `validate_env.sh`, `install.sh`
+# File layout, `.env`, validation, install/Makefile steps (per mode)
 
-## Layout (annotated)
+## Layout — `fusion`/`vlm`/`agentic` modes (flat `{{STACK_DIR}}/`)
 
 ```
 {{STACK_DIR}}/
@@ -39,6 +39,10 @@
 │   ├── Dockerfile
 │   ├── publisher.py
 │   └── simulation-data/*.avi + *.csv pairs
+├── vlm/                          # {{DEPLOYMENT}}=vlm or agentic only — see VLM.md
+│   └── vlm-explainer/{Dockerfile,explainer.py,requirements.txt}
+├── agentic/                      # {{DEPLOYMENT}}=agentic only — see AGENTIC.md
+│   └── docker-compose-agentic.yml + docker-compose-vllm.yml overlays
 └── tests/
     ├── conftest.py
     └── test_fusion_pipeline.py  # TESTS.md
@@ -46,13 +50,20 @@
 
 This is a curated layout, not a mirror of the reference repo — omit
 `docker-compose-vllm.yml`/`docker-compose-agentic.yml`/`configs/agentic/`
-(unless `{{AGENTIC}}=yes`), `insights-workbench/`, `ui-service/`, `training/`,
-`helm/`, vertical-specific `docs/`,
+(unless `{{DEPLOYMENT}}` is `vlm`/`agentic`), `insights-workbench/`,
+`ui-service/`, `training/`, `helm/`, vertical-specific `docs/`,
 `README-dockerhub.md`, `CHANGELOG.md`, and `third-party-programs.txt` from
 the reference — see SKILL.md's *Reference implementation* section for the
 full copy/leave-behind table and renaming rule.
 
-## `.env` (required fields, mirrors the reference)
+## Layout — `ts` mode
+
+See [`APPS_CONVENTION.md`](APPS_CONVENTION.md) for the full `apps/{{APP_NAME}}/`
+tree (`simulation-data/`, `telegraf-config/`, `time-series-analytics-config/`,
+`grafana-dashboard.json`, `training/`) — this mode adds one folder to an
+existing shared repo, it does not generate a new Compose topology.
+
+## `.env` — `fusion`/`vlm`/`agentic` modes
 
 ```
 COMPOSE_PROJECT_NAME={{STACK_DIR_SLUG}}
@@ -71,7 +82,7 @@ MTX_WEBRTCICESERVERS2_0_PASSWORD=   # generated: openssl rand -hex 16
 CONTINUOUS_SIMULATOR_INGESTION=true   # false = ingest once, no loop
 SIMULATION_REPLAY_COUNT=3
 SIMULATION_TARGET_FPS=10
-TS_TOPIC={{SENSOR_MEASUREMENT}}        # topic the simulator/device publishes RAW points to (Telegraf's mqtt_consumer input) — name it TS_TOPIC, matching the reference Compose simulator service's `${TS_TOPIC}` env var verbatim
+TS_TOPIC={{SENSOR_MEASUREMENT}}       # topic the simulator/device publishes RAW points to (Telegraf's mqtt_consumer input) — name it TS_TOPIC, matching the reference Compose simulator service's `${TS_TOPIC}` env var verbatim
 
 FUSION_MODE={{FUSION_MODE}}           # AND | OR
 TOLERANCE_NS={{TOLERANCE_NS}}         # e.g. 50e6
@@ -79,13 +90,20 @@ TOLERANCE_NS={{TOLERANCE_NS}}         # e.g. 50e6
 INFLUXDB_RETENTION_DURATION=1h0m0s
 S3_BUCKET_TTL=30m
 LOG_LEVEL=INFO
+
+# vlm/agentic modes only:
+LLM_MODEL_NAME={{LLM_MODEL_NAME}}
+LLM_DEVICE={{LLM_DEVICE}}
+LLM_WEIGHT_FORMAT={{LLM_WEIGHT_FORMAT}}
+HUGGINGFACEHUB_API_TOKEN=
 ```
 
-## `validate_env.sh` — validation rules table
+### `validate_env.sh` — validation rules table (`fusion`/`vlm`/`agentic`)
 
 | Var | Rule |
 |---|---|
-| `MODE` | `demo` \| `production` |
+| `{{DEPLOYMENT}}` | `vision` \| `ts` \| `fusion` \| `vlm` \| `agentic` |
+| `MODE` | `demo` \| `production` (`vision`/`ts` only) |
 | `HOST_IP` | non-empty; reject `127.0.0.1` when validating for remote/WebRTC access (same rule as `metro-ai-app-recipe`) |
 | `FUSION_MODE` | exactly `AND` or `OR` — reject anything else |
 | `TOLERANCE_NS` | numeric (accepts scientific notation e.g. `50e6`), `> 0` |
@@ -94,14 +112,14 @@ LOG_LEVEL=INFO
 | `{{VISION_TOPIC}}`, `{{TS_TOPIC}}`, `{{SENSOR_ALERT_TOPIC}}`, `{{FUSION_TOPIC}}` | non-empty, distinct from each other (a collision silently merges two data streams) |
 | `MTX_WEBRTCICESERVERS2_0_USERNAME`/`PASSWORD` | non-empty (Coturn auth) |
 | `INPUT_TYPE` | `simulator` \| `rtsp` \| `device` \| `opcua` |
-| Agentic (`{{AGENTIC}}=yes` only) | `LLM_MODEL_NAME` set, `MODEL_PATH` resolvable |
-| Vision model file (`configs/dlstreamer-pipeline-server/models/{{DEFAULT_MODEL}}/…`), sensor `.pkl`/`.xml`/`.bin` if the pattern is pretrained | must exist on disk before `up`. This check existing is not a substitute for asking the user up front when the model has no known source — see SKILL.md's *ask, don't fabricate* rule |
+| `vlm`/`agentic` only | `LLM_MODEL_NAME` set, `MODEL_PATH` resolvable |
+| Vision model file (`configs/dlstreamer-pipeline-server/models/{{DEFAULT_MODEL}}/…`), sensor `.pkl`/`.xml`/`.bin` if the pattern is pretrained | must exist on disk before `up`. This check existing is not a substitute for asking the user up front when the model has no known source — see SKILL.md's *Model availability* rule |
 
 Ship it as a `bash -e` script; exit non-zero with a clear message on first
 failure. Call it as step 0 of `install.sh` exactly like
 `metro-ai-app-recipe`.
 
-## `install.sh` — steps
+### `install.sh` — steps (`fusion`/`vlm`/`agentic`)
 
 1. **Preflight**: `./validate_env.sh`.
 2. **`.env` population**: `HOST_IP`, generated TURN creds
@@ -139,26 +157,100 @@ failure. Call it as step 0 of `install.sh` exactly like
 8. **Fusion Analytics image**: `docker compose build ia-fusion-analytics` (it
    has no prebuilt registry tag in the reference — always build from
    `fusion-analytics/Dockerfile` unless a registry tag is pinned).
+9. **`vlm`/`agentic` only — LLM weights**: run `model-download` ahead of
+   `apm-llm` startup; confirm `MODEL_PATH` resolves before marking install
+   complete.
 
-## `Makefile` targets (optional, mirrors the reference)
+### `Makefile` targets (optional, mirrors the reference) — `fusion`/`vlm`/`agentic`
 
 - `up`: `check_env_variables` → `validate_host_ip` → `down` → dashboard swap →
-  `docker compose up -d`.
+  `docker compose up -d` (include the `vlm`/`agentic` overlay compose files
+  when `{{DEPLOYMENT}}` is `vlm`/`agentic`).
 - `down`: `docker compose down -v --remove-orphans`.
 - `status`: `docker ps` table filtered to this stack's network, then tail the
   last 5 log lines of every container and flag any containing `error`
   (case-insensitive) — do not fail the whole command on a false-positive
   first-login Grafana token warning, just surface it.
 
-## Final-summary proof points
+### Final-summary proof points — `fusion`/`vlm`/`agentic`
 
 Quote in the closing summary: the `docker compose up -d` output showing all
-fifteen containers `healthy`/`running` (the sixteenth, `seaweedfs-volumes-init`,
-is a one-shot init job that exits after running, not a long-lived service);
-the three MQTT topic subscriptions
+containers `healthy`/`running`; the three MQTT topic subscriptions
 (`{{VISION_TOPIC}}`, `{{TS_TOPIC}}`, `{{FUSION_TOPIC}}`) each with one
 captured message; the `FUSION_MODE` value and one example fused-decision JSON
 that matches its semantics; the InfluxDB `select * from` output for the
 fusion measurement; the Grafana dashboard URL + confirmation the WebRTC
-iframe/panel is present; and, if `{{AGENTIC}}=yes`, the LLM explanation text
-for one flagged event.
+iframe/panel is present; and, if `{{DEPLOYMENT}}` is `vlm`/`agentic`, the LLM
+explanation text for one flagged event.
+
+## `.env` — `ts` mode (required fields, shared across all apps — do not fork per app)
+
+```
+COMPOSE_PROJECT_NAME=timeseriessoftware
+TIMESERIES_UID=2999
+KAPACITOR_PORT=9092
+GRAFANA_PORT=3000
+LOG_LEVEL=INFO
+
+CONTINUOUS_SIMULATOR_INGESTION=true   # false = ingest once, no loop
+
+INFLUXDB_USERNAME=            # alphabets only, >=5 chars, not "admin"
+INFLUXDB_PASSWORD=            # >=10 alphanumeric, at least 1 digit, no shell-special chars
+VISUALIZER_GRAFANA_USER=      # alphabets only, >=5 chars
+VISUALIZER_GRAFANA_PASSWORD=  # same rule as INFLUXDB_PASSWORD
+VISUALIZER_GRAFANA_INACTIVE_TIMEOUT=1h
+
+INFLUXDB_RETENTION_DURATION=1h0m0s
+OPCUA_SERVER_PORT_MAPPING=30003
+```
+
+No per-vertical topic/mode vars belong in `.env` — those live inside
+`apps/{{APP_NAME}}/` (Telegraf input blocks, `config.json`'s `alerts`
+section) per [`APPS_CONVENTION.md`](APPS_CONVENTION.md).
+
+### Validation — reuse the Makefile's own target, don't reimplement (`ts`)
+
+```bash
+make check_env_variables
+```
+
+This already validates `INFLUXDB_USERNAME`/`PASSWORD` and
+`VISUALIZER_GRAFANA_USER`/`PASSWORD` against the exact charset/length rules
+documented above, and is a hard dependency of both `up_mqtt_ingestion` and
+`up_opcua_ingestion` — you never need to call it manually before `make up_*`,
+but do call it manually when just scaffolding files (before the first
+`make up_*`) to fail fast on a bad `.env`.
+
+Additional rules **this skill** enforces before generating files (not
+covered by the Makefile target):
+
+| Var | Rule |
+|---|---|
+| `{{APP_NAME}}` | kebab-case, not already present in `SAMPLE_APP_LIST` |
+| `{{INGEST_TRANSPORT}}` | exactly `opcua` or `mqtt` |
+| `{{ALERT_CHANNEL}}` | exactly `mqtt` or `opcua` — never both enabled in the same TICKscript |
+| `config.json`/variants | ≤ 5 KB each (microservice hard limit) |
+| `{{SENSOR_UDF_NAME}}` | matches the UDF's internal filename inside the packaged `.tar` exactly |
+
+### `Makefile` targets (reference — do not duplicate, just call) — `ts`
+
+- `make up_opcua_ingestion app={{APP_NAME}}` — OPC-UA simulator path;
+  MQTT publisher scaled to `0`.
+- `make up_mqtt_ingestion app={{APP_NAME}}` — MQTT publisher path; OPC-UA
+  simulator scaled to `0`.
+- `make status` — table of running containers filtered to this stack +
+  a best-effort scan of the last 5 log lines per container for the word
+  "error" (informational, not a hard gate — a stale first-login Grafana
+  warning is expected noise).
+- `make down` — `docker compose down -v --remove-orphans`.
+
+### Final-summary proof points — `ts`
+
+Quote in the closing summary: `{{APP_NAME}}` appearing in the Makefile's
+`SAMPLE_APP_LIST` diff; the `make check_env_variables` pass/fail output; the
+`make up_{{INGEST_TRANSPORT}}_ingestion app={{APP_NAME}}` container-healthy
+output confirming the unused simulator is scaled to `0`; the InfluxDB
+`select * from` output for the raw sensor measurement; the flagged-anomaly
+log line + the captured MQTT/OPC-UA alert; and the Grafana dashboard URL
+with confirmation `apps/{{APP_NAME}}/grafana-dashboard.json` is what's
+rendering (not a stale previous app's dashboard).

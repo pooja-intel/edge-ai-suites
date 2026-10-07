@@ -1,10 +1,13 @@
-# Telegraf + Time Series Analytics Microservice reference (the sensor half)
+# Telegraf + Time Series Analytics Microservice reference (the sensor half, inside `fusion`/`vlm`/`agentic`)
 
 > **Skill pointer:** for authoring the UDF + TICKscript pattern itself
 > (threshold, rate-of-change, rolling z-score, or pretrained-model
 > inference), invoke external `time-series-analytics-user` and follow its
 > `references/patterns.md` — do not hand-roll a new pattern here. Below are
-> recipe-specific overrides for wiring that service into the fusion stack.
+> recipe-specific overrides for wiring that service into the flat
+> `{{STACK_DIR}}/` shape used by `fusion`/`vlm`/`agentic` modes. For the
+> standalone `apps/<name>/` shape used by `ts` mode, see
+> [`ANALYTICS.md`](ANALYTICS.md) instead.
 
 ## Telegraf — MQTT ingest bridge
 
@@ -21,15 +24,19 @@ Required env on the `ia-telegraf` service:
 - `INFLUX_SERVER=ia-influxdb`, `INFLUXDB_DBNAME=datain`,
   `INFLUXDB_USERNAME`/`INFLUXDB_PASSWORD` from `.env`.
 - `TS_MS_SERVER_URL=http://ia-time-series-analytics-microservice:${KAPACITOR_PORT}`
-  — Telegraf forwards every ingested point to the microservice's REST
-  `/input` endpoint **in addition to** writing it to InfluxDB; both happen
-  from the same input plugin instance, no separate output config needed.
+  — `Telegraf.conf` needs **two** `[[outputs.influxdb]]` blocks, not one:
+  the first writes to `http://$INFLUX_SERVER:$INFLUXDB_PORT` (real
+  InfluxDB), the second writes to `urls = ["$TS_MS_SERVER_URL"]` (the
+  microservice, which exposes an InfluxDB-line-protocol-compatible write
+  endpoint). The input plugin does not auto-forward to a REST `/input`
+  endpoint — omitting the second output block means the UDF receives no
+  data at all.
 - `TELEGRAF_METRIC_BATCH_SIZE=100` — batch size per flush to InfluxDB; leave
   as-is unless the vertical has a much higher/lower sensor rate.
 
 The raw sensor stream lands in InfluxDB measurement `{{SENSOR_MEASUREMENT}}`
-(e.g. `weld-sensor-data`) and is simultaneously fed point-by-point to
-Kapacitor via the microservice REST API — this is what the UDF processes.
+(e.g. `weld-sensor-data`) and is simultaneously written to the microservice
+via the second `[[outputs.influxdb]]` block — this is what the UDF processes.
 
 ## Time Series Analytics Microservice — `config.json`
 

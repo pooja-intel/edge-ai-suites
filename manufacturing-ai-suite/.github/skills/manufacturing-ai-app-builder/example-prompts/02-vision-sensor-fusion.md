@@ -12,21 +12,22 @@
 3. Inputs — camera: sample weld video for a demo, or a real RTSP feed?
    [sample video]; sensors: real OPC-UA/MQTT feed, or looping sample CSV?
    [sample CSV]
-4. Deployment — quick local demo, single-host Docker solution, or
-   Kubernetes? [single-host Docker]
+4. Deployment — quick local demo, or single-host Docker Compose solution?
+   [single-host Docker]
 5. Fuse with AND (both must agree) or OR (either is enough)? [AND]
 
 **Discovery (Step 2):** "what feeds this" = both, correlated into one verdict
-→ **`manufacturing-multimodal-app-recipe`** (this workspace; DLSPS + Telegraf/
-InfluxDB + Time Series Analytics + Fusion Analytics + Grafana). This is
-**not** routed to `manufacturing-timeseries-app-recipe` or `metro-ai-app-recipe`
-alone, because the business requirement is explicitly a **combined** verdict.
+→ **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=fusion`; this workspace;
+DLSPS + Telegraf/InfluxDB + Time Series Analytics + Fusion Analytics +
+Grafana). This is **not** routed to `{{DEPLOYMENT}}=ts` or
+`metro-ai-app-recipe` alone, because the business requirement is explicitly a
+**combined** verdict.
 
 **Plan (Step 4 — presented, awaits confirmation):**
 - Deliverable: `./weld-defect-stack/` Docker Compose solution; Grafana at
   `https://localhost:3000` with a live annotated WebRTC panel, sensor trend,
   and fused-verdict table.
-- Skill: `manufacturing-multimodal-app-recipe` (this workspace — no install).
+- Skill: `manufacturing-app-recipe` (`{{DEPLOYMENT}}=fusion`; this workspace — no install).
 - Supporting: `dlsps-user` for the vision pipeline operational details,
   `time-series-analytics-user` for the sensor UDF pattern.
 - Inferred technology (decisions, not questions): weld-defect classifier on
@@ -34,10 +35,9 @@ alone, because the business requirement is explicitly a **combined** verdict.
   `vision_weld_defect_classification` / `ts_weld_anomaly_detection` /
   `fusion/anomaly_detection_results`.
 - Requirements: Docker + Compose v2; Nginx/Coturn ports free.
-- On Kubernetes → the reference app's own `helm/` chart deploys the same
-  stack.
 
-**Build (Step 5, after "go"):** delegate to `manufacturing-multimodal-app-recipe`,
+**Build (Step 5, after "go"):** delegate to `manufacturing-app-recipe`
+(`{{DEPLOYMENT}}=fusion`),
 passing the inferred `{{OBJECT}}=weld_defect`, `{{FUSION_MODE}}=AND`, and
 topics; verify against the recipe's own completion criteria (including the
 fused-verdict MQTT proof), then tell the user how to open the dashboard.

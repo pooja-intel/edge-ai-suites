@@ -10,31 +10,30 @@
    [vibration sensor only]
 3. Inputs — a real OPC-UA/MQTT feed from the pump's sensor, or a looping
    sample dataset for a demo? [sample dataset]
-4. Deployment — quick local demo, single-host Docker solution, or
-   Kubernetes? [single-host Docker]
+4. Deployment — quick local demo, or single-host Docker Compose solution?
+   [single-host Docker]
 5. Do you need a live sensor-trend + anomaly dashboard? [yes]
 
 **Discovery (Step 2):** "what feeds this" = sensor only, full dashboard
-requested → **`manufacturing-timeseries-app-recipe`** (this workspace;
-Telegraf/InfluxDB + Time Series Analytics Microservice + Grafana, scaffolded
-as a new `apps/pump-vibration-monitor/` sample app). No vision component, so
-`manufacturing-multimodal-app-recipe` does not apply.
+requested → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`; this
+workspace; Telegraf/InfluxDB + Time Series Analytics Microservice + Grafana,
+scaffolded as a new `apps/pump-vibration-monitor/` sample app). No vision
+component, so `{{DEPLOYMENT}}=fusion`/`vlm`/`agentic` does not apply.
 
 **Plan (Step 4 — presented, awaits confirmation):**
 - Deliverable: a new `apps/pump-vibration-monitor/` folder registered in the
   Time Series AI Stack's `Makefile`; Grafana at
   `https://localhost:3000` showing vibration trend + anomaly alerts.
-- Skill: `manufacturing-timeseries-app-recipe` (this workspace — no install).
+- Skill: `manufacturing-app-recipe` (`{{DEPLOYMENT}}=ts`; this workspace — no install).
 - Supporting: `time-series-analytics-user` for the actual UDF/TICKscript
   pattern (a pretrained rolling-anomaly model on vibration amplitude).
 - Inferred technology (decisions, not questions): OPC-UA ingestion via the
   bundled simulator, MQTT alert channel on `alerts/pump_vibration`, streaming
   (non-batch) UDF, single stream.
 - Requirements: Docker + Compose v2; port `3000` free.
-- On Kubernetes → the reference app's own `helm/` chart deploys the same
-  stack.
 
-**Build (Step 5, after "go"):** delegate to `manufacturing-timeseries-app-recipe`,
+**Build (Step 5, after "go"):** delegate to `manufacturing-app-recipe`
+(`{{DEPLOYMENT}}=ts`),
 passing the inferred `{{APP_NAME}}=pump-vibration-monitor`, ingestion
 transport, and alert channel; it in turn delegates the UDF authoring to
 `time-series-analytics-user`. Verify against the recipe's own completion

@@ -9,15 +9,15 @@
 2. What feeds this — a camera, a sensor, or both together? [camera only]
 3. Inputs — camera: sample PCB inspection video, or a real RTSP/USB feed?
    [sample video]
-4. Deployment — quick local demo, single-host Docker solution, or
-   Kubernetes? [single-host Docker]
+4. Deployment — quick local demo, or single-host Docker Compose solution?
+   [single-host Docker]
 5. Do you need a live annotated video wall + alert dashboard? [yes]
 
 **Discovery (Step 2):** "what feeds this" = camera only, no sensor to
 correlate against → **`metro-ai-app-recipe`** (vision-only end-to-end stack;
 already covers the "Industrial / logistics" vertical, including
-surface-defect detection). Not routed to `manufacturing-multimodal-app-recipe`
-— there is no second modality to fuse.
+surface-defect detection). Not routed to `manufacturing-app-recipe`'s
+`fusion`/`vlm`/`agentic` modes — there is no second modality to fuse.
 
 **Plan (Step 4 — presented, awaits confirmation):**
 - Deliverable: `./pcb-defect-stack/` Docker Compose solution; Grafana-based
