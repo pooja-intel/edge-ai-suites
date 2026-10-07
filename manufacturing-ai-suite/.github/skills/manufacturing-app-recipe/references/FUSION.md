@@ -142,6 +142,17 @@ can hit, and (optionally) a query endpoint the `vllm`/`agentic` layer's
 is the integration point [`references/VLM.md`](VLM.md) depends on when
 `{{DEPLOYMENT}}` is `vllm` or `agentic`.
 
+**InfluxQL injection warning — do not copy the reference's query-building
+verbatim.** The reference `api.py`'s `/detections?label=...` endpoint
+interpolates the `label` query parameter directly into an InfluxQL string
+(`f"fusion_classification = '{label}'"`) — it defines a `_SAFE_LABEL_RE`
+allowlist regex but never actually applies it, so a crafted `label` value
+breaks out of the string literal and injects arbitrary InfluxQL. Any query
+endpoint built from this template **must** validate/allowlist every
+user-supplied filter value (e.g. `_SAFE_LABEL_RE.fullmatch(label)`, rejecting
+with 400 on failure) before interpolating it into a query string — never
+trust `_SAFE_LABEL_RE` being merely *defined* as evidence it's *enforced*.
+
 ## Batching for the explanation layer (`vllm`/`agentic` modes only)
 
 Fusion Analytics itself maintains the batch, in addition to its per-event

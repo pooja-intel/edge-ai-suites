@@ -33,8 +33,8 @@ the answer is "vision", "time series", or "both"; you infer that from what
 signals feed the decision.
 
 1. **Ask business questions** — outcome, what feeds the decision (camera,
-   sensor, or both), deployment target, hardware, scale — never
-   framework/model/precision/device/modality-by-name.
+   sensor, or both), deployment target, hardware, scale — never ask which
+   framework/model/precision/device, or the modality, by name.
 2. **Discover** the relevant skill(s) — the two local manufacturing recipes,
    or the vision-only skills, from
    [`references/SKILL_CATALOG.md`](references/SKILL_CATALOG.md) and
