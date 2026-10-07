@@ -3,7 +3,7 @@
 Two unrelated lightweight paths share this file — each produces one
 single-component app proving a model/UDF runs on Intel hardware, with **no**
 full Compose topology (no Telegraf/InfluxDB/Fusion Analytics/Grafana/Nginx/
-SeaweedFS/MediaMTX/Coturn). `fusion`/`vlm`/`agentic` modes never use this
+SeaweedFS/MediaMTX/Coturn). `multimodal`/`vllm`/`agentic` modes never use this
 file — they are production-only.
 
 ## `vision` mode

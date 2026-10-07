@@ -18,7 +18,7 @@
 requested → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`; this
 workspace; Telegraf/InfluxDB + Time Series Analytics Microservice + Grafana,
 scaffolded as a new `apps/pump-vibration-monitor/` sample app). No vision
-component, so `{{DEPLOYMENT}}=fusion`/`vlm`/`agentic` does not apply.
+component, so `{{DEPLOYMENT}}=multimodal`/`vllm`/`agentic` does not apply.
 
 **Plan (Step 4 — presented, awaits confirmation):**
 - Deliverable: a new `apps/pump-vibration-monitor/` folder registered in the

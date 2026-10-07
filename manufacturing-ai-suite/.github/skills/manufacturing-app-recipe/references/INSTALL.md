@@ -1,15 +1,14 @@
 # File layout, `.env`, validation, install/Makefile steps (per mode)
 
-## Layout — `fusion`/`vlm`/`agentic` modes (flat `{{STACK_DIR}}/`)
+## Layout — `multimodal`/`vllm`/`agentic` modes (flat `{{STACK_DIR}}/`)
 
 ```
 {{STACK_DIR}}/
 ├── README.md
 ├── docker-compose.yml
 ├── .env
-├── validate_env.sh              # step 0 of install.sh
 ├── install.sh                   # HOST_IP, model dl, dataset dl, TLS cert
-├── Makefile                     # up/down/status wrapping docker compose (optional; sample_*.sh also fine)
+├── Makefile                     # up/down/status wrapping docker compose; check_env_variables/validate_host_ip targets (optional; sample_*.sh also fine)
 ├── configs/
 │   ├── dlstreamer-pipeline-server/
 │   │   ├── config.json          # PIPELINE.md
@@ -39,8 +38,8 @@
 │   ├── Dockerfile
 │   ├── publisher.py
 │   └── simulation-data/*.avi + *.csv pairs
-├── vlm/                          # {{DEPLOYMENT}}=vlm or agentic only — see VLM.md
-│   └── vlm-explainer/{Dockerfile,explainer.py,requirements.txt}
+├── vllm/                          # {{DEPLOYMENT}}=vllm or agentic only — see VLM.md
+│   └── vllm-explainer/{Dockerfile,explainer.py,requirements.txt}
 ├── agentic/                      # {{DEPLOYMENT}}=agentic only — see AGENTIC.md
 │   └── docker-compose-agentic.yml + docker-compose-vllm.yml overlays
 └── tests/
@@ -50,7 +49,7 @@
 
 This is a curated layout, not a mirror of the reference repo — omit
 `docker-compose-vllm.yml`/`docker-compose-agentic.yml`/`configs/agentic/`
-(unless `{{DEPLOYMENT}}` is `vlm`/`agentic`), `insights-workbench/`,
+(unless `{{DEPLOYMENT}}` is `vllm`/`agentic`), `insights-workbench/`,
 `ui-service/`, `training/`, `helm/`, vertical-specific `docs/`,
 `README-dockerhub.md`, `CHANGELOG.md`, and `third-party-programs.txt` from
 the reference — see SKILL.md's *Reference implementation* section for the
@@ -63,7 +62,7 @@ tree (`simulation-data/`, `telegraf-config/`, `time-series-analytics-config/`,
 `grafana-dashboard.json`, `training/`) — this mode adds one folder to an
 existing shared repo, it does not generate a new Compose topology.
 
-## `.env` — `fusion`/`vlm`/`agentic` modes
+## `.env` — `multimodal`/`vllm`/`agentic` modes
 
 ```
 COMPOSE_PROJECT_NAME={{STACK_DIR_SLUG}}
@@ -91,20 +90,20 @@ INFLUXDB_RETENTION_DURATION=1h0m0s
 S3_BUCKET_TTL=30m
 LOG_LEVEL=INFO
 
-# vlm/agentic modes only:
+# vllm/agentic modes only:
 LLM_MODEL_NAME={{LLM_MODEL_NAME}}
 LLM_DEVICE={{LLM_DEVICE}}
 LLM_WEIGHT_FORMAT={{LLM_WEIGHT_FORMAT}}
 HUGGINGFACEHUB_API_TOKEN=
 ```
 
-### `validate_env.sh` — validation rules table (`fusion`/`vlm`/`agentic`)
+### Env validation rules (`make check_env_variables`/`validate_host_ip`)
 
 | Var | Rule |
 |---|---|
-| `{{DEPLOYMENT}}` | `vision` \| `ts` \| `fusion` \| `vlm` \| `agentic` |
+| `{{DEPLOYMENT}}` | `vision` \| `ts` \| `multimodal` \| `vllm` \| `agentic` |
 | `MODE` | `demo` \| `production` (`vision`/`ts` only) |
-| `HOST_IP` | non-empty; reject `127.0.0.1` when validating for remote/WebRTC access (same rule as `metro-ai-app-recipe`) |
+| `HOST_IP` | non-empty; reject `127.0.0.1` when validating for remote/WebRTC access |
 | `FUSION_MODE` | exactly `AND` or `OR` — reject anything else |
 | `TOLERANCE_NS` | numeric (accepts scientific notation e.g. `50e6`), `> 0` |
 | `INFLUXDB_USERNAME`/`PASSWORD`, `VISUALIZER_GRAFANA_USER`/`PASSWORD` | non-empty, satisfy the length/charset rules from `.env` comments — reject weak/empty creds before `docker compose up` |
@@ -112,21 +111,24 @@ HUGGINGFACEHUB_API_TOKEN=
 | `{{VISION_TOPIC}}`, `{{TS_TOPIC}}`, `{{SENSOR_ALERT_TOPIC}}`, `{{FUSION_TOPIC}}` | non-empty, distinct from each other (a collision silently merges two data streams) |
 | `MTX_WEBRTCICESERVERS2_0_USERNAME`/`PASSWORD` | non-empty (Coturn auth) |
 | `INPUT_TYPE` | `simulator` \| `rtsp` \| `device` \| `opcua` |
-| `vlm`/`agentic` only | `LLM_MODEL_NAME` set, `MODEL_PATH` resolvable |
+| `vllm`/`agentic` only | `LLM_MODEL_NAME` set, `MODEL_PATH` resolvable |
 | Vision model file (`configs/dlstreamer-pipeline-server/models/{{DEFAULT_MODEL}}/…`), sensor `.pkl`/`.xml`/`.bin` if the pattern is pretrained | must exist on disk before `up`. This check existing is not a substitute for asking the user up front when the model has no known source — see SKILL.md's *Model availability* rule |
 
-Ship it as a `bash -e` script; exit non-zero with a clear message on first
-failure. Call it as step 0 of `install.sh` exactly like
-`metro-ai-app-recipe`.
+Implement as `check_env_variables`/`validate_host_ip` Makefile targets (no
+standalone `validate_env.sh` script — the reference repo doesn't have one),
+exiting non-zero with a clear message on first failure; chain both as a
+dependency of the `up`/`up_vllm`/`up_agentic` targets, same convention as
+`ts` mode's `make check_env_variables`.
 
-### `install.sh` — steps (`fusion`/`vlm`/`agentic`)
+### `install.sh` — steps (`multimodal`/`vllm`/`agentic`)
 
-1. **Preflight**: `./validate_env.sh`.
+1. **Preflight**: `make check_env_variables` (also `validate_host_ip` when
+   validating for remote/WebRTC access).
 2. **`.env` population**: `HOST_IP`, generated TURN creds
-   (`openssl rand -hex 16`), video/render GIDs for GPU/NPU (same
-   `getent group video|render` pattern as `metro-ai-app-recipe`).
-3. **Vision model download**: reuse `metro-ai-app-recipe`'s
-   `download_public_models.sh`/`model-download-user` pattern for OMZ/OpenVINO
+   (`openssl rand -hex 16`), video/render GIDs for GPU/NPU via
+   `getent group video|render` (so DLSPS/UDF containers get `/dev/dri`
+   access).
+3. **Vision model download**: use `model-download-user` for OMZ/OpenVINO
    models, or fetch the vertical's specific classifier IR from its published
    location. Land it under
    `configs/dlstreamer-pipeline-server/models/{{DEFAULT_MODEL}}/` — a name
@@ -141,10 +143,15 @@ failure. Call it as step 0 of `install.sh` exactly like
    rule-based patterns (threshold/rate-of-change) there is nothing to
    download. Same stop-and-ask rule as step 3 if a pretrained model has no
    known source.
-5. **Simulator dataset** (if `{{INPUT_TYPE}}=simulator`): download the
-   paired `.avi`+`.csv` sample set for the vertical (reference: the
-   [Intel_Robotic_Welding_Multimodal_Dataset](https://huggingface.co/datasets/IntelLabs/Intel_Robotic_Welding_Multimodal_Dataset)
-   on Hugging Face) into `<simulator>/simulation-data/`.
+5. **Simulator dataset** (if `{{INPUT_TYPE}}=simulator`): the paired
+   `.avi`+`.csv` sample set for this vertical must come from the invoking
+   prompt or the user — **do not silently download the reference's
+   Intel_Robotic_Welding_Multimodal_Dataset** (that's the weld-defect
+   sample's own dataset, not a generic stand-in for every vertical). If no
+   local file and no resolvable URL exist, stop here and ask the user for
+   one instead of fetching an unrelated dataset, per SKILL.md's *Model
+   availability* rule. Once provided, land it under
+   `<simulator>/simulation-data/`.
 6. **Grafana dashboard swap**: `rm configs/grafana/provisioning/*.json &&
    cp configs/grafana/dashboards_jsons/{{DASHBOARD_SLUG}}.json
    configs/grafana/provisioning/{{DASHBOARD_SLUG}}.json` — dashboards live in
@@ -157,30 +164,38 @@ failure. Call it as step 0 of `install.sh` exactly like
 8. **Fusion Analytics image**: `docker compose build ia-fusion-analytics` (it
    has no prebuilt registry tag in the reference — always build from
    `fusion-analytics/Dockerfile` unless a registry tag is pinned).
-9. **`vlm`/`agentic` only — LLM weights**: run `model-download` ahead of
+9. **`vllm`/`agentic` only — LLM weights**: run `model-download` ahead of
    `apm-llm` startup; confirm `MODEL_PATH` resolves before marking install
    complete.
 
-### `Makefile` targets (optional, mirrors the reference) — `fusion`/`vlm`/`agentic`
+### `Makefile` targets (optional, mirrors the reference) — `multimodal`/`vllm`/`agentic`
 
 - `up`: `check_env_variables` → `validate_host_ip` → `down` → dashboard swap →
-  `docker compose up -d` (include the `vlm`/`agentic` overlay compose files
-  when `{{DEPLOYMENT}}` is `vlm`/`agentic`).
+  `docker compose up -d` — plain `multimodal` mode, no LLM/VLM overlay.
+- `up_vllm`: same preflight chain (+ `check_hardware`/`check_models`) plus
+  `docker-compose-vllm.yml` — use this one, not `up`, when
+  `{{DEPLOYMENT}}=vllm`.
+- `up_agentic`: same preflight chain plus `docker-compose-agentic.yml` (which
+  itself layers in the vLLM service) — use this one when
+  `{{DEPLOYMENT}}=agentic`. Never bring up `vllm`/`agentic` mode by manually
+  passing `-f docker-compose-vllm.yml`/`-f docker-compose-agentic.yml` to a
+  bare `docker compose up` — these three targets are the actual entry
+  points, one per `{{DEPLOYMENT}}` value, not a single conditional `up`.
 - `down`: `docker compose down -v --remove-orphans`.
 - `status`: `docker ps` table filtered to this stack's network, then tail the
   last 5 log lines of every container and flag any containing `error`
   (case-insensitive) — do not fail the whole command on a false-positive
   first-login Grafana token warning, just surface it.
 
-### Final-summary proof points — `fusion`/`vlm`/`agentic`
+### Final-summary proof points — `multimodal`/`vllm`/`agentic`
 
 Quote in the closing summary: the `docker compose up -d` output showing all
 containers `healthy`/`running`; the three MQTT topic subscriptions
 (`{{VISION_TOPIC}}`, `{{TS_TOPIC}}`, `{{FUSION_TOPIC}}`) each with one
 captured message; the `FUSION_MODE` value and one example fused-decision JSON
 that matches its semantics; the InfluxDB `select * from` output for the
-fusion measurement; the Grafana dashboard URL + confirmation the WebRTC
-iframe/panel is present; and, if `{{DEPLOYMENT}}` is `vlm`/`agentic`, the LLM
+multimodal measurement; the Grafana dashboard URL + confirmation the WebRTC
+iframe/panel is present; and, if `{{DEPLOYMENT}}` is `vllm`/`agentic`, the LLM
 explanation text for one flagged event.
 
 ## `.env` — `ts` mode (required fields, shared across all apps — do not fork per app)

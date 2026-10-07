@@ -20,18 +20,18 @@ disambiguation (still no technology):
 - visual-only defect → **`metro-ai-app-recipe`**
 - measurement-only anomaly → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`)
   (or `time-series-analytics-user` if no dashboard/scaffold is wanted)
-- both, correlated into one verdict → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=fusion`, or `vlm`/`agentic` for a narrative explanation)
+- both, correlated into one verdict → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=multimodal`, or `vllm`/`agentic` for a narrative explanation)
 
 If still unclear after question 1, present **two** candidate plans (e.g.
-vision-only vs the full fusion stack) and let the user pick, rather than
+vision-only vs the full multimodal stack) and let the user pick, rather than
 guessing which modality matters more.
 
 **Plan (Step 4):** once the branch is chosen, propose the concrete
 deliverable + skill + inferred technology and **wait for confirmation**
 before building.
 
-**Key behavior:** never guess "fusion" just because both a camera and a
+**Key behavior:** never guess "multimodal" just because both a camera and a
 sensor exist somewhere in the process — only route to
-`manufacturing-app-recipe`'s `fusion`/`vlm`/`agentic` modes when the user
+`manufacturing-app-recipe`'s `multimodal`/`vllm`/`agentic` modes when the user
 confirms both signals must combine into **one** decision. Clarify the
 business intent first, route deterministically, then confirm.

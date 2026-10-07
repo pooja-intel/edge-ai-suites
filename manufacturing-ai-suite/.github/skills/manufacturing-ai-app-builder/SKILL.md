@@ -17,7 +17,6 @@ compatibility: >-
   assume them.
 metadata:
   author: open-edge-platform
-  version: "1.0.0"
   tags: "orchestrator business-objective skill-discovery planning manufacturing time-series multimodal vision"
 allowed-tools: bash git gh
 ---
@@ -102,14 +101,13 @@ Adapt the wording to the stated outcome, but cover these axes:
    dataset [default].
 4. **Deployment target** — a quick local demo/POC, or a single-host Docker
    Compose solution? [Docker Compose]
-5. **Hardware** — Intel GPU (default) for vision, or Intel CPU/NPU? [Intel
-   GPU if a camera is involved, else Intel CPU]
+5. **Hardware** — Intel GPU (default) for vision, or Intel CPU/NPU?
 6. **Scale / operations** — one stream vs many; needs a dashboard/UI vs just
    an alert; MQTT or OPC-UA alerting? [reasonable default per domain]
 7. **Where to build it** — an absolute path to an existing checkout to add
    to (sensor-only recipe adds `apps/<name>/` to an existing
    `industrial-edge-insights-time-series` clone), or where to create a new
-   standalone stack directory (fusion recipe). Skip only if the invoking
+   standalone stack directory (multimodal recipe). Skip only if the invoking
    context already makes this unambiguous — never let the delegate default
    to the current working directory or invent a path.
 
@@ -126,7 +124,7 @@ objective is ambiguous or a delegate's availability is unclear, load
 
 | What feeds the decision (Step 1, Q2) | Full stack + dashboard needed? | Route to |
 |---|---|---|
-| **Both** camera + sensor, one fused verdict (optionally + narrative explanation) | yes (always — this is the point of fusion) | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=fusion`, or `vlm`/`agentic` for explainability) |
+| **Both** camera + sensor, one fused verdict (optionally + narrative explanation) | yes (always — this is the point of multimodal correlation) | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=multimodal`, or `vllm`/`agentic` for explainability) |
 | **Sensor only** | yes — simulator/real ingest + Kapacitor UDF + Grafana + app registry | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`) |
 | **Sensor only** | no — just a UDF/TICKscript against an already-running microservice | **`time-series-analytics-user`** |
 | **Camera only** | yes — annotated video + dashboard + alerts, any vertical | **`metro-ai-app-recipe`** |
@@ -140,9 +138,9 @@ custom-code path — do not invent a skill.
 ### Step 3 — Decide the deliverable & infer technology
 
 From the answers decide the shape of the deliverable (quick single app vs
-end-to-end fusion/vision/sensor solution vs cluster deploy) and **silently
+end-to-end multimodal/vision/sensor solution vs cluster deploy) and **silently
 infer** every technical parameter the chosen delegate needs (vision model,
-sensor UDF pattern, fusion mode/tolerance, device, topics,
+sensor UDF pattern, multimodal mode/tolerance, device, topics,
 mode flags, etc.) using each recipe's own parameter table
 (`{{OBJECT}}`, `{{APP_NAME}}`/`{{STACK_DIR}}`, `{{FUSION_MODE}}`, ...). The
 delegate skill defines exactly which parameters it consumes — prepare them so
@@ -194,7 +192,7 @@ Only after confirmation:
    Chain supporting skills in dependency order (e.g.
    `time-series-analytics-user`'s UDF pattern feeds into
    `manufacturing-app-recipe`'s `ts`-mode `apps/<name>/` scaffold, or its
-   `fusion`/`vlm`/`agentic`-mode sensor half; `dlsps-user` feeds the vision
+   `multimodal`/`vllm`/`agentic`-mode sensor half; `dlsps-user` feeds the vision
    half).
 3. Relay only the **business-relevant** progress to the user; keep the
    technical chatter to the delegate.
@@ -211,7 +209,7 @@ step fails, report the failing delegate step and stop — do not loop.
 
 See [`example-prompts/`](example-prompts/) for end-to-end walk-throughs:
 - `01-sensor-only-anomaly.md` — pump vibration monitoring → `manufacturing-app-recipe` (`ts` mode).
-- `02-vision-sensor-fusion.md` — weld defect detection → `manufacturing-app-recipe` (`fusion` mode).
+- `02-vision-sensor-fusion.md` — weld defect detection → `manufacturing-app-recipe` (`multimodal` mode).
 - `03-vision-only-inspection.md` — camera-only PCB defect detection → `metro-ai-app-recipe`.
 - `04-ambiguous-modality.md` — vague "catch problems early" objective → clarify modality + route.
 
@@ -220,10 +218,10 @@ See [`example-prompts/`](example-prompts/) for end-to-end walk-throughs:
 - **User names a skill directly** → skip discovery; hand off to that skill.
 - **Objective spans two skills** (e.g. bare UDF prototype now, full scaffolded
   app later) → sequence them in the plan and confirm the whole pipeline once.
-- **Unsure if fusion is really needed** — if the user only wants a sensor
+- **Unsure if multimodal correlation is really needed** — if the user only wants a sensor
   *or* vision alert and mentions the other modality just as context (not as
   something to correlate into one verdict), route single-modality, not
-  `manufacturing-app-recipe`'s `fusion`/`vlm`/`agentic` modes — fusion is for
+  `manufacturing-app-recipe`'s `multimodal`/`vllm`/`agentic` modes — multimodal correlation is for
   when **both** signals must agree/combine into one decision, not merely
   coexist.
 - **No catalog match** → say so; offer the closest entry or a custom path;
@@ -237,7 +235,7 @@ See [`example-prompts/`](example-prompts/) for end-to-end walk-throughs:
 ## Notes
 
 - The manufacturing-domain delegate (`manufacturing-app-recipe`, covering
-  `vision`/`ts`/`fusion`/`vlm`/`agentic` modes) and this skill ship locally
+  `vision`/`ts`/`multimodal`/`vllm`/`agentic` modes) and this skill ship locally
   in this workspace under `.github/skills/` — no install needed to delegate
   to them.
 - `metro-ai-app-recipe`, `dlsps-user`, `dlstreamer-coding-agent`, and

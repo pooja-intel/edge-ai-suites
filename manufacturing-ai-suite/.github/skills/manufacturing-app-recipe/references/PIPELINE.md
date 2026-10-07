@@ -1,4 +1,4 @@
-# DLSPS vision pipeline reference (the video half — `vision`/`fusion`/`vlm`/`agentic` modes)
+# DLSPS vision pipeline reference (the video half — `vision`/`multimodal`/`vllm`/`agentic` modes)
 
 > **Skill pointer:** for DL Streamer Pipeline Server deployment/operation
 > (startup, REST launch/stop/status, MQTT/S3/publisher wiring, GPU/NPU device
@@ -9,7 +9,7 @@
 > MQTT/WebRTC/S3 destination wiring, which exists to feed Fusion Analytics
 > and the dashboard in the other modes.
 
-## Required env (`fusion`/`vlm`/`agentic` modes)
+## Required env (`multimodal`/`vllm`/`agentic` modes)
 
 - `REST_SERVER_PORT=8080`, `SERVICE_NAME=dlstreamer-pipeline-server`,
   `MQTT_HOST=ia-mqtt-broker`, `MQTT_PORT=1883`.
@@ -56,7 +56,7 @@ rtspsrc add-reference-timestamp-meta=true location="rtsp://mediamtx:8554/live.st
 ```
 
 - `add-reference-timestamp-meta=true` on `rtspsrc` + `add-rtp-timestamp=true`
-  on `gvametaconvert` are **required** for `fusion`/`vlm`/`agentic` modes —
+  on `gvametaconvert` are **required** for `multimodal`/`vllm`/`agentic` modes —
   Fusion Analytics matches vision and sensor messages by the RTP sender
   timestamp (`metadata.rtp.sender_ntp_unix_timestamp_ns`); omitting either
   flag means the vision message has no timestamp to fuse on and Fusion
@@ -79,7 +79,7 @@ inference-region=1 name=classification` (classifier optional) exactly as in
 — reuse that skill's GPU/NPU `vapostproc` guidance verbatim if this vertical
 needs bounding-box localization instead of a whole-frame label.
 
-## Destination configuration — three sinks, all required (`fusion`/`vlm`/`agentic` modes)
+## Destination configuration — three sinks, all required (`multimodal`/`vllm`/`agentic` modes)
 
 ```json
 "destination": {

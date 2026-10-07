@@ -1,4 +1,4 @@
-# Vision + sensor fusion — weld defect detection
+# Vision + sensor multimodal — weld defect detection
 
 **User (business objective):**
 > I want to catch defective welds on my production line — I have a camera
@@ -17,7 +17,7 @@
 5. Fuse with AND (both must agree) or OR (either is enough)? [AND]
 
 **Discovery (Step 2):** "what feeds this" = both, correlated into one verdict
-→ **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=fusion`; this workspace;
+→ **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=multimodal`; this workspace;
 DLSPS + Telegraf/InfluxDB + Time Series Analytics + Fusion Analytics +
 Grafana). This is **not** routed to `{{DEPLOYMENT}}=ts` or
 `metro-ai-app-recipe` alone, because the business requirement is explicitly a
@@ -27,17 +27,17 @@ Grafana). This is **not** routed to `{{DEPLOYMENT}}=ts` or
 - Deliverable: `./weld-defect-stack/` Docker Compose solution; Grafana at
   `https://localhost:3000` with a live annotated WebRTC panel, sensor trend,
   and fused-verdict table.
-- Skill: `manufacturing-app-recipe` (`{{DEPLOYMENT}}=fusion`; this workspace — no install).
+- Skill: `manufacturing-app-recipe` (`{{DEPLOYMENT}}=multimodal`; this workspace — no install).
 - Supporting: `dlsps-user` for the vision pipeline operational details,
   `time-series-analytics-user` for the sensor UDF pattern.
 - Inferred technology (decisions, not questions): weld-defect classifier on
   CPU, `FUSION_MODE=AND`, 50 ms timestamp tolerance, MQTT topics
   `vision_weld_defect_classification` / `ts_weld_anomaly_detection` /
-  `fusion/anomaly_detection_results`.
+  `multimodal/anomaly_detection_results`.
 - Requirements: Docker + Compose v2; Nginx/Coturn ports free.
 
 **Build (Step 5, after "go"):** delegate to `manufacturing-app-recipe`
-(`{{DEPLOYMENT}}=fusion`),
+(`{{DEPLOYMENT}}=multimodal`),
 passing the inferred `{{OBJECT}}=weld_defect`, `{{FUSION_MODE}}=AND`, and
 topics; verify against the recipe's own completion criteria (including the
 fused-verdict MQTT proof), then tell the user how to open the dashboard.

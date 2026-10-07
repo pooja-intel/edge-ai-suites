@@ -17,7 +17,7 @@
 correlate against → **`metro-ai-app-recipe`** (vision-only end-to-end stack;
 already covers the "Industrial / logistics" vertical, including
 surface-defect detection). Not routed to `manufacturing-app-recipe`'s
-`fusion`/`vlm`/`agentic` modes — there is no second modality to fuse.
+`multimodal`/`vllm`/`agentic` modes — there is no second modality to fuse.
 
 **Plan (Step 4 — presented, awaits confirmation):**
 - Deliverable: `./pcb-defect-stack/` Docker Compose solution; Grafana-based
@@ -39,6 +39,6 @@ how to open the dashboard.
 
 **Key behavior:** even though the objective is manufacturing-domain, a
 single-modality (camera-only) request routes to the general-purpose vision
-recipe, not one of the two manufacturing-specific fusion/sensor skills —
+recipe, not one of the two manufacturing-specific multimodal/sensor skills —
 `manufacturing-ai-app-builder` only special-cases routing when a sensor
 signal is genuinely part of the decision.

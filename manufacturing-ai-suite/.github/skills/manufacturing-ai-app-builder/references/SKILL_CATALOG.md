@@ -6,8 +6,8 @@ the decision") to a **primary** skill and any **supporting** skills, then plan
 + delegate.
 
 > `manufacturing-app-recipe` ships in **this workspace** under
-> `.github/skills/` — no install needed; it covers `vision`/`ts`/`fusion`/
-> `vlm`/`agentic` deployment modes.
+> `.github/skills/` — no install needed; it covers `vision`/`ts`/`multimodal`/
+> `vllm`/`agentic` deployment modes.
 > `metro-ai-app-recipe`, `dlsps-user`, `dlstreamer-coding-agent`, and
 > `time-series-analytics-user` live in **other** repos/suites, not under
 > this suite's `.github/skills/` — never assume one is present; confirm and
@@ -15,12 +15,12 @@ the decision") to a **primary** skill and any **supporting** skills, then plan
 > (`npx skills@latest add open-edge-platform/skills --skill <name>`, or
 > `open-edge-platform/dlstreamer` for `dlstreamer-coding-agent`).
 
-## 1. Vision + sensor fusion — one correlated verdict from both a camera and a sensor
+## 1. Vision + sensor multimodal — one correlated verdict from both a camera and a sensor
 
 | If the user wants… | Primary skill | Supporting |
 |---|---|---|
-| A defect/anomaly verdict that must **combine** a camera-side defect signal **and** a sensor-side anomaly signal (AND/OR logic, timestamp-correlated) — e.g. weld quality (vision + pressure/gas/current), machining (surface defect + vibration), PCB (visual + electrical test) | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=fusion`) | `dlsps-user` (vision pipeline ops), `time-series-analytics-user` (sensor UDF pattern), `model-download-user` (custom vision IR) |
-| The same, plus a natural-language explanation of each fused alert | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=vlm`) | same as above |
+| A defect/anomaly verdict that must **combine** a camera-side defect signal **and** a sensor-side anomaly signal (AND/OR logic, timestamp-correlated) — e.g. weld quality (vision + pressure/gas/current), machining (surface defect + vibration), PCB (visual + electrical test) | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=multimodal`) | `dlsps-user` (vision pipeline ops), `time-series-analytics-user` (sensor UDF pattern), `model-download-user` (custom vision IR) |
+| The same, plus a natural-language explanation of each fused alert | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=vllm`) | same as above |
 | The same, plus full agent orchestration (LangGraph meta-agent, metrics) over the explanation layer | **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=agentic`) | same as above |
 
 Deliverable shape: end-to-end Compose stack (DLSPS + Telegraf/InfluxDB + Time
@@ -46,7 +46,7 @@ stack vs quick prototype" answer picks between these two rows.
 |---|---|---|
 | A **full end-to-end analytics stack** (live annotated video + dashboard + alerts) for detection/classification/counting/zone-alerting on any vertical, including manufacturing (defect detection, PPE compliance, zone intrusion, forklift tracking) | **`metro-ai-app-recipe`** — production mode (`MODE=production`, the default) | `model-download-user` (custom IR), `dlstreamer-coding-agent` (custom pipeline JSON) |
 | A **quick local demo / PoC** — a single lightweight app (no full stack) proving a model runs: a simple DL Streamer pipeline **or** a minimal OpenVINO inference script | **`metro-ai-app-recipe`** — demo/PoC mode (`MODE=demo`) | `dlstreamer-coding-agent` (DL Streamer sub-path), `model-download-user` (model IR) |
-| **Multi-camera / spatial** cross-camera tracking & scene fusion | **`scenescape-setup`** — reached via the `metro-ai-app-recipe` Scenescape opt-in path | `metro-ai-app-recipe` for the detection front-end |
+| **Multi-camera / spatial** cross-camera tracking & scene multimodal | **`scenescape-setup`** — reached via the `metro-ai-app-recipe` Scenescape opt-in path | `metro-ai-app-recipe` for the detection front-end |
 | A **custom vision pipeline / sample app in code** (Python/C/C++/GStreamer), or **migrating** an NVIDIA DeepStream pipeline to Intel DL Streamer | **`dlstreamer-coding-agent`** | `model-download-user` |
 | Just **deploy/operate** the DL Streamer Pipeline Server via REST — start/stop/monitor pipelines, configure `config.json`, no dashboard/alerting stack | **`dlsps-user`** | — |
 
@@ -67,7 +67,7 @@ Grafana/MQTT/dashboard layer.
   `metro-ai-app-recipe`); a bare UDF or bare pipeline-server operation routes
   to the underlying microservice-user skill (`time-series-analytics-user` /
   `dlsps-user`).
-- **Don't over-route to fusion.** Fusion (§1) is for when one verdict must
+- **Don't over-route to multimodal.** Multimodal (§1) is for when one verdict must
   come from **both** modalities together (AND/OR logic). If the user has a
   camera and a sensor but the decision only genuinely depends on one of them,
   route single-modality (§2 or §3) — adding an unused modality is
@@ -78,8 +78,8 @@ Grafana/MQTT/dashboard layer.
   GStreamer) → **`dlstreamer-coding-agent`** (§3), same as the general
   `metro-ai-app-builder` catalog.
 - **Multi-camera spatial correlation with no sensor** is NOT time-series
-  fusion — it's `scenescape-setup` via `metro-ai-app-recipe` (§3), not
-  `manufacturing-app-recipe`'s `fusion` mode (§1), because there's no sensor
+  multimodal — it's `scenescape-setup` via `metro-ai-app-recipe` (§3), not
+  `manufacturing-app-recipe`'s `multimodal` mode (§1), because there's no sensor
   stream to correlate against.
 - When the objective spans two skills (e.g. prototype a UDF now, scaffold the
   full app later), sequence them and confirm the **whole pipeline** once.

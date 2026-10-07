@@ -51,12 +51,18 @@ picking the transport is a `make` target choice, not a `.env` edit.
     security_policy = "None"
     security_mode = "None"
     [[inputs.opcua.nodes]]
-      name = "wind_speed"
+      name = "{{SENSOR_TAGS}}"
       namespace = "1"
       identifier_type = "i"
       identifier = "2003"
       default_tags = { source="opcua_merge" }
   ```
+
+  `name` above is a placeholder — rename it to this vertical's actual field
+  name (e.g. `bp_reading` for a blood-pressure app), matching whatever the
+  adapted simulator assigns for that column; never leave it as the
+  wind-turbine example's `wind_speed`/`grid_active_power`, add one
+  `[[inputs.opcua.nodes]]` block per `{{SENSOR_TAGS}}` column.
 
 - `name_override` is the InfluxDB measurement name — keep it in sync with
   whatever `{{SENSOR_MEASUREMENT}}` the TICKscript's

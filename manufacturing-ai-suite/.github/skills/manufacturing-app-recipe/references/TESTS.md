@@ -8,7 +8,7 @@ the self-signed Nginx cert).
 ## `conftest.py` (all production modes)
 
 - Fixtures: `host_ip`, `base_url` (`https://{host_ip}:{grafana_port}` for
-  `fusion`/`vlm`/`agentic`, `https://{host_ip}:{grafana_port}/ts-api` for
+  `multimodal`/`vllm`/`agentic`, `https://{host_ip}:{grafana_port}/ts-api` for
   `ts`), `mqtt_client`, `influx_client`.
 - Set `NO_PROXY=*`/`no_proxy=*` for all in-process HTTP calls — same
   corporate-proxy caveat as `metro-ai-app-recipe`.
@@ -59,7 +59,7 @@ the self-signed Nginx cert).
   matches `apps/{{APP_NAME}}/grafana-dashboard.json`, not a stale previous
   app's dashboard left over from `provisioning/`.
 
-## `fusion`/`vlm`/`agentic` modes (≥ 9 tests collected)
+## `multimodal`/`vllm`/`agentic` modes (≥ 9 tests collected)
 
 ### `test_vision_pipeline.py`
 
@@ -71,7 +71,7 @@ the self-signed Nginx cert).
 - `test_vision_rtp_timestamp_present` — assert
   `metadata.rtp.sender_ntp_unix_timestamp_ns` is present **after** the
   ~300-packet warm-up window (see `PIPELINE.md`); this is the precondition
-  for fusion working at all, so test it explicitly rather than assuming.
+  for multimodal working at all, so test it explicitly rather than assuming.
 - `test_webrtc_stream_reachable` — WHEP endpoint returns 200 once the
   pipeline is running (reuse `metro-ai-app-recipe`'s
   `test_webrtc_stream.py` assertion contract).
@@ -106,12 +106,12 @@ the self-signed Nginx cert).
   fuse) — this is the test most likely to catch a timestamp-parsing
   regression (see the `parse_ts_string_to_ns` caveat in `FUSION.md`).
 - `test_fusion_influxdb_measurement_populated` — after a fused event, query
-  the fusion InfluxDB measurement and assert the row's `mode`/`fused_decision`
+  the multimodal InfluxDB measurement and assert the row's `mode`/`fused_decision`
   fields match what was published on `{{FUSION_TOPIC}}`.
 - `test_vision_only_measurement_always_populated` — assert the raw vision
   InfluxDB measurement receives a row for every vision message, independent
-  of whether fusion found a sensor match (validates the "write vision data
-  regardless of fusion outcome" behavior in `FUSION.md`).
+  of whether multimodal found a sensor match (validates the "write vision data
+  regardless of multimodal outcome" behavior in `FUSION.md`).
 
 ### `test_dashboard.py`
 
@@ -121,14 +121,14 @@ the self-signed Nginx cert).
 - `test_dashboard_provisioned` — the `{{DASHBOARD_SLUG}}` dashboard exists via
   Grafana's search API.
 
-## `vlm`/`agentic` modes — additional tests (on top of `fusion`'s, ≥ 2 more)
+## `vllm`/`agentic` modes — additional tests (on top of `multimodal`'s, ≥ 2 more)
 
 ### `test_explanation.py`
 
 - `test_llm_health` — `GET /v3/config` on `apm-llm` returns 200.
 - `test_batch_complete_produces_explanation` — publish a synthetic
   batch-complete MQTT event, assert one explanation output appears in the
-  explainer's (`vlm-explainer` or `apm-agent`'s) `OUTPUT_DIR`, quote it
+  explainer's (`vllm-explainer` or `apm-agent`'s) `OUTPUT_DIR`, quote it
   verbatim.
 - `test_fallback_mode` (only if `LLM_MODE=fallback` was selected) — assert a
   structured explanation is still produced with `apm-llm` absent/stopped.

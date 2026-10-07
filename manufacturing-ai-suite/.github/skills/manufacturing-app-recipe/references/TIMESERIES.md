@@ -1,11 +1,11 @@
-# Telegraf + Time Series Analytics Microservice reference (the sensor half, inside `fusion`/`vlm`/`agentic`)
+# Telegraf + Time Series Analytics Microservice reference (the sensor half, inside `multimodal`/`vllm`/`agentic`)
 
 > **Skill pointer:** for authoring the UDF + TICKscript pattern itself
 > (threshold, rate-of-change, rolling z-score, or pretrained-model
 > inference), invoke external `time-series-analytics-user` and follow its
 > `references/patterns.md` — do not hand-roll a new pattern here. Below are
 > recipe-specific overrides for wiring that service into the flat
-> `{{STACK_DIR}}/` shape used by `fusion`/`vlm`/`agentic` modes. For the
+> `{{STACK_DIR}}/` shape used by `multimodal`/`vllm`/`agentic` modes. For the
 > standalone `apps/<name>/` shape used by `ts` mode, see
 > [`ANALYTICS.md`](ANALYTICS.md) instead.
 
@@ -136,7 +136,7 @@ Keep these three names in lockstep across `TIMESERIES.md` and `FUSION.md`:
 | `{{TS_TOPIC}}` | TICKscript first `.topic(...)` | Fusion Analytics `TS_TOPIC` env var |
 | `{{SENSOR_ALERT_TOPIC}}` | TICKscript second `.topic(...)` | ops/human MQTT subscriber only — **not** consumed by Fusion Analytics |
 
-## Verifying the sensor half in isolation (before wiring fusion)
+## Verifying the sensor half in isolation (before wiring multimodal)
 
 ```bash
 docker exec -ti ia-mqtt-broker mosquitto_sub -h localhost -v -t '{{TS_TOPIC}}' -p 1883

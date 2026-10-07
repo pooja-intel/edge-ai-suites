@@ -5,7 +5,7 @@ The Time Series AI Stack is one shared Compose topology
 verticals plug into via a per-vertical `apps/<name>/` folder. Adding a new
 sample app means creating this folder and registering it — it does **not**
 mean writing a new `docker-compose.yml`. This convention applies only to
-`ts` mode; `fusion`/`vlm`/`agentic` modes generate a flat, standalone
+`ts` mode; `multimodal`/`vllm`/`agentic` modes generate a flat, standalone
 `{{STACK_DIR}}/` instead (see [`INSTALL.md`](INSTALL.md)).
 
 ## Steps (mirrors the reference `create-a-new-sample-app.md`)
@@ -45,7 +45,7 @@ mean writing a new `docker-compose.yml`. This convention applies only to
 5. **`grafana-dashboard.json`** — one Grafana dashboard JSON, volume-mounted
    directly by the repo-root `docker-compose.yml` at
    `./apps/${SAMPLE_APP}/grafana-dashboard.json` (note: **not** a directory
-   like the `fusion`/`vlm`/`agentic` modes' `dashboards_jsons/` — this repo
+   like the `multimodal`/`vllm`/`agentic` modes' `dashboards_jsons/` — this repo
    mounts the single file straight into Grafana's provisioning path). See
    [`PROXY_UI.md`](PROXY_UI.md) for the panel requirements.
 

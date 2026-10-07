@@ -7,7 +7,7 @@
 > `references/tickscript-basics.md`. Below are recipe-specific overrides for
 > landing that output inside an `apps/{{APP_NAME}}/` folder with this repo's
 > three config-variant convention. For the flat `{{STACK_DIR}}/` shape used
-> by `fusion`/`vlm`/`agentic` modes, see [`TIMESERIES.md`](TIMESERIES.md)
+> by `multimodal`/`vllm`/`agentic` modes, see [`TIMESERIES.md`](TIMESERIES.md)
 > instead.
 
 ## `config.json` — two variants, same `udfs`/`alerts` shape

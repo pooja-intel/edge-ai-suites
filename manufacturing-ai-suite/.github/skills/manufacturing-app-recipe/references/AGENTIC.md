@@ -2,22 +2,26 @@
 
 Adds full agent orchestration on top of the bare LLM/VLM call described in
 [`VLM.md`](VLM.md): a LangGraph meta-agent + worker agents replace
-`vlm-explainer`'s single request/response call, and (optionally) usage/latency
+`vllm-explainer`'s single request/response call, and (optionally) usage/latency
 metrics. **Off by default** — only build this when `{{DEPLOYMENT}}=agentic`
-is explicitly chosen; `vlm` mode's bare call is sufficient for most
+is explicitly chosen; `vllm` mode's bare call is sufficient for most
 explainability needs.
 
 **Do not re-implement the agent framework by hand** — this layer is an
 overlay Compose file (reference: `docker-compose-agentic.yml` +
 `docker-compose-vllm.yml`) composing existing microservices, not new code to
-write from scratch. It **replaces** `vlm-explainer` from `VLM.md` — do not
+write from scratch. It **replaces** `vllm-explainer` from `VLM.md` — do not
 run both the bare explainer and `apm-agent` at the same time.
+
+Bring the stack up with `make up_agentic` — not `make up` or `make up_vllm`,
+which omit the `docker-compose-agentic.yml` overlay these services are
+defined in (see [`INSTALL.md`](INSTALL.md)'s *Makefile targets* section).
 
 ## Components (in addition to `apm-llm` + `model-download` from `VLM.md`)
 
 | Service | Image | Role |
 |---|---|---|
-| `apm-agent` | `intel/agent-quality-handler` | LangGraph meta-agent + worker agents; subscribes to the same batch-complete MQTT event as `vlm-explainer` and orchestrates (possibly multi-step/tool-calling) calls to `apm-llm` to produce a richer explanation |
+| `apm-agent` | `intel/agent-quality-handler` | LangGraph meta-agent + worker agents; subscribes to the same batch-complete MQTT event as `vllm-explainer` and orchestrates (possibly multi-step/tool-calling) calls to `apm-llm` to produce a richer explanation |
 | (optional, `{{AGENT_METRICS}}=yes`) `metrics-manager` / `prometheus` | `intel/metrics-manager` | LLM-usage/latency metrics — skip for a minimal Agentic add-on |
 
 ## Wiring into Fusion Analytics
