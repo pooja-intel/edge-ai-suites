@@ -42,7 +42,7 @@
 │   └── vllm-explainer/{Dockerfile,explainer.py,requirements.txt}
 ├── agentic/                      # {{DEPLOYMENT}}=agentic only — see AGENTIC.md
 │   └── docker-compose-agentic.yml + docker-compose-vllm.yml overlays
-└── tests/
+└── tests/                        # only if {{GENERATE_TESTS}}=yes — TESTS.md
     ├── conftest.py
     └── test_fusion_pipeline.py  # TESTS.md
 ```
@@ -52,8 +52,8 @@ This is a curated layout, not a mirror of the reference repo — omit
 (unless `{{DEPLOYMENT}}` is `vllm`/`agentic`), `insights-workbench/`,
 `ui-service/`, `training/`, `helm/`, vertical-specific `docs/`,
 `README-dockerhub.md`, `CHANGELOG.md`, and `third-party-programs.txt` from
-the reference — see SKILL.md's *Reference implementation* section for the
-full copy/leave-behind table and renaming rule.
+the reference — see *Reference implementation* below for the full
+copy/leave-behind table and renaming rule.
 
 ## Layout — `ts` mode
 
@@ -269,3 +269,134 @@ output confirming the unused simulator is scaled to `0`; the InfluxDB
 log line + the captured MQTT/OPC-UA alert; and the Grafana dashboard URL
 with confirmation `apps/{{APP_NAME}}/grafana-dashboard.json` is what's
 rendering (not a stale previous app's dashboard).
+
+## Image tags — pin to the latest available tag (never `:latest`)
+
+Resolve each image to the **newest published stable tag on Docker Hub**
+(query the repo's `tags` API with `ordering=last_updated`), pin it, and
+ignore `*-weekly` pre-releases.
+
+- `intel/dlstreamer-pipeline-server:2026.2.0-ubuntu24` (vision — `vision`,
+  `multimodal`, `vllm`, `agentic`)
+- `intel/ia-time-series-analytics-microservice:<latest>` (Kapacitor + UDF —
+  `ts`, `multimodal`, `vllm`, `agentic`)
+- `intel/ia-multimodal-fusion-analytics:<latest>` (multimodal correlator, built
+  from `fusion-analytics/Dockerfile` if no prebuilt tag is pinned yet —
+  `multimodal`, `vllm`, `agentic`)
+- `telegraf:1.39.3-alpine`, `influxdb:1.12.4` (all production modes)
+- `eclipse-mosquitto:2.0.22`, `grafana/grafana-oss:13.0.2`, `nginx:1.31.4`
+  (all production modes)
+- `bluenviron/mediamtx:1.20.1` (WebRTC WHIP/WHEP), `coturn/coturn:4.17.2-alpine`
+  (ICE/TURN), `chrislusf/seaweedfs:4.42` (S3) — `multimodal`, `vllm`, `agentic` only
+- `intel/ia-opcua-server:<latest>` / `intel/ia-mqtt-publisher:<latest>`
+  (simulators) — `ts` only, whichever matches `{{INGEST_TRANSPORT}}`
+- `openvino/model_server:<gpu-tag>` (OVMS, serves the LLM/VLM) — `vllm`,
+  `agentic` only
+- Agentic-only: `intel/agent-quality-handler`, `intel/model-download`,
+  `intel/metrics-manager` (only if `{{AGENT_METRICS}}=yes`) — `agentic` only
+
+## Reference implementation — a template to read, not a folder to clone
+
+The upstream
+[`industrial-edge-insights-time-series/`](https://github.com/open-edge-platform/edge-ai-suites/tree/main/manufacturing-ai-suite/industrial-edge-insights-time-series)
+wind-turbine-anomaly-detection sample (`ts` mode) and
+[`industrial-edge-insights-multimodal/`](https://github.com/open-edge-platform/edge-ai-suites/tree/main/manufacturing-ai-suite/industrial-edge-insights-multimodal)
+weld-defect-detection sample (`multimodal`/`vllm`/`agentic` modes) are the
+**shape reference** — read them to learn the structure, then **author the
+new stack's files with vertical-specific names and content**. Do **not**
+`cp -r` either reference repo and patch it in place — that leaves
+vertical-specific leftovers (unused `weld_anomaly_detector.*` files, a
+`weld-data-simulator/` folder for a non-weld vertical, weld training
+scripts, weld docs) sitting in a stack that has nothing to do with that
+vertical, and is the single most common mistake when using this skill.
+
+### What to copy vs. what to leave behind (`multimodal`/`vllm`/`agentic`)
+
+| Copy (adapt names/content to `{{OBJECT}}`/`{{SENSOR_UDF_NAME}}`/`{{STACK_DIR}}`) | Leave out unless the mode/question explicitly requests it |
+|---|---|
+| `docker-compose.yml` topology, `.env` keys, `Makefile`/`sample_*.sh` targets | `docker-compose-vllm.yml`/`docker-compose-agentic.yml`/`configs/agentic/` — `vllm`/`agentic` modes only |
+| `configs/{dlstreamer-pipeline-server,time-series-analytics-microservice,telegraf,influxdb,mqtt-broker,grafana,nginx,seaweedfs-s3}/` structure | `insights-workbench/`, `ui-service/` — weld-specific VLM/agentic UI, not part of the base multimodal stack |
+| `fusion-analytics/{Dockerfile,fusion.py,api.py,requirements.txt}` (generalize label lists — see [FUSION.md](FUSION.md)) | `training/` (weld classifier/VLM training scripts) — the new vertical's model is supplied by the user or fetched via `model-download-user`, not trained here |
+| the data simulator's `Dockerfile`/`publisher.py` control flow (paired video+CSV replay) | `docs/user-guide/weld-defect-detection/`, `README-dockerhub.md`, `CHANGELOG.md`, `third-party-programs.txt` — reference-repo metadata |
+| one dashboard JSON as a layout template | the reference's other dashboard variants (`*_agentic.json`, `*_vlm.json`) unless `{{DEPLOYMENT}}` is `vllm`/`agentic` |
+| `tests/` structure/pattern from [TESTS.md](TESTS.md) — only if `{{GENERATE_TESTS}}=yes` | the reference's actual weld-assertion test bodies — write new assertions against `{{VISION_TOPIC}}`/`{{TS_TOPIC}}`/`{{FUSION_TOPIC}}`; the whole `tests/` folder if `{{GENERATE_TESTS}}=no` |
+| `helm/` | always — Helm/Kubernetes deployment is out of scope for this skill; Docker Compose only |
+
+### What to copy vs. what to leave behind (`ts`)
+
+| Copy | Leave out |
+|---|---|
+| `simulation-data/`, `telegraf-config/`, `time-series-analytics-config/` shape, `grafana-dashboard.json` | another app's `training/` scripts — write new ones only if this vertical trains a model |
+| the chosen simulator's control flow (OPC-UA server or MQTT publisher) | the unused simulator (OPC-UA vs MQTT) entirely |
+| `Makefile` `SAMPLE_APP_LIST` registration pattern | `DEFAULT_SAMPLE_APP` change, unless explicitly requested |
+
+### Renaming rule — no leftover vertical-specific names
+
+Every file, directory, service name, container name, image env var, MQTT
+topic, InfluxDB measurement, WebRTC peer-id, and dashboard filename that is
+vertical-specific in a reference (contains `weld`/`Weld`, `wind-turbine`, or
+any other old vertical's name) MUST be renamed to match this stack's own
+`{{OBJECT}}`/`{{SENSOR_UDF_NAME}}`/`{{STACK_DIR}}`/`{{APP_NAME}}` — never
+leave the reference's naming in a generated stack for a different vertical
+(data simulator directory + Compose service, its image env var, UDF
+file/class + tick script — **delete** the reference's original files
+entirely rather than leaving them unused alongside the new ones, pretrained
+model files, vision model directory, WebRTC `peer-id`/S3 `folder_prefix`,
+MQTT topics, InfluxDB measurements, dashboard JSON filename).
+
+## Completion criteria (per mode, all applicable must pass)
+
+**`vision`** (demo/PoC — see [`DEMO_POC.md`](DEMO_POC.md)):
+1. The chosen delegate skill's container(s) start successfully.
+2. One inference call round-trips end-to-end with evidence quoted verbatim.
+3. No literal `{{...}}` remains.
+
+**`ts`** (demo — same bar as `time-series-analytics-user`; production — all
+of these):
+1. `apps/{{APP_NAME}}/` exists with all required subpaths; registered in
+   `SAMPLE_APP_LIST`.
+2. `make check_env_variables` exits 0 with a valid `.env`.
+3. `make up_{{INGEST_TRANSPORT}}_ingestion app={{APP_NAME}}` → all
+   containers `running`/`healthy`; unused simulator scaled to `0`.
+4. `curl -k --noproxy '*' https://<HOST_IP>:${GRAFANA_PORT}/ts-api/kapacitor/v1/ping` returns 204/200 (`-k` only valid when `{{HOST_IP}}=localhost`; otherwise use `--cacert`/`--resolve` per SKILL.md's *Execution guardrails*).
+5. InfluxDB measurement for the raw sensor stream populated within 30 s.
+6. `config.json`'s `udfs.models` key consistent with the chosen UDF pattern.
+7. The UDF-flagged measurement populates; the alert channel captures one
+   crit alert.
+8. Grafana shows `apps/{{APP_NAME}}/grafana-dashboard.json` rendering live
+   data.
+9. If `{{GENERATE_TESTS}}=yes`: `pytest -q tests/` passes, ≥ 6 tests
+   collected.
+
+**`multimodal`** (all of these; **`vllm`/`agentic` add their own criteria below**):
+1. `./install.sh` succeeds; no leftover reference-vertical artifacts.
+2. `make check_env_variables` exits 0; an invalid `FUSION_MODE` exits non-zero.
+3. `docker compose up -d` → all containers `running`/`healthy` (incl.
+   `mediamtx`, `coturn`, `seaweedfs-*`).
+4. All three MQTT topics (`{{VISION_TOPIC}}`, `{{TS_TOPIC}}`,
+   `{{FUSION_TOPIC}}`) carry data.
+5. A fused message appears only per `{{FUSION_MODE}}` semantics, within
+   `{{TOLERANCE_NS}}`.
+6. InfluxDB has both the raw vision measurement and the multimodal measurement
+   populated.
+7. Grafana renders the WebRTC panel + sensor trend + multimodal verdict table.
+8. If `{{GENERATE_TESTS}}=yes`: `pytest -q tests/` passes, ≥ 9 tests
+   collected.
+9. No literal `{{...}}` remains anywhere.
+
+**`vllm`** (criteria 1–9 above, plus):
+10. The LLM/VLM service (OVMS/vLLM) health check passes before it is marked
+    ready.
+11. Publishing a synthetic fused-alert batch produces one explanation output,
+    quoted verbatim in the final summary.
+12. `LLM_MODE=fallback` (if selected) still produces a structured explanation
+    with no LLM running.
+
+**`agentic`** (criteria 1–12 above, plus):
+13. `model-download` completes and `apm-llm`'s health check passes
+    (`GET /v3/config` returns 200) before `apm-agent` is marked healthy.
+14. Publishing a synthetic `apm/batch-complete` MQTT event produces one
+    agent-orchestrated explanation in `apm-agent`'s `OUTPUT_DIR`, quoted
+    verbatim.
+15. If `{{AGENT_METRICS}}=yes`: `metrics-manager`/Prometheus reports at
+    least one LLM-latency metric.

@@ -1,41 +1,16 @@
 # Sensor-only anomaly detection — pump vibration monitoring
 
-**User (business objective):**
-> I want to know when one of my pumps is about to fail, based on its
-> vibration sensor readings, and see it on a dashboard.
+**User:**
+> Alert me when one of my pumps is about to fail based on its vibration
+> sensor readings, and show it on a dashboard.
 
-**Orchestrator (Step 1 — business Q&A, batched):**
-1. Outcome — alert before a pump failure, based on vibration anomalies? [yes]
-2. What feeds this — a camera, the vibration sensor, or both together?
-   [vibration sensor only]
-3. Inputs — a real OPC-UA/MQTT feed from the pump's sensor, or a looping
-   sample dataset for a demo? [sample dataset]
-4. Deployment — quick local demo, or single-host Docker Compose solution?
-   [single-host Docker]
-5. Do you need a live sensor-trend + anomaly dashboard? [yes]
+Only a sensor feeds this decision, no camera, so it routes to
+**`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`). The orchestrator just
+confirms the ingestion source (sample dataset vs. a real OPC-UA/MQTT feed)
+and that a dashboard is wanted, then builds.
 
-**Discovery (Step 2):** "what feeds this" = sensor only, full dashboard
-requested → **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=ts`; this
-workspace; Telegraf/InfluxDB + Time Series Analytics Microservice + Grafana,
-scaffolded as a new `apps/pump-vibration-monitor/` sample app). No vision
-component, so `{{DEPLOYMENT}}=multimodal`/`vllm`/`agentic` does not apply.
-
-**Plan (Step 4 — presented, awaits confirmation):**
-- Deliverable: a new `apps/pump-vibration-monitor/` folder registered in the
-  Time Series AI Stack's `Makefile`; Grafana at
-  `https://localhost:3000` showing vibration trend + anomaly alerts.
-- Skill: `manufacturing-app-recipe` (`{{DEPLOYMENT}}=ts`; this workspace — no install).
-- Supporting: `time-series-analytics-user` for the actual UDF/TICKscript
-  pattern (a pretrained rolling-anomaly model on vibration amplitude).
-- Inferred technology (decisions, not questions): OPC-UA ingestion via the
-  bundled simulator, MQTT alert channel on `alerts/pump_vibration`, streaming
-  (non-batch) UDF, single stream.
-- Requirements: Docker + Compose v2; port `3000` free.
-
-**Build (Step 5, after "go"):** delegate to `manufacturing-app-recipe`
-(`{{DEPLOYMENT}}=ts`),
-passing the inferred `{{APP_NAME}}=pump-vibration-monitor`, ingestion
-transport, and alert channel; it in turn delegates the UDF authoring to
-`time-series-analytics-user`. Verify against the recipe's own completion
-criteria, then tell the user how to run `make up_opcua_ingestion
-app=pump-vibration-monitor` and open the dashboard.
+Output:
+- A new `apps/pump-vibration-monitor/` sample app with a pretrained
+  vibration-anomaly UDF
+- An MQTT alert on `alerts/pump_vibration` when amplitude is anomalous
+- A Grafana dashboard at `https://localhost:3000` showing the live trend

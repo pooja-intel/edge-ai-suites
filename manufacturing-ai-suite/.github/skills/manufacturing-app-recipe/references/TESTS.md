@@ -1,5 +1,9 @@
 # Test contracts (per mode)
 
+Only load/author this file when `{{GENERATE_TESTS}}=yes` (asked explicitly
+per mode in SKILL.md's *Questions*) — skip the `tests/` folder and its
+pytest completion criteria entirely otherwise.
+
 `pytest --collect-only -q tests/ | tail -1` should report at least the
 counts noted per section below (no stubs). Mirror `metro-ai-app-recipe`'s
 pytest layout (`conftest.py` with `NO_PROXY=*` + `--cacert`/`-k` handling for

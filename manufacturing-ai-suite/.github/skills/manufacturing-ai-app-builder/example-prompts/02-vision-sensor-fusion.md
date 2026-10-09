@@ -1,43 +1,18 @@
 # Vision + sensor multimodal — weld defect detection
 
-**User (business objective):**
-> I want to catch defective welds on my production line — I have a camera
-> looking at the weld and pressure/gas-flow sensors on the welder, and I want
-> one alert only when both point to a problem.
+**User:**
+> I want to catch defective welds — I have a camera on the weld and
+> pressure/gas-flow sensors on the welder, and I only want an alert when
+> both agree there's a problem.
 
-**Orchestrator (Step 1 — business Q&A, batched):**
-1. Outcome — one fused defect alert combining camera + sensor evidence? [yes]
-2. What feeds this — a camera, sensors, or both together? [both — camera +
-   pressure/gas-flow, correlated]
-3. Inputs — camera: sample weld video for a demo, or a real RTSP feed?
-   [sample video]; sensors: real OPC-UA/MQTT feed, or looping sample CSV?
-   [sample CSV]
-4. Deployment — quick local demo, or single-host Docker Compose solution?
-   [single-host Docker]
-5. Fuse with AND (both must agree) or OR (either is enough)? [AND]
+Both signals must combine into one verdict, so it routes to
+**`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=multimodal`, `FUSION_MODE=AND`)
+rather than a single-modality skill. The orchestrator confirms the video/CSV
+input source and deployment target, then builds.
 
-**Discovery (Step 2):** "what feeds this" = both, correlated into one verdict
-→ **`manufacturing-app-recipe`** (`{{DEPLOYMENT}}=multimodal`; this workspace;
-DLSPS + Telegraf/InfluxDB + Time Series Analytics + Fusion Analytics +
-Grafana). This is **not** routed to `{{DEPLOYMENT}}=ts` or
-`metro-ai-app-recipe` alone, because the business requirement is explicitly a
-**combined** verdict.
-
-**Plan (Step 4 — presented, awaits confirmation):**
-- Deliverable: `./weld-defect-stack/` Docker Compose solution; Grafana at
-  `https://localhost:3000` with a live annotated WebRTC panel, sensor trend,
-  and fused-verdict table.
-- Skill: `manufacturing-app-recipe` (`{{DEPLOYMENT}}=multimodal`; this workspace — no install).
-- Supporting: `dlsps-user` for the vision pipeline operational details,
-  `time-series-analytics-user` for the sensor UDF pattern.
-- Inferred technology (decisions, not questions): weld-defect classifier on
-  CPU, `FUSION_MODE=AND`, 50 ms timestamp tolerance, MQTT topics
-  `vision_weld_defect_classification` / `ts_weld_anomaly_detection` /
-  `multimodal/anomaly_detection_results`.
-- Requirements: Docker + Compose v2; Nginx/Coturn ports free.
-
-**Build (Step 5, after "go"):** delegate to `manufacturing-app-recipe`
-(`{{DEPLOYMENT}}=multimodal`),
-passing the inferred `{{OBJECT}}=weld_defect`, `{{FUSION_MODE}}=AND`, and
-topics; verify against the recipe's own completion criteria (including the
-fused-verdict MQTT proof), then tell the user how to open the dashboard.
+Output:
+- `./weld-defect-stack/` Docker Compose solution: DLSPS (vision) + Telegraf/
+  InfluxDB + Time Series Analytics (sensor) + Fusion Analytics
+- A fused alert only when the camera and the sensor flag the same weld
+- A Grafana dashboard at `https://localhost:3000` with the live video panel,
+  sensor trend, and fused-verdict table

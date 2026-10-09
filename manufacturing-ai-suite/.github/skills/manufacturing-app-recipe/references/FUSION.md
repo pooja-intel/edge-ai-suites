@@ -186,4 +186,5 @@ Confirm a fused message appears **only** after both a vision anomaly and a
 sensor anomaly (for `AND`) or either one, matched **or unmatched** (for
 `OR`) land within/without `{{TOLERANCE_NS}}` — inject one modality's anomaly
 without the other and confirm the multimodal behavior matches `{{FUSION_MODE}}`
-exactly (this is the single most important test in [`TESTS.md`](TESTS.md)).
+exactly (if `{{GENERATE_TESTS}}=yes`, this is the single most important test
+in [`TESTS.md`](TESTS.md); otherwise verify it manually).
